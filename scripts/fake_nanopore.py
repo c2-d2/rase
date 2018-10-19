@@ -67,11 +67,11 @@ def print_read(name, seq, qual):
 
 def ont_fake_name_gen():
     i=0
-    main_id="42424242-4242-4242-4242-424242424242"
     run_id="runid=4242424242424242424242424242424242424242"
     ch="ch=42"
     while True:
         i+=1
+        main_id="{:08}-4242-4242-4242-424242424242".format(i)
         read="read={}".format(i)
         start_time="start_time=2018-01-01T17:16:17Z"
         yield " ".join([main_id, run_id, read, ch, start_time])
