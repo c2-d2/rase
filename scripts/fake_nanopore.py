@@ -73,8 +73,19 @@ def ont_fake_name_gen():
         i+=1
         main_id="{:08}-4242-4242-4242-424242424242".format(i)
         read="read={}".format(i)
-        start_time="start_time=2018-01-01T17:16:17Z"
+        start_time="start_time={}".format(fake_datetime(round(i*200/1000000)))
         yield " ".join([main_id, run_id, read, ch, start_time])
+
+
+def fake_datetime(mbp):
+    mbp=int(mbp)
+    s=mbp%60
+    mbp//=60
+    m=mbp%60
+    mbp//=60
+    h=mbp%60
+    dt="2018-01-01T{:02}:{:02}:{:02}Z".format(h, m, s)
+    return dt
 
 
 def main():
