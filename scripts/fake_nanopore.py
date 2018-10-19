@@ -43,6 +43,38 @@ def readfq(fp):
                 break
 
 
+def stats(reads_fn, max_reads=None):
+    if max_reads is None:
+        max_reads=99999999
+    bps=0
+    reads=0
+    with open(reads_fn) as f:
+        for name, seq, qual in readfq(f):
+            reads+=1
+            bps+=len(seq)
+            if reads >= max_reads:
+                break
+    return reads, bps
+
+
+def first_pass(reads1_fn, reads2_fn, max_reads=None):
+    bps1, reads1 = stats(reads1_fn, max_reads)
+    if reads2_fn:
+        bps2, reads2 = stats(reads1_fn, max_reads)
+        assert reads1 == reads2, "The input files have different numbers of reads"
+    else:
+        bps2, reads2 = 0, 0
+    return reads1+reads2, bps1+bps2
+
+
+def fake_nanopore(reads1_fn, reads2_fn, bps_per_read=None, reads_per_read=None, number_of_reads=None, number_of_bps=None):
+    bps, reads = first_pass(reads1_fn, reads2_fn)
+    if number_of_reads:
+
+
+
+
+
 def fake_nanopore_se(reads1):
     create_ont_fake_name=ont_fake_name_gen()
     for name, seq, qual in readfq(reads1):
