@@ -11,7 +11,9 @@ import os
 import sys
 
 def readfq(fp):
+    ##
     ## Taken from https://github.com/lh3/readfq
+    ##
     last = None # this is a buffer keeping the last unprocessed line
     while True: # mimic closure; is it a bad idea?
         if not last: # the first record or a record following a fastq
@@ -43,7 +45,34 @@ def readfq(fp):
                 break
 
 
-def stats(reads_fn, max_reads=None):
+def se_reader(reads_fn):
+    with open(reads_fn) as fp:
+        for name, seq, _ in readfq(fp):
+            yield name, seq
+
+
+def pe_reader(reads1_fn, reads2_fn):
+    with open (reads1_fn) as fp1:
+        with open (reads2_fn) as fp2:
+            f1=readfq(fp1)
+            f2=readfq(fp2)
+
+            while 1:
+                name1, seq1, _=fp1.next()
+                name2, seq2, _=fp2.next()
+                yield f"{name1}_{name2}", f"{seq1}N{seq2}"
+
+
+def fx_stats(reads_fn, max_reads=None):
+    """Calculate basic statistics for a FASTx file.
+
+    Args:
+        reads_fn(str): FASTx - filename.
+        max_reads(int): Take only first x reads.
+
+    Return
+        (#reads, #bps)
+    """
     if max_reads is None:
         max_reads=99999999
     bps=0
@@ -58,9 +87,19 @@ def stats(reads_fn, max_reads=None):
 
 
 def first_pass(reads1_fn, reads2_fn, max_reads=None):
-    bps1, reads1 = stats(reads1_fn, max_reads)
+    """First pass through the input files.
+
+    Args:
+        reads_fn(str): FASTx - filename.
+        reads_fn(str): FASTx - filename.
+        max_reads(int): Take only first x reads.
+
+    Return
+        (#reads, #bps)
+    """
+    bps1, reads1 = fx_stats(reads1_fn, max_reads)
     if reads2_fn:
-        bps2, reads2 = stats(reads1_fn, max_reads)
+        bps2, reads2 = fx_stats(reads1_fn, max_reads)
         assert reads1 == reads2, "The input files have different numbers of reads"
     else:
         bps2, reads2 = 0, 0
@@ -68,33 +107,77 @@ def first_pass(reads1_fn, reads2_fn, max_reads=None):
 
 
 def fake_nanopore(reads1_fn, reads2_fn, bps_per_read=None, reads_per_read=None, number_of_reads=None, number_of_bps=None):
-    bps, reads = first_pass(reads1_fn, reads2_fn)
-    if number_of_reads:
+    """Fake nanopore reads.
+
+    Args:
+        reads1_fn(str): First read file.
+        reads1_fn(str): Second read file.
+        bps_per_read(int): Create reads by chaining them up to x bps.
+        reads_per_read(int): Create reads by chaining n reads.
+        number_of_reads(int): Take only first n reads.
+        number_of_bps(): Take only first n bps.
+    """
 
 
+    # 1) Initialize parameters
+    total_bps, total_reads = first_pass(reads1_fn, reads2_fn, max_reads)
+
+    if bps_per_read is None:
+        bps_per_read=10*15
+
+    if reads_per_read is None:
+        bps_per_read=1
+
+    if number_of_reads is None:
+        number_of_reads=total_reads
+    else:
+        number_of_reads=min(reads, number_of_reads)
+
+    if number_of_bps is None:
+        number_of_bps=total_bps
+    else:
+        number_of_bps=min(reads, number_of_bps)
+
+    # 2) Iterate over reads
+    current_reads=0
+    current_bps=0
+    while current_reads<number_of_reads and current_bps<number_of_bps:
+        names=[]
+        seqs=[]
+        bqs=[]
+
+        seqs_len=0
+
+        # 2A) Chaining
+        while len(names)<reads_per_read and
+                and seqs_len<bps_per_reads:
+            try:
+                n,s=reader.next()
+                names.append(n)
+                seqs.append(s)
+                seqs_len+=len(s)
+            except StopIteration:
+                # todo: fix end
+                break
+
+        # 2B) Updating statistics and printing
+        name=" ".join(names)
+        seq="N".join(seqs)
+        current_reads+=len(names)
+        current_bps+=len(seq)
+        fa_print_read(name, seq)
 
 
-
-def fake_nanopore_se(reads1):
-    create_ont_fake_name=ont_fake_name_gen()
-    for name, seq, qual in readfq(reads1):
-        fake_ont_name=next(create_ont_fake_name)
-        print_read(fake_ont_name, seq, qual)
-
-
-def fake_nanopore_pe(reads1, reads2):
-    create_ont_fake_name=ont_fake_name_gen()
-    for (name1, seq1, qual1), (name2, seq2, qual2) in zip(readfq(reads1),readfq(reads1)):
-        fake_ont_name=next(create_ont_fake_name)
-        print_read(fake_ont_name, "{}NNN{}".format(seq1,seq2), "{}NNN{}".format(qual1,qual2))
-
-
-def print_read(name, seq, qual):
-        print("{}{}".format("@" if qual else ">", name))
+def fa_print_read(name, seq):
+        print(f"@{name}")
         print(seq)
-        if qual:
-            print("+")
-            print(qual)
+
+
+def fq_print_read(name, seq, qual):
+        print(f"@{name}")
+        print(seq)
+        print("+")
+        print(qual)
 
 
 def ont_fake_name_gen():
