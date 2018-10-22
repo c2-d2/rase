@@ -75,7 +75,7 @@ def fx_stats(reads_fn, max_reads=None):
         (#reads, #bps)
     """
     if max_reads is None:
-        max_reads=99999999
+        max_reads=10**15
     bps=0
     reads=0
     with open(reads_fn) as f:
@@ -127,7 +127,7 @@ def fake_nanopore(reads1_fn, reads2_fn, reads_per_read, bps_per_read, number_of_
         reader=pe_reader(reads1_fn, reads2_fn)
 
 
-    total_bps, total_reads = first_pass(reads1_fn, reads2_fn, max_reads)
+    total_bps, total_reads = first_pass(reads1_fn, reads2_fn, number_of_reads)
 
     if bps_per_read is None:
         bps_per_read=10*15
@@ -218,16 +218,14 @@ def main():
     parser = argparse.ArgumentParser(description=desc)
 
     parser.add_argument(
-        'reads1',
+        'reads1_fn',
         metavar="reads1.fq",
-        type=argparse.FileType('r'),
         help='1st FASTA or FASTQ file',
     )
 
     parser.add_argument(
-        'reads2',
+        'reads2_fn',
         metavar="reads2.fq",
-        type=argparse.FileType('r'),
         default=None,
         nargs='?',
         help='2nd FASTA or FASTQ file',
@@ -268,12 +266,12 @@ def main():
     args = parser.parse_args()
 
     fake_nanopore(
-        reads1_fn=reads1_fn,
-        reads2_fn=reads2_fn,
-        reads_per_read=reads_per_read,
-        bps_per_read=bps_per_read,
-        number_of_reads=number_of_reads,
-        number_of_bps=number_of_bps,
+        reads1_fn=args.reads1_fn,
+        reads2_fn=args.reads2_fn,
+        reads_per_read=args.reads_per_read,
+        bps_per_read=args.bps_per_read,
+        number_of_reads=args.number_of_reads,
+        number_of_bps=args.number_of_bps,
     )
 
 
