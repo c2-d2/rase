@@ -10,6 +10,7 @@ import argparse
 import os
 import sys
 
+
 def readfq(fp):
     ##
     ## Taken from https://github.com/lh3/readfq
@@ -67,8 +68,8 @@ def fx_stats(reads_fn, max_reads=None):
     """Calculate basic statistics for a FASTx file.
 
     Args:
-        reads_fn(str): FASTx - filename.
-        max_reads(int): Take only first x reads.
+        reads_fn(str): FASTA or FASTQ filename.
+        max_reads(int): Take only first max_reads reads.
 
     Return
         (#reads, #bps)
@@ -90,8 +91,8 @@ def first_pass(reads1_fn, reads2_fn, max_reads=None):
     """First pass through the input files.
 
     Args:
-        reads_fn(str): FASTx - filename.
-        reads_fn(str): FASTx - filename.
+        reads_fn(str): 1st FASTA or FASTQ filename.
+        reads_fn(str): 2nd FASTA or FASTQ filename.
         max_reads(int): Take only first x reads.
 
     Return
@@ -106,20 +107,26 @@ def first_pass(reads1_fn, reads2_fn, max_reads=None):
     return reads1+reads2, bps1+bps2
 
 
-def fake_nanopore(reads1_fn, reads2_fn, bps_per_read=None, reads_per_read=None, number_of_reads=None, number_of_bps=None):
+def fake_nanopore(reads1_fn, reads2_fn, reads_per_read, bps_per_read, number_of_reads, number_of_bps):
     """Fake nanopore reads.
 
     Args:
-        reads1_fn(str): First read file.
-        reads1_fn(str): Second read file.
-        bps_per_read(int): Create reads by chaining them up to x bps.
-        reads_per_read(int): Create reads by chaining n reads.
-        number_of_reads(int): Take only first n reads.
-        number_of_bps(): Take only first n bps.
+        reads1_fn(str): 1st FASTA or FASTQ filename.
+        reads1_fn(str): 2nd FASTA or FASTQ filename.
+        reads_per_read(int): Create reads by chaining n reads, None for no restrictions.
+        bps_per_read(int): Create reads by chaining them up to x bps, None for no restrictions.
+        number_of_reads(int): Take only first n reads, None for no restrictions.
+        number_of_bps(): Take only first n bps, None for no restrictions.
     """
 
 
     # 1) Initialize parameters
+    if reads2_fn is None:
+        reader=se_reader(reads1_fn)
+    else:
+        reader=pe_reader(reads1_fn, reads2_fn)
+
+
     total_bps, total_reads = first_pass(reads1_fn, reads2_fn, max_reads)
 
     if bps_per_read is None:
@@ -149,7 +156,7 @@ def fake_nanopore(reads1_fn, reads2_fn, bps_per_read=None, reads_per_read=None, 
         seqs_len=0
 
         # 2A) Chaining
-        while len(names)<reads_per_read and
+        while len(names)<reads_per_read \
                 and seqs_len<bps_per_reads:
             try:
                 n,s=reader.next()
@@ -169,15 +176,15 @@ def fake_nanopore(reads1_fn, reads2_fn, bps_per_read=None, reads_per_read=None, 
 
 
 def fa_print_read(name, seq):
-        print(f"@{name}")
-        print(seq)
+    print(f"@{name}")
+    print(seq)
 
 
 def fq_print_read(name, seq, qual):
-        print(f"@{name}")
-        print(seq)
-        print("+")
-        print(qual)
+    print(f"@{name}")
+    print(seq)
+    print("+")
+    print(qual)
 
 
 def ont_fake_name_gen():
@@ -226,11 +233,48 @@ def main():
         help='2nd FASTA or FASTQ file',
     )
 
+    parser.add_argument('-r',
+        dest='reads_per_read',
+        metavar='INT',
+        type=int,
+        default=None,
+        help='Create reads by chaining INT reads.',
+    )
+
+    parser.add_argument('-b',
+        dest='bps_per_read',
+        metavar='INT',
+        type=int,
+        default=None,
+        help='Create reads by chaining them up to INT bps.',
+    )
+
+    parser.add_argument('-R',
+        dest='number_of_reads',
+        metavar='INT',
+        type=int,
+        default=None,
+        help='Take only first INT reads',
+    )
+
+    parser.add_argument('-N',
+        dest='number_of_bps',
+        metavar='INT',
+        type=int,
+        default=None,
+        help='Take only first INT bps.',
+    )
+
     args = parser.parse_args()
-    if args.reads2 is None:
-        fake_nanopore_se(args.reads1)
-    else:
-        fake_nanopore_pe(args.reads1, args.reads2)
+
+    fake_nanopore(
+        reads1_fn=reads1_fn,
+        reads2_fn=reads2_fn,
+        reads_per_read=reads_per_read,
+        bps_per_read=bps_per_read,
+        number_of_reads=number_of_reads,
+        number_of_bps=number_of_bps,
+    )
 
 
 if __name__ == '__main__':
