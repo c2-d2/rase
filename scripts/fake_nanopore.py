@@ -11,6 +11,10 @@ import os
 import sys
 
 
+def warning(*args):
+    print(*args, file=sys.stderr)
+
+
 def readfq(fp):
     ##
     ## Taken from https://github.com/lh3/readfq
@@ -59,8 +63,8 @@ def pe_reader(reads1_fn, reads2_fn):
             f2=readfq(fp2)
 
             while 1:
-                name1, seq1, _=fp1.next()
-                name2, seq2, _=fp2.next()
+                name1, seq1, _=next(fp1)
+                name2, seq2, _=next(fp2)
                 yield f"{name1}_{name2}", f"{seq1}N{seq2}"
 
 
@@ -76,8 +80,8 @@ def fx_stats(reads_fn, max_reads=None):
     """
     if max_reads is None:
         max_reads=10**15
-    bps=0
     reads=0
+    bps=0
     with open(reads_fn) as f:
         for name, seq, qual in readfq(f):
             reads+=1
@@ -121,19 +125,22 @@ def fake_nanopore(reads1_fn, reads2_fn, reads_per_read, bps_per_read, number_of_
 
 
     # 1) Initialize parameters
+    warning("First pass through the files")
     if reads2_fn is None:
         reader=se_reader(reads1_fn)
     else:
         reader=pe_reader(reads1_fn, reads2_fn)
 
 
-    total_bps, total_reads = first_pass(reads1_fn, reads2_fn, number_of_reads)
+    total_reads, total_bps = first_pass(reads1_fn, reads2_fn, number_of_reads)
+
+    warning(f"First pass finished; {total_reads} reads and {total_bps}bps")
 
     if bps_per_read is None:
         bps_per_read=10*15
 
     if reads_per_read is None:
-        bps_per_read=1
+        reads_per_read=1
 
     if number_of_reads is None:
         number_of_reads=total_reads
@@ -146,6 +153,7 @@ def fake_nanopore(reads1_fn, reads2_fn, reads_per_read, bps_per_read, number_of_
         number_of_bps=min(reads, number_of_bps)
 
     # 2) Iterate over reads
+    warning("Second pass")
     current_reads=0
     current_bps=0
     while current_reads<number_of_reads and current_bps<number_of_bps:
@@ -156,10 +164,11 @@ def fake_nanopore(reads1_fn, reads2_fn, reads_per_read, bps_per_read, number_of_
         seqs_len=0
 
         # 2A) Chaining
+        #warning("Chaining")
         while len(names)<reads_per_read \
-                and seqs_len<bps_per_reads:
+                and seqs_len<bps_per_read:
             try:
-                n,s=reader.next()
+                n,s=next(reader)
                 names.append(n)
                 seqs.append(s)
                 seqs_len+=len(s)
@@ -168,6 +177,7 @@ def fake_nanopore(reads1_fn, reads2_fn, reads_per_read, bps_per_read, number_of_
                 break
 
         # 2B) Updating statistics and printing
+        #warning("Printing")
         name=" ".join(names)
         seq="N".join(seqs)
         current_reads+=len(names)
@@ -176,7 +186,7 @@ def fake_nanopore(reads1_fn, reads2_fn, reads_per_read, bps_per_read, number_of_
 
 
 def fa_print_read(name, seq):
-    print(f"@{name}")
+    print(f">{name}")
     print(seq)
 
 
