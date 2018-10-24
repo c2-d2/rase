@@ -11,7 +11,7 @@ import os
 import sys
 
 
-def warning(*args):
+def message(*args):
     print(*args, file=sys.stderr)
 
 
@@ -65,7 +65,7 @@ def pe_reader(reads1_fn, reads2_fn):
             while 1:
                 name1, seq1, _ =next(f1)
                 name2, seq2, _ =next(f2)
-                yield f"{name1}_{name2}", f"{seq1}N{seq2}"
+                yield f"{name1}_{name2}", f"{seq1}n{seq2}"
 
 
 def fx_stats(reads_fn, max_reads=None):
@@ -102,12 +102,12 @@ def first_pass(reads1_fn, reads2_fn, max_reads=None):
     Return
         (#reads, #bps)
     """
-    bps1, reads1 = fx_stats(reads1_fn, max_reads)
+    reads1, bps1 = fx_stats(reads1_fn, max_reads)
     if reads2_fn:
-        bps2, reads2 = fx_stats(reads1_fn, max_reads)
+        reads2, bps2 = fx_stats(reads1_fn, max_reads)
         assert reads1 == reads2, "The input files have different numbers of reads"
     else:
-        bps2, reads2 = 0, 0
+        reads2, bps2 = 0, 0
     return reads1+reads2, bps1+bps2
 
 
@@ -125,7 +125,7 @@ def fake_nanopore(reads1_fn, reads2_fn, reads_per_read, bps_per_read, number_of_
 
 
     # 1) Initialize parameters
-    warning("First pass through the files")
+    message("First pass through the files")
     if reads2_fn is None:
         reader=se_reader(reads1_fn)
     else:
@@ -134,10 +134,10 @@ def fake_nanopore(reads1_fn, reads2_fn, reads_per_read, bps_per_read, number_of_
 
     total_reads, total_bps = first_pass(reads1_fn, reads2_fn, number_of_reads)
 
-    warning(f"First pass finished; {total_reads} reads and {total_bps}bps")
+    message(f"First pass finished; {total_reads} reads and {total_bps}bps")
 
     if bps_per_read is None:
-        bps_per_read=10*15
+        bps_per_read=10**15
 
     if reads_per_read is None:
         reads_per_read=1
@@ -145,7 +145,7 @@ def fake_nanopore(reads1_fn, reads2_fn, reads_per_read, bps_per_read, number_of_
     if number_of_reads is None:
         number_of_reads=total_reads
     else:
-        number_of_reads=min(reads, number_of_reads)
+        number_of_reads=min(total_reads, number_of_reads)
 
     if number_of_bps is None:
         number_of_bps=total_bps
@@ -153,7 +153,6 @@ def fake_nanopore(reads1_fn, reads2_fn, reads_per_read, bps_per_read, number_of_
         number_of_bps=min(reads, number_of_bps)
 
     # 2) Iterate over reads
-    warning("Second pass")
     current_reads=0
     current_bps=0
     while current_reads<number_of_reads and current_bps<number_of_bps:
@@ -164,7 +163,7 @@ def fake_nanopore(reads1_fn, reads2_fn, reads_per_read, bps_per_read, number_of_
         seqs_len=0
 
         # 2A) Chaining
-        #warning("Chaining")
+        #message("Chaining")
         while len(names)<reads_per_read \
                 and seqs_len<bps_per_read:
             try:
@@ -177,7 +176,7 @@ def fake_nanopore(reads1_fn, reads2_fn, reads_per_read, bps_per_read, number_of_
                 break
 
         # 2B) Updating statistics and printing
-        #warning("Printing")
+        #message("Printing")
         name=" ".join(names)
         seq="N".join(seqs)
         current_reads+=len(names)
