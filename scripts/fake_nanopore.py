@@ -11,7 +11,7 @@ import os
 import sys
 
 
-def warning(*args):
+def message(*args):
     print(*args, file=sys.stderr)
 
 
@@ -69,7 +69,7 @@ def pe_reader(reads1_fn, reads2_fn):
                 yield f"{name1}_{name2}", f"{seq1}n{seq2}"
 
 
-def fx_stats(reads_fn, max_reads=None):
+def fx_stats(reads_fn, max_reads):
     """Calculate basic statistics for a FASTx file.
 
     Args:
@@ -79,8 +79,6 @@ def fx_stats(reads_fn, max_reads=None):
     Return
         (#reads, #bps)
     """
-    if max_reads is None:
-        max_reads = 10**15
     reads = 0
     bps = 0
     with open(reads_fn) as f:
@@ -126,20 +124,21 @@ def fake_nanopore(reads1_fn, reads2_fn, reads_per_read, bps_per_read,
     """
 
     # 1) Initialize parameters
-    warning("First pass through the files")
     if reads2_fn is None:
         reader = se_reader(reads1_fn)
     else:
         reader = pe_reader(reads1_fn, reads2_fn)
 
-    if number_of_reads is None or reads_per_read is None:
+    if number_of_reads is None:
         reads_to_count = 10 * 10
     else:
         reads_to_count = number_of_reads * reads_per_read
 
-    total_reads, total_bps = first_pass(reads1_fn, reads2_fn, number_of_reads)
+    message(
+        f"First pass through the files (reading max {reads_to_count} reads).")
+    total_reads, total_bps = first_pass(reads1_fn, reads2_fn, reads_to_count)
 
-    warning(f"First pass finished; {total_reads} reads and {total_bps}bps")
+    message(f"First pass finished; {total_reads} reads and {total_bps}bps")
 
     if bps_per_read is None:
         bps_per_read = 10**15
@@ -169,7 +168,7 @@ def fake_nanopore(reads1_fn, reads2_fn, reads_per_read, bps_per_read,
         seqs_len = 0
 
         # 2A) Chaining
-        #warning("Chaining")
+        #message("Chaining")
         while len(names)<reads_per_read \
                 and seqs_len<bps_per_read:
             try:
@@ -182,7 +181,7 @@ def fake_nanopore(reads1_fn, reads2_fn, reads_per_read, bps_per_read,
                 break
 
         # 2B) Updating statistics and printing
-        #warning("Printing")
+        #message("Printing")
         name = next(name_gen)  #+ " ".join(names)
         seq = "N".join(seqs)
         current_reads += 1
@@ -214,7 +213,7 @@ def ont_fake_name_gen(reads):
         main_id = "{:08}-4242-4242-4242-424242424242".format(i)
         read = "read={}".format(i)
         start_time = "start_time={}".format(
-            fake_datetime((i - 1) * 24 * 3600 / reads))
+            fake_datetime((i - 1) * (24 * 3600 - 1) / (reads - 2)))
         yield " ".join([main_id, run_id, read, ch, start_time])
 
 
@@ -250,8 +249,8 @@ def main():
         dest='reads_per_read',
         metavar='INT',
         type=int,
-        default=None,
-        help='Produce composed reads by chaining INT reads.',
+        default=1,
+        help='Produce composed reads by chaining INT reads. [1]',
     )
 
     parser.add_argument(
