@@ -63,8 +63,8 @@ def pe_reader(reads1_fn, reads2_fn):
             f2=readfq(fp2)
 
             while 1:
-                name1, seq1, _=next(fp1)
-                name2, seq2, _=next(fp2)
+                name1, seq1, _ =next(f1)
+                name2, seq2, _ =next(f2)
                 yield f"{name1}_{name2}", f"{seq1}N{seq2}"
 
 
@@ -182,7 +182,7 @@ def fake_nanopore(reads1_fn, reads2_fn, reads_per_read, bps_per_read, number_of_
         seq="N".join(seqs)
         current_reads+=len(names)
         current_bps+=len(seq)
-        fa_print_read(name, seq)
+        fq_print_read(name, seq)
 
 
 def fa_print_read(name, seq):
@@ -190,11 +190,14 @@ def fa_print_read(name, seq):
     print(seq)
 
 
-def fq_print_read(name, seq, qual):
+def fq_print_read(name, seq, qual=None):
     print(f"@{name}")
     print(seq)
     print("+")
-    print(qual)
+    if qual is None:
+        print(len(seq)*"?")
+    else:
+        print(qual)
 
 
 def ont_fake_name_gen():
