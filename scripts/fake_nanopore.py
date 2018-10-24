@@ -11,7 +11,7 @@ import os
 import sys
 
 
-def message(*args):
+def warning(*args):
     print(*args, file=sys.stderr)
 
 
@@ -73,7 +73,7 @@ def fx_stats(reads_fn, max_reads=None):
 
     Args:
         reads_fn(str): FASTA or FASTQ filename.
-        max_reads(int): Take only first max_reads reads.
+        max_reads(int): Create max_reads reads.
 
     Return
         (#reads, #bps)
@@ -97,7 +97,7 @@ def first_pass(reads1_fn, reads2_fn, max_reads=None):
     Args:
         reads_fn(str): 1st FASTA or FASTQ filename.
         reads_fn(str): 2nd FASTA or FASTQ filename.
-        max_reads(int): Take only first x reads.
+        max_reads(int): Take only this number of reads.
 
     Return
         (#reads, #bps)
@@ -119,22 +119,22 @@ def fake_nanopore(reads1_fn, reads2_fn, reads_per_read, bps_per_read, number_of_
         reads1_fn(str): 2nd FASTA or FASTQ filename.
         reads_per_read(int): Create reads by chaining n reads, None for no restrictions.
         bps_per_read(int): Create reads by chaining them up to x bps, None for no restrictions.
-        number_of_reads(int): Take only first n reads, None for no restrictions.
-        number_of_bps(): Take only first n bps, None for no restrictions.
+        number_of_reads(int): Create n reads, None for no restrictions.
+        number_of_bps(): Create n bps, None for no restrictions.
     """
 
 
     # 1) Initialize parameters
-    message("First pass through the files")
+    warning("First pass through the files")
     if reads2_fn is None:
         reader=se_reader(reads1_fn)
     else:
         reader=pe_reader(reads1_fn, reads2_fn)
 
 
-    total_reads, total_bps = first_pass(reads1_fn, reads2_fn, number_of_reads)
+    total_reads, total_bps = first_pass(reads1_fn, reads2_fn, number_of_reads*reads_per_read)
 
-    message(f"First pass finished; {total_reads} reads and {total_bps}bps")
+    warning(f"First pass finished; {total_reads} reads and {total_bps}bps")
 
     if bps_per_read is None:
         bps_per_read=10**15
@@ -163,7 +163,7 @@ def fake_nanopore(reads1_fn, reads2_fn, reads_per_read, bps_per_read, number_of_
         seqs_len=0
 
         # 2A) Chaining
-        #message("Chaining")
+        #warning("Chaining")
         while len(names)<reads_per_read \
                 and seqs_len<bps_per_read:
             try:
@@ -176,10 +176,10 @@ def fake_nanopore(reads1_fn, reads2_fn, reads_per_read, bps_per_read, number_of_
                 break
 
         # 2B) Updating statistics and printing
-        #message("Printing")
+        #warning("Printing")
         name=" ".join(names)
         seq="N".join(seqs)
-        current_reads+=len(names)
+        current_reads+=1
         current_bps+=len(seq)
         fq_print_read(name, seq)
 
@@ -232,7 +232,7 @@ def main():
     parser.add_argument(
         'reads1_fn',
         metavar="reads1.fq",
-        help='1st FASTA or FASTQ file',
+        help='1st FASTA or FASTQ file.',
     )
 
     parser.add_argument(
@@ -240,7 +240,7 @@ def main():
         metavar="reads2.fq",
         default=None,
         nargs='?',
-        help='2nd FASTA or FASTQ file',
+        help='2nd FASTA or FASTQ file.',
     )
 
     parser.add_argument('-r',
@@ -248,7 +248,7 @@ def main():
         metavar='INT',
         type=int,
         default=None,
-        help='Create reads by chaining INT reads.',
+        help='Produce composed reads by chaining INT reads.',
     )
 
     parser.add_argument('-b',
@@ -256,7 +256,7 @@ def main():
         metavar='INT',
         type=int,
         default=None,
-        help='Create reads by chaining them up to INT bps.',
+        help='Produce composed reads by chaining them to INT bps.',
     )
 
     parser.add_argument('-R',
@@ -264,7 +264,7 @@ def main():
         metavar='INT',
         type=int,
         default=None,
-        help='Take only first INT reads',
+        help='Create INT reads.',
     )
 
     parser.add_argument('-N',
@@ -272,7 +272,7 @@ def main():
         metavar='INT',
         type=int,
         default=None,
-        help='Take only first INT bps.',
+        help='Create INT bps of reads.',
     )
 
     args = parser.parse_args()
