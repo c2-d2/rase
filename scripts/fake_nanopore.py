@@ -6,6 +6,7 @@ License: MIT
 """
 
 import argparse
+import datetime
 import os
 import sys
 
@@ -91,7 +92,7 @@ def fx_stats(reads_fn, max_reads=None):
     return reads, bps
 
 
-def first_pass(reads1_fn, reads2_fn, max_reads=None):
+def first_pass(reads1_fn, reads2_fn, max_reads):
     """First pass through the input files.
 
     Args:
@@ -131,8 +132,12 @@ def fake_nanopore(reads1_fn, reads2_fn, reads_per_read, bps_per_read,
     else:
         reader = pe_reader(reads1_fn, reads2_fn)
 
-    total_reads, total_bps = first_pass(reads1_fn, reads2_fn,
-                                        number_of_reads * reads_per_read)
+    if number_of_reads is None or reads_per_read is None:
+        reads_to_count = 10 * 10
+    else:
+        reads_to_count = number_of_reads * reads_per_read
+
+    total_reads, total_bps = first_pass(reads1_fn, reads2_fn, number_of_reads)
 
     warning(f"First pass finished; {total_reads} reads and {total_bps}bps")
 
@@ -155,6 +160,7 @@ def fake_nanopore(reads1_fn, reads2_fn, reads_per_read, bps_per_read,
     # 2) Iterate over reads
     current_reads = 0
     current_bps = 0
+    name_gen = ont_fake_name_gen(number_of_reads)
     while current_reads < number_of_reads and current_bps < number_of_bps:
         names = []
         seqs = []
@@ -177,7 +183,7 @@ def fake_nanopore(reads1_fn, reads2_fn, reads_per_read, bps_per_read,
 
         # 2B) Updating statistics and printing
         #warning("Printing")
-        name = " ".join(names)
+        name = next(name_gen)  #+ " ".join(names)
         seq = "N".join(seqs)
         current_reads += 1
         current_bps += len(seq)
@@ -199,7 +205,7 @@ def fq_print_read(name, seq, qual=None):
         print(qual)
 
 
-def ont_fake_name_gen():
+def ont_fake_name_gen(reads):
     i = 0
     run_id = "runid=4242424242424242424242424242424242424242"
     ch = "ch=42"
@@ -208,18 +214,13 @@ def ont_fake_name_gen():
         main_id = "{:08}-4242-4242-4242-424242424242".format(i)
         read = "read={}".format(i)
         start_time = "start_time={}".format(
-            fake_datetime(round(i * 200 / 1000000)))
+            fake_datetime((i - 1) * 24 * 3600 / reads))
         yield " ".join([main_id, run_id, read, ch, start_time])
 
 
-def fake_datetime(mbp):
-    mbp = int(mbp)
-    s = mbp % 60
-    mbp //= 60
-    m = mbp % 60
-    mbp //= 60
-    h = mbp % 60
-    dt = "2018-01-01T{:02}:{:02}:{:02}Z".format(h, m, s)
+def fake_datetime(seconds):
+    dt = datetime.datetime.utcfromtimestamp(
+        round(seconds)).strftime('%Y-%m-%dT%H:%M:%SZ')
     return dt
 
 
