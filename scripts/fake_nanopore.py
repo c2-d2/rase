@@ -218,8 +218,9 @@ def ont_fake_name_gen(reads):
 
 
 def fake_datetime(seconds):
+    ss=1540498052+seconds
     dt = datetime.datetime.utcfromtimestamp(
-        round(seconds)).strftime('%Y-%m-%dT%H:%M:%SZ')
+        round(ss)).strftime('%Y-%m-%dT%H:%M:%SZ')
     return dt
 
 
