@@ -130,7 +130,7 @@ def fake_nanopore(reads1_fn, reads2_fn, reads_per_read, bps_per_read,
         reader = pe_reader(reads1_fn, reads2_fn)
 
     if number_of_reads is None:
-        reads_to_count = 10 * 10
+        reads_to_count = 10 ** 10
     else:
         reads_to_count = number_of_reads * reads_per_read
 
@@ -143,8 +143,19 @@ def fake_nanopore(reads1_fn, reads2_fn, reads_per_read, bps_per_read,
     if bps_per_read is None:
         bps_per_read = 10**15
 
-    if reads_per_read is None:
-        reads_per_read = 1
+        # reads per read restr
+        if reads_per_read is None:
+            reads_per_read = 1
+        else:
+            pass
+
+    else:
+        # bps restr, realx reads_per_read
+        if reads_per_read is None:
+            # relax the other param
+            reads_per_read = 10*15
+        else:
+            pass
 
     if number_of_reads is None:
         number_of_reads = total_reads
@@ -155,6 +166,12 @@ def fake_nanopore(reads1_fn, reads2_fn, reads_per_read, bps_per_read,
         number_of_bps = total_bps
     else:
         number_of_bps = min(reads, number_of_bps)
+
+    message("bps_per_read", bps_per_read)
+    message("reads_per_read", reads_per_read)
+    message("number_of_reads", number_of_reads)
+    message("number_of_bps", number_of_bps)
+
 
     # 2) Iterate over reads
     current_reads = 0
@@ -250,7 +267,7 @@ def main():
         dest='reads_per_read',
         metavar='INT',
         type=int,
-        default=1,
+        default=None,
         help='Produce composed reads by chaining INT reads. [1]',
     )
 
