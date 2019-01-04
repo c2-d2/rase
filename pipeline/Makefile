@@ -18,6 +18,13 @@ all: ## Run everything
 	$(SM)
 
 test: ## Run the smallest experiment
+	ls database/*.tsv || \
+		(cd database \
+		&& wget https://github.com/c2-d2/rase-db/releases/download/v01/spneumoniae_sparc.k18.tar.gz \
+		&& wget https://github.com/c2-d2/rase-db/releases/download/v01/spneumoniae_sparc.k18.tsv)
+	ls reads/*.fq || \
+		(cd reads \
+		&& wget https://zenodo.org/record/1405173/files/sp10_norwich_P33.filtered.fq)
 	$(SM) test
 
 replot: ## Replot all figures
