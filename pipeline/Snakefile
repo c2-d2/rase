@@ -10,7 +10,7 @@ import sys
 
 
 snakemake.shell.prefix("set -eo pipefail;")
-snakemake.shell("(./scripts/test_environments.sh 2>&1) >/dev/null || ./scripts/test_environments.sh")
+snakemake.shell("(../scripts/test_environments.sh 2>&1) >/dev/null || ../scripts/test_environments.sh")
 
 
 # 1) Detect indexes
@@ -117,7 +117,7 @@ rule preprocess_reads:
         "benchmarks/{pref}.readprep.log"
     shell:
         """
-            ./scripts/minion_rename_reads.py {input.fq} | paste -d '\t' - - - - | sort | uniq | perl -pe 's/\t/\n/g' > "{params.fq}"
+            ../scripts/minion_rename_reads.py {input.fq} | paste -d '\t' - - - - | sort | uniq | perl -pe 's/\t/\n/g' > "{params.fq}"
             touch "{output.t}"
         """
 
@@ -158,7 +158,7 @@ rule quantify:
     shell:
         """
             mkdir -p "prediction/{wildcards.pref}__{wildcards.index}"
-            scripts/prophyle_quantify.py -p 'prediction/{wildcards.pref}__{wildcards.index}/' -i 60 "database/{wildcards.index}/tree.nw" "{params.bam}" /dev/null
+            ../scripts/prophyle_quantify.py -p 'prediction/{wildcards.pref}__{wildcards.index}/' -i 60 "database/{wildcards.index}/tree.nw" "{params.bam}" /dev/null
             touch "{output.t}"
         """
 
@@ -177,8 +177,8 @@ rule predict:
         "benchmarks/{pref}__{index}.predict.log"
     shell:
         """
-            scripts/rase_predict.py database/{wildcards.index}.tsv prediction/{wildcards.pref}__{wildcards.index}/*.tsv > "{params.tsv1}"
-            scripts/prediction_add_flags.py  {params.tsv1} > {params.tsv2}
+            ../scripts/rase_predict.py database/{wildcards.index}.tsv prediction/{wildcards.pref}__{wildcards.index}/*.tsv > "{params.tsv1}"
+            ../scripts/prediction_add_flags.py  {params.tsv1} > {params.tsv2}
             rm {params.tsv1}
             touch "{output.t}"
         """
@@ -199,12 +199,12 @@ rule plot_timeline:
         pref="{pref}"
     shell:
         """
-            ./scripts/plot_selected_snapshots.py "database/{wildcards.index}.tsv" "prediction/{wildcards.pref}__{wildcards.index}" 1 5 -1 "plots/{wildcards.pref}__{wildcards.index}.snapshots."
+            ../scripts/plot_selected_snapshots.py "database/{wildcards.index}.tsv" "prediction/{wildcards.pref}__{wildcards.index}" 1 5 -1 "plots/{wildcards.pref}__{wildcards.index}.snapshots."
             for x in plots/{wildcards.pref}__{wildcards.index}.snapshots.*; do
-                ./scripts/reproducible_pdf.sh "$x";
+                ../scripts/reproducible_pdf.sh "$x";
             done
-            ./scripts/plot_timeline.R "{params.tsv}" "{output.pdf}"
-            ./scripts/reproducible_pdf.sh "{output.pdf}"
+            ../scripts/plot_timeline.R "{params.tsv}" "{output.pdf}"
+            ../scripts/reproducible_pdf.sh "{output.pdf}"
         """
 
 
