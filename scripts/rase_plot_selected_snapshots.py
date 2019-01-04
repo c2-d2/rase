@@ -45,7 +45,7 @@ def secs_to_text(cs):
 
 
 def plot_snapshots(res_table, directory, indexes, outprefix):
-    plotting_script=os.path.join(os.path.dirname(os.path.realpath(__file__)), "plot_snapshot.R")
+    plotting_script=os.path.join(os.path.dirname(os.path.realpath(__file__)), "rase_plot_snapshot.R")
     plots=get_plot_info(directory, indexes)
     for fn, s, t in plots:
         cmd=[plotting_script, res_table, fn, "{}{}.pdf".format(outprefix, t)]
