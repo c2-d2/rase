@@ -1,5 +1,4 @@
 #! /usr/bin/env python3
-
 """ Print order of nodes
 
 Author: Karel Brinda <kbrinda@hsph.harvard.edu>
@@ -14,9 +13,9 @@ from ete3 import *
 
 
 def print_order(newick_in_fn):
-    tree=Tree(newick_in_fn,format=1)
+    tree = Tree(newick_in_fn, format=1)
 
-    leaves=[]
+    leaves = []
 
     for i, leaf in enumerate(tree.iter_leaf_names(), 1):
         leaves.append((leaf, i))
@@ -32,16 +31,16 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Print order of leaves')
 
-    parser.add_argument('-i', '--in-newick',
-            type=str,
-            metavar='FILE',
-            required=True,
-            dest='newick_in_fn',
-            help='input newick tree',
-        )
+    parser.add_argument(
+        '-i',
+        '--in-newick',
+        type=str,
+        metavar='FILE',
+        required=True,
+        dest='newick_in_fn',
+        help='input newick tree',
+    )
 
     args = parser.parse_args()
 
-    print_order(
-        newick_in_fn=args.newick_in_fn,
-    )
+    print_order(newick_in_fn=args.newick_in_fn, )

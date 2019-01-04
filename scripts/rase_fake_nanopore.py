@@ -110,8 +110,7 @@ def first_pass(reads1_fn, reads2_fn, max_reads):
     return reads1 + reads2, bps1 + bps2
 
 
-def fake_nanopore(reads1_fn, reads2_fn, reads_per_read, bps_per_read,
-                  number_of_reads, number_of_bps):
+def fake_nanopore(reads1_fn, reads2_fn, reads_per_read, bps_per_read, number_of_reads, number_of_bps):
     """Fake nanopore reads.
 
     Args:
@@ -130,12 +129,11 @@ def fake_nanopore(reads1_fn, reads2_fn, reads_per_read, bps_per_read,
         reader = pe_reader(reads1_fn, reads2_fn)
 
     if number_of_reads is None:
-        reads_to_count = 10 ** 10
+        reads_to_count = 10**10
     else:
         reads_to_count = number_of_reads * reads_per_read
 
-    message(
-        f"First pass through the files (reading max {reads_to_count} reads).")
+    message(f"First pass through the files (reading max {reads_to_count} reads).")
     total_reads, total_bps = first_pass(reads1_fn, reads2_fn, reads_to_count)
 
     message(f"First pass finished; {total_reads} reads and {total_bps}bps")
@@ -153,7 +151,7 @@ def fake_nanopore(reads1_fn, reads2_fn, reads_per_read, bps_per_read,
         # bps restr, realx reads_per_read
         if reads_per_read is None:
             # relax the other param
-            reads_per_read = 10*15
+            reads_per_read = 10 * 15
         else:
             pass
 
@@ -171,7 +169,6 @@ def fake_nanopore(reads1_fn, reads2_fn, reads_per_read, bps_per_read,
     message("reads_per_read", reads_per_read)
     message("number_of_reads", number_of_reads)
     message("number_of_bps", number_of_bps)
-
 
     # 2) Iterate over reads
     current_reads = 0
@@ -229,15 +226,13 @@ def ont_fake_name_gen(reads):
         i += 1
         main_id = "{:08}-4242-4242-4242-424242424242".format(i)
         read = "read={}".format(i)
-        start_time = "start_time={}".format(
-            fake_datetime((i - 1) * (24 * 3600 - 1) / (reads - 2)))
+        start_time = "start_time={}".format(fake_datetime((i - 1) * (24 * 3600 - 1) / (reads - 2)))
         yield " ".join([main_id, run_id, read, ch, start_time])
 
 
 def fake_datetime(seconds):
-    ss=1540498052+seconds
-    dt = datetime.datetime.utcfromtimestamp(
-        round(ss)).strftime('%Y-%m-%dT%H:%M:%SZ')
+    ss = 1540498052 + seconds
+    dt = datetime.datetime.utcfromtimestamp(round(ss)).strftime('%Y-%m-%dT%H:%M:%SZ')
     return dt
 
 
