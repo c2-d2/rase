@@ -1,0 +1,17 @@
+language: python
+os:
+- linux
+#- osx
+sudo: required
+python:
+#- '3.2'
+#- '3.3'
+#- '3.4'
+#- '3.5'
+- '3.6'
+install:
+- pip install .
+- pip install -r requirements.txt
+script:
+- rase -v
+- make test
