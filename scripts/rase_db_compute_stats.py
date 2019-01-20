@@ -18,7 +18,12 @@ re_cat = re.compile("(.*)_cat")
 cats = ['S', 'R', 's', 'r', 'Rr', 'Ss']
 
 
-def compute_stats(fn):
+def compute_stats(fn, s):
+    if s:
+        cats = ['S', 'R', 's', 'r', 'Rr', 'Ss']
+    else:
+        cats = ['Rr', 'Ss']
+
     stats = collections.defaultdict(lambda: collections.Counter())
     ants = {}
     pgs = set()
@@ -61,6 +66,13 @@ def main():
     parser = argparse.ArgumentParser(description="")
 
     parser.add_argument(
+        '-s',
+        action="store_false",
+        dest="s",
+        help='Shorter version of the outputs (only _Rr and _Ss categories)',
+    )
+
+    parser.add_argument(
         'fn',
         type=str,
         metavar='res_cat.tsv',
@@ -69,7 +81,7 @@ def main():
 
     args = parser.parse_args()
 
-    compute_stats(args.fn)
+    compute_stats(args.fn, args.s)
 
 
 if __name__ == "__main__":
