@@ -37,7 +37,7 @@ def format_time(seconds):
 
 class Runner:
     def __init__(self, metadata_fn, tree_fn, bam_fn, pref, delta, first_read_delay):
-        self.metadata = RaseMetadataTable('metadata_fn')
+        self.metadata = RaseMetadataTable(metadata_fn)
         self.stats = Stats(tree_fn)
         self.rase_bam_reader = RaseBamReader(bam_fn)
         self.pref = pref
@@ -47,8 +47,8 @@ class Runner:
     def run(self):
         # 1) set the initial window:
         #     [t0, t0+delta), where t0=time_of_first_read-first_read_delay
-        t0 = rase_bam_reader.t1 - args.first_read_delay
-        current_window = [t0, t0 + args.delta]  # [x, y)
+        t0 = self.rase_bam_reader.t1 - self.first_read_delay
+        current_window = [t0, t0 + self.delta]  # [x, y)
         f = open("{}/{}.tsv".format(self.pref, current_window[1]), mode="w")
 
         # 2) iterate through individual reads, and update and print statistics
@@ -61,20 +61,20 @@ class Runner:
                 self.stats.print(file=f)
                 f.close()
                 while read_timestamp >= current_window[1]:
-                    current_window[0] += args.delta
-                    current_window[1] += args.delta
-                f = open("{}/{}.tsv".format(args.pref, current_window[1]), mode="w")
+                    current_window[0] += self.delta
+                    current_window[1] += self.delta
+                f = open("{}/{}.tsv".format(self.pref, current_window[1]), mode="w")
 
                 last_time = format_time(current_window[0] - t0)
                 print(
                     "Time t={}: {} reads and {} non-propagated ({} propagated) assignments processed.".format(
-                        last_time, stats.nb_assigned_reads, stats.nb_nonprop_asgs, stats.nb_asgs
+                        last_time, self.stats.nb_assigned_reads, self.stats.nb_nonprop_asgs, self.stats.nb_asgs
                     ), file=sys.stderr
                 )
 
-            stats.update_from_one_read(read_stats)
+            self.stats.update_from_read(read_stats)
 
-        stats.print(file=f)
+        self.stats.print(file=f)
         f.close()
 
         with open(args.tsv, mode="w") as f:
@@ -165,8 +165,8 @@ class Stats:
 
     def __init__(self, tree_fn):
         self._tree = ete3.Tree(tree_fn, format=1)
-        self._isolates = sorted([isolate.name for isolate in self.tree])
-        self._descending_isolates = self._precompute_descendants(self.tree)
+        self._isolates = sorted([isolate.name for isolate in self._tree])
+        self._descending_isolates_d = self._precompute_descendants(self._tree)
 
         # stats for assigned reads
         self.nb_assigned_reads = 0
@@ -192,13 +192,13 @@ class Stats:
             descending_leaves[root.name] = set([isolate.name for isolate in root])
         return descending_leaves
 
-    def _descending_isolates(*nnames):
+    def _descending_isolates(self, *nnames):
         isolates = set()
         for nname in nnames:
-            isolates |= self._descending_isolates(nname)
+            isolates |= self._descending_isolates_d[nname]
         return sorted(isolates)
 
-    def update(self, asgs):
+    def update_from_read(self, asgs):
         """Update statistics from assignments of a single read.
 
         Params:
@@ -224,12 +224,12 @@ class Stats:
 
             # 2) update stats for individual isolates
             nnames = [asg["rname"] for asg in asgs]
-            isolates = self._descending_isolates(*nnames)
-            l = len(desc_isolates)
+            bestmatching_isolates = self._descending_isolates(*nnames)
+            l = len(bestmatching_isolates)
             delta_ct = 1.0 / l
             delta_h1 = h1 / l
             delta_ln = ln / l
-            for isolate in desc_isolates:
+            for isolate in bestmatching_isolates:
                 self.stats_ct[isolate] += delta_ct
                 self.stats_h1[isolate] += delta_h1
                 self.stats_ln[isolate] += delta_ln
@@ -247,7 +247,7 @@ class Stats:
         """
         print("taxid", "count", "count_norm", "ln", "ln_norm", "h1", "h1_norm", sep="\t", file=file)
         table = []
-        for isolate in self.isolates + [FAKE_ISOLATE_UNASSIGNED]:
+        for isolate in self._isolates + [FAKE_ISOLATE_UNASSIGNED]:
             table.append(
                 [
                     isolate,
@@ -616,9 +616,9 @@ def main():
     )
 
     parser.add_argument(
-        'tsv',
+        'metadata',
         type=str,
-        metavar='stats.tsv',
+        metavar='metadata.tsv',
     )
 
     parser.add_argument('-p', type=str, dest='pref', metavar='STR', required=True, help="Output dir for samplings")
@@ -644,7 +644,7 @@ def main():
     args = parser.parse_args()
 
     r = Runner(
-        metadata_fn=args.tsv, tree_fn=args.tree, bam_fn=args.bam, pref=args.pref, delta=args.delta,
+        metadata_fn=args.metadata, tree_fn=args.tree, bam_fn=args.bam, pref=args.pref, delta=args.delta,
         first_read_delay=args.first_read_delay
     )
     r.run()
