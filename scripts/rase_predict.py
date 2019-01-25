@@ -116,14 +116,14 @@ class Stats:
         cumul_qlen (float): Cumulative weighted read length.
         cumul_h1 (float): Cumulative weighted hit count.
 
-        stats_count (dict): isolate -> number of processed reads
-        stats_qlen (dict): isolate -> weighted qlen
+        stats_ct (dict): isolate -> number of processed reads
         stats_h1 (dict): isolate -> squared h1
+        stats_ln (dict): isolate -> weighted qlen
     """
 
     def __init__(self, tree_fn):
-        self.tree = ete3.Tree(tree_fn, format=1)
-        self.isolates = sorted([isolate.name for isolate in self.tree])
+        self._tree = ete3.Tree(tree_fn, format=1)
+        self._isolates = sorted([isolate.name for isolate in self.tree])
         self._descending_isolates = self._precompute_descendants(self.tree)
 
         # stats for assigned reads
@@ -135,19 +135,26 @@ class Stats:
         self.nb_unassigned_reads = 0
 
         # cumulative statistics for assigned reads
-        self.cumul_h1_pow1 = 0.0
-        self.cumul_ln_pow1 = 0.0
+        self.cumul_h1 = 0.0
+        self.cumul_ln = 0.0
 
         # statistics for individual isolates, "_unassigned_" for unassigned
-        self.stats_h1_pow0 = collections.defaultdict(lambda: 0.0)
-        self.stats_h1_pow1 = collections.defaultdict(lambda: 0.0)
-        self.stats_ln_pow1 = collections.defaultdict(lambda: 0.0)
+        self.stats_ct = collections.defaultdict(lambda: 0.0)
+        self.stats_h1 = collections.defaultdict(lambda: 0.0)
+        self.stats_ln = collections.defaultdict(lambda: 0.0)
 
-    def _precompute_descendants(self, tree):
+    @staticmethod
+    def _precompute_descendants(tree):
         descending_leaves = {}
         for root in list(tree.traverse()) + [tree]:
             descending_leaves[root.name] = set([isolate.name for isolate in root])
         return descending_leaves
+
+    def _descending_isolates(*nnames):
+        isolates = set()
+        for nname in nnames:
+            isolates |= self._descending_isolates(nname)
+        return sorted(isolates)
 
     def update_from_one_read(self, asgs):
         """Update statistics from assignments of a single read.
@@ -163,29 +170,32 @@ class Stats:
 
         # is read is assigned to at least 1 node?
         if is_assigned:
+            h1 = asg0['h1']
+            ln = asg0['ln']
+
+            # 1) update cumulative stats
             self.nb_assigned_reads += 1
             self.nb_nonprop_asgs += len(asgs)
 
-            self.cumul_h1_pow1 += asg0['h1']
-            self.cumul_ln_pow1 += asg0['ln']
+            self.cumul_h1 += h1
+            self.cumul_ln += ln
 
-            for asg in asgs:
-                nname = asg["rname"]
-                descending_isolates = self._descending_isolates[nname]
-                l = len(descending_isolates)
-                self.nb_asgs += l
-                self._update_isolate_stats(descending_isolates, h1=asg["h1"], ln=asg["ln"], l=l)
+            # 2) update stats for individual isolates
+            nnames = [asg["rname"] for asg in asgs]
+            isolates = self._descending_isolates(*nnames)
+            l = len(desc_isolates)
+            delta_ct = 1.0 / l
+            delta_h1 = h1 / l
+            delta_ln = ln / l
+            for isolate in desc_isolates:
+                self.stats_ct[isolate] += delta_ct
+                self.stats_h1[isolate] += delta_h1
+                self.stats_ln[isolate] += delta_ln
         else:
             if len(asgs) != 1:
                 warnings.warn("A single read shouldn't be reported as unassigned multiple times ({})".format(asgs))
             self.nb_unassigned_reads += 1
             self.update_isolate_stats([FAKE_ISOLATE_UNASSIGNED], h1=0, ln=asg0["ln"], l=1)
-
-    def _update_isolate_stats(self, isolates, h1, ln, l):
-        for isolate in isolates:
-            self.stats_h1_pow0[isolate] += 1.0 / l
-            self.stats_h1_pow1[isolate] += 1.0 * (h1 / l)
-            self.stats_ln_pow1[isolate] += 1.0 * (ln / l)
 
     def print(self, file):
         """Print statistics.
@@ -199,12 +209,12 @@ class Stats:
             table.append(
                 [
                     isolate,
-                    self.stats_h1_pow0[isolate],
-                    1.0 * self.stats_h1_pow0[isolate] / self.nb_assigned_reads if self.nb_assigned_reads != 0 else 0,
-                    self.stats_ln_pow1[isolate],
-                    self.stats_ln_pow1[isolate] / self.cumul_ln_pow1 if self.cumul_ln_pow1 != 0 else 0,
-                    self.stats_h1_pow1[isolate],
-                    self.stats_h1_pow1[isolate] / self.cumul_h1_pow1 if self.cumul_h1_pow1 != 0 else 0,
+                    self.stats_ct[isolate],
+                    1.0 * self.stats_ct[isolate] / self.nb_assigned_reads if self.nb_assigned_reads != 0 else 0,
+                    self.stats_ln[isolate],
+                    self.stats_ln[isolate] / self.cumul_ln if self.cumul_ln != 0 else 0,
+                    self.stats_h1[isolate],
+                    self.stats_h1[isolate] / self.cumul_h1 if self.cumul_h1 != 0 else 0,
                 ]
             )
 
