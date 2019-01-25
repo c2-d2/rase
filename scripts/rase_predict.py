@@ -16,6 +16,7 @@ import os
 import pysam
 import re
 import sys
+import warnings
 
 FAKE_ISOLATE_UNASSIGNED = "_unassigned_"
 HEADER_PRINTED = False
@@ -148,12 +149,6 @@ class Stats:
             descending_leaves[root.name] = set([isolate.name for isolate in root])
         return descending_leaves
 
-    def _get_number_of_assigned_isolates(self, asgs):
-        l = 0
-        for asg in asgs:
-            l += len(self._descending_isolates[asg["rname"]])
-        return l
-
     def update_from_one_read(self, asgs):
         """Update statistics from assignments of a single read.
 
@@ -168,11 +163,8 @@ class Stats:
 
         # is read is assigned to at least 1 node?
         if is_assigned:
-            l = self._get_number_of_assigned_isolates(asgs)
-
             self.nb_assigned_reads += 1
             self.nb_nonprop_asgs += len(asgs)
-            self.nb_asgs += l
 
             self.cumul_h1_pow1 += asg0['h1']
             self.cumul_ln_pow1 += asg0['ln']
@@ -180,14 +172,14 @@ class Stats:
             for asg in asgs:
                 nname = asg["rname"]
                 descending_isolates = self._descending_isolates[nname]
+                l = len(descending_isolates)
+                self.nb_asgs += l
                 self._update_isolate_stats(descending_isolates, h1=asg["h1"], ln=asg["ln"], l=l)
         else:
-            assert len(
-                asgs
-            ) == 1, "A single read shouldn't be reported as unassigned mutliple times (error: {})".format(asgs)
-            asg = asgs[0]
+            if len(asgs) != 1:
+                warnings.warn("A single read shouldn't be reported as unassigned multiple times ({})".format(asgs))
             self.nb_unassigned_reads += 1
-            self.update_isolate_stats([FAKE_ISOLATE_UNASSIGNED], h1=0, ln=asg["ln"], l=1)
+            self.update_isolate_stats([FAKE_ISOLATE_UNASSIGNED], h1=0, ln=asg0["ln"], l=1)
 
     def _update_isolate_stats(self, isolates, h1, ln, l):
         for isolate in isolates:
@@ -318,7 +310,6 @@ class SingleAssignmentReader:
                 if alignment.seq != "*":
                     self.read_ln = len(alignment.seq)
                 else:
-                    #self.read_ln=read.infer_read_length()
                     self.read_ln = read.infer_read_length()
         self.last_qname = self.qname
 
