@@ -99,7 +99,10 @@ class RaseMetadataTable:
 
 
 class Stats:
-    """Statistics for an experiment.
+    """Statistics for RASE predictions.
+
+    The attributes contain all necessary information that are necessary for
+    predicting in RASE.
 
     Params:
         tree_fn (str): Filename of the Newick tree.
@@ -120,7 +123,7 @@ class Stats:
     def __init__(self, tree_fn):
         self.tree = ete3.Tree(tree_fn, format=1)
         self.isolates = sorted([isolate.name for isolate in self.tree])
-        self.descending_isolates = self._precompute_descendants(self.tree)
+        self._descending_isolates = self._precompute_descendants(self.tree)
 
         # stats for assigned reads
         self.nb_assigned_reads = 0
@@ -145,10 +148,10 @@ class Stats:
             descending_leaves[root.name] = set([isolate.name for isolate in root])
         return descending_leaves
 
-    def _get_number_of_assigned_strains(self, asgs):
+    def _get_number_of_assigned_isolates(self, asgs):
         l = 0
         for asg in asgs:
-            l += len(self.descending_isolates[asg["rname"]])
+            l += len(self._descending_isolates[asg["rname"]])
         return l
 
     def update_from_one_read(self, asgs):
@@ -163,7 +166,7 @@ class Stats:
         is_assigned = asgs[0]["assigned"]
 
         if is_assigned:
-            l = self._get_number_of_assigned_strains(asgs)
+            l = self._get_number_of_assigned_isolates(asgs)
 
             self.nb_assigned_reads += 1
             self.nb_nonprop_asgs += len(asgs)
@@ -171,9 +174,9 @@ class Stats:
 
             for asg in asgs:
                 nname = asg["rname"]
-                descending_isolates = self.descending_isolates[nname]
+                descending_isolates = self._descending_isolates[nname]
                 self._update_cumuls(h1=asg["h1"], ln=asg["ln"], weight=len(descending_isolates) / l)
-                self._update_strain_stats(descending_isolates, h1=asg["h1"], ln=asg["ln"], l=l)
+                self._update_isolate_stats(descending_isolates, h1=asg["h1"], ln=asg["ln"], l=l)
 
         else:
             assert len(
@@ -181,13 +184,13 @@ class Stats:
             ) == 1, "A single read shouldn't be reported as unassigned mutliple times (error: {})".format(asgs)
             asg = asgs[0]
             self.nb_unassigned_reads += 1
-            self.update_strain_stats([FAKE_ISOLATE_UNASSIGNED], h1=0, ln=asg["ln"], l=1)
+            self.update_isolate_stats([FAKE_ISOLATE_UNASSIGNED], h1=0, ln=asg["ln"], l=1)
 
     def _update_cumuls(self, h1, ln, weight):
         self.cumul_h1_pow1 += h1 * weight
         self.cumul_ln_pow1 += ln * weight
 
-    def _update_strain_stats(self, isolates, h1, ln, l):
+    def _update_isolate_stats(self, isolates, h1, ln, l):
         for isolate in isolates:
             self.stats_h1_pow0[isolate] += 1.0 / l
             self.stats_h1_pow1[isolate] += 1.0 * (h1 / l)
