@@ -122,7 +122,7 @@ class Stats:
     def __init__(self, tree_fn):
         self.tree = ete3.Tree(tree_fn, format=1)
         self.isolates = sorted([isolate.name for isolate in self.tree])
-        self.descending_isolates = self.precompute_descendants(self.tree)
+        self.descending_isolates = self._precompute_descendants(self.tree)
 
         # stats for assigned reads
         self.nb_assigned_reads = 0
@@ -143,13 +143,13 @@ class Stats:
         self.stats_c1_pow1 = collections.defaultdict(lambda: 0.0)
         self.stats_ln_pow1 = collections.defaultdict(lambda: 0.0)
 
-    def precompute_descendants(self, tree):
+    def _precompute_descendants(self, tree):
         descending_leaves = {}
         for root in list(tree.traverse()) + [tree]:
             descending_leaves[root.name] = set([isolate.name for isolate in root])
         return descending_leaves
 
-    def get_number_of_assigned_strains(self, asgs):
+    def _get_number_of_assigned_strains(self, asgs):
         l = 0
         for asg in asgs:
             l += len(self.descending_isolates[asg["rname"]])
@@ -167,7 +167,7 @@ class Stats:
         is_assigned = asgs[0]["assigned"]
 
         if is_assigned:
-            l = self.get_number_of_assigned_strains(asgs)
+            l = self._get_number_of_assigned_strains(asgs)
 
             self.nb_assigned_reads += 1
             self.nb_nonprop_asgs += len(asgs)
@@ -176,8 +176,8 @@ class Stats:
             for asg in asgs:
                 nname = asg["rname"]
                 descending_isolates = self.descending_isolates[nname]
-                self.update_cumuls(h1=asg["h1"], c1=asg["c1"], ln=asg["ln"], weight=len(descending_isolates) / l)
-                self.update_strain_stats(descending_isolates, h1=asg["h1"], c1=asg["c1"], ln=asg["ln"], l=l)
+                self._update_cumuls(h1=asg["h1"], c1=asg["c1"], ln=asg["ln"], weight=len(descending_isolates) / l)
+                self._update_strain_stats(descending_isolates, h1=asg["h1"], c1=asg["c1"], ln=asg["ln"], l=l)
 
         else:
             assert len(
@@ -187,12 +187,12 @@ class Stats:
             self.nb_unassigned_reads += 1
             self.update_strain_stats([FAKE_ISOLATE_UNASSIGNED], h1=0, c1=0, ln=asg["ln"], l=1)
 
-    def update_cumuls(self, h1, c1, ln, weight):
+    def _update_cumuls(self, h1, c1, ln, weight):
         self.cumul_h1_pow1 += h1 * weight
         self.cumul_c1_pow1 += c1 * weight
         self.cumul_ln_pow1 += ln * weight
 
-    def update_strain_stats(self, isolates, h1, c1, ln, l):
+    def _update_strain_stats(self, isolates, h1, c1, ln, l):
         for isolate in isolates:
             self.stats_h1_pow0[isolate] += 1.0 / l
             self.stats_h1_pow1[isolate] += 1.0 * (h1 / l)
@@ -228,8 +228,8 @@ class Stats:
             print(*x, sep="\t", file=file)
 
 
-class AssignmentBlockReader:
-    """Iterator over blocks of ProPhyle assignments in a BAM file.
+class RaseBamReader:
+    """Iterator over all assignments of individual reads a BAM/RASE file.
 
     Assumes a non-empty BAM file.
 
@@ -241,7 +241,7 @@ class AssignmentBlockReader:
     """
 
     def __init__(self, bam_fn):
-        self.assignment_reader = AssignmentReader(bam_fn)
+        self.assignment_reader = SingleAssignmentReader(bam_fn)
         self._buffer = []
         self._finished = False
         self._load_assignment()
@@ -278,8 +278,8 @@ class AssignmentBlockReader:
         self.t1 = timestamp_from_qname(self._buffer[0]["qname"])
 
 
-class AssignmentReader:
-    """Iterator over individual ProPhyle assignments in a BAM file.
+class SingleAssignmentReader:
+    """Iterator over individual assignments in BAM/RASE.
 
     Assumes that it is possible to infer read lengths (either
     from the ln tag, base sequence or cigars).
