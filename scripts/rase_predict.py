@@ -35,6 +35,52 @@ def format_time(seconds):
     return "{}h{}m".format(hours, minutes)
 
 
+class Runner:
+    def __init__(self, metadata_fn, tree_fn, bam_fn, pref, delta, first_read_delay):
+        self.metadata = RaseMetadataTable('metadata_fn')
+        self.stats = Stats(tree_fn)
+        self.rase_bam_reader = RaseBamReader(bam_fn)
+        self.pref = pref
+        self.delta = delta
+        self.first_read_delay = first_read_delay
+
+    def run(self):
+        # 1) set the initial window:
+        #     [t0, t0+delta), where t0=time_of_first_read-first_read_delay
+        t0 = rase_bam_reader.t1 - args.first_read_delay
+        current_window = [t0, t0 + args.delta]  # [x, y)
+        f = open("{}/{}.tsv".format(self.pref, current_window[1]), mode="w")
+
+        # 2) iterate through individual reads, and update and print statistics
+        for read_stats in self.rase_bam_reader:
+            assert len(read_stats) > 0
+            read_timestamp = timestamp_from_qname(read_stats[0]["qname"])
+
+            # do we have to shift the window?
+            if read_timestamp >= current_window[1]:
+                self.stats.print(file=f)
+                f.close()
+                while read_timestamp >= current_window[1]:
+                    current_window[0] += args.delta
+                    current_window[1] += args.delta
+                f = open("{}/{}.tsv".format(args.pref, current_window[1]), mode="w")
+
+                last_time = format_time(current_window[0] - t0)
+                print(
+                    "Time t={}: {} reads and {} non-propagated ({} propagated) assignments processed.".format(
+                        last_time, stats.nb_assigned_reads, stats.nb_nonprop_asgs, stats.nb_asgs
+                    ), file=sys.stderr
+                )
+
+            stats.update_from_one_read(read_stats)
+
+        stats.print(file=f)
+        f.close()
+
+        with open(args.tsv, mode="w") as f:
+            stats.print(file=f)
+
+
 class RaseMetadataTable:
     """RASE metadata table.
 
@@ -93,11 +139,6 @@ class RaseMetadataTable:
                     cat = x[a + "_cat"].upper()
                     assert cat in set(["NA", "S", "R"])
                     self.rcat[taxid][a] = cat
-
-        #print(self.ants)
-        #print(self.pg)
-        #print(self.rcat)
-        #sys.exit(0)
 
 
 class Stats:
@@ -248,7 +289,7 @@ class RaseBamReader:
         return self
 
     def __next__(self):
-        """Get next block of assignments of the same read.
+        """Retrieve set of assignments of the next read.
         """
 
         if self._finished:
@@ -345,8 +386,8 @@ class SingleAssignmentReader:
         return asg
 
 
-class AssignmentStatisticsSnapshot:
-    """Assignment statistics at a time.
+class Predict:
+    """Predicting from assignment statistics at a time.
 
     This class loads prediction statistics for a given time point (relative
     similarity to individual samples).
@@ -602,43 +643,11 @@ def main():
 
     args = parser.parse_args()
 
-    stats = Stats(args.tree)
-    assignment_block_reader = AssignmentBlockReader(args.bam)
-
-    # 1) set the initial window:
-    #     [t0, t0+delta), where t0=time_of_first_read-first_read_delay
-    t0 = assignment_block_reader.t1 - args.first_read_delay
-    current_window = [t0, t0 + args.delta]  # [x, y)
-    f = open("{}/{}.tsv".format(args.pref, current_window[1]), mode="w")
-
-    # 2) iterate through individual reads, and update and print statistics
-    for read_stats in assignment_block_reader:
-        assert len(read_stats) > 0
-        read_timestamp = timestamp_from_qname(read_stats[0]["qname"])
-
-        # do we have to shift the window?
-        if read_timestamp >= current_window[1]:
-            stats.print(file=f)
-            f.close()
-            while read_timestamp >= current_window[1]:
-                current_window[0] += args.delta
-                current_window[1] += args.delta
-            f = open("{}/{}.tsv".format(args.pref, current_window[1]), mode="w")
-
-            last_time = format_time(current_window[0] - t0)
-            print(
-                "Time t={}: {} reads and {} non-propagated ({} propagated) assignments processed.".format(
-                    last_time, stats.nb_assigned_reads, stats.nb_nonprop_asgs, stats.nb_asgs
-                ), file=sys.stderr
-            )
-
-        stats.update_from_one_read(read_stats)
-
-    stats.print(file=f)
-    f.close()
-
-    with open(args.tsv, mode="w") as f:
-        stats.print(file=f)
+    r = Runner(
+        metadata_fn=args.tsv, tree_fn=args.tree, bam_fn=args.bam, pref=args.pref, delta=args.delta,
+        first_read_delay=args.first_read_delay
+    )
+    r.run()
 
 
 if __name__ == "__main__":
