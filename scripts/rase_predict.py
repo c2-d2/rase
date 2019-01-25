@@ -111,12 +111,10 @@ class Stats:
 
         cumul_qlen (float): Cumulative weighted read length.
         cumul_h1 (float): Cumulative weighted hit count.
-        cumul_c1 (float): Cumulative weighted coverage.
 
         stats_count (dict): isolate -> number of processed reads
         stats_qlen (dict): isolate -> weighted qlen
         stats_h1 (dict): isolate -> squared h1
-        stats_c1 (dict): isolate -> squared c1
     """
 
     def __init__(self, tree_fn):
@@ -134,13 +132,11 @@ class Stats:
 
         # cumulative statistics for assigned reads
         self.cumul_h1_pow1 = 0.0
-        self.cumul_c1_pow1 = 0.0
         self.cumul_ln_pow1 = 0.0
 
         # statistics for individual isolates, "_unassigned_" for unassigned
         self.stats_h1_pow0 = collections.defaultdict(lambda: 0.0)
         self.stats_h1_pow1 = collections.defaultdict(lambda: 0.0)
-        self.stats_c1_pow1 = collections.defaultdict(lambda: 0.0)
         self.stats_ln_pow1 = collections.defaultdict(lambda: 0.0)
 
     def _precompute_descendants(self, tree):
@@ -176,8 +172,8 @@ class Stats:
             for asg in asgs:
                 nname = asg["rname"]
                 descending_isolates = self.descending_isolates[nname]
-                self._update_cumuls(h1=asg["h1"], c1=asg["c1"], ln=asg["ln"], weight=len(descending_isolates) / l)
-                self._update_strain_stats(descending_isolates, h1=asg["h1"], c1=asg["c1"], ln=asg["ln"], l=l)
+                self._update_cumuls(h1=asg["h1"], ln=asg["ln"], weight=len(descending_isolates) / l)
+                self._update_strain_stats(descending_isolates, h1=asg["h1"], ln=asg["ln"], l=l)
 
         else:
             assert len(
@@ -185,18 +181,16 @@ class Stats:
             ) == 1, "A single read shouldn't be reported as unassigned mutliple times (error: {})".format(asgs)
             asg = asgs[0]
             self.nb_unassigned_reads += 1
-            self.update_strain_stats([FAKE_ISOLATE_UNASSIGNED], h1=0, c1=0, ln=asg["ln"], l=1)
+            self.update_strain_stats([FAKE_ISOLATE_UNASSIGNED], h1=0, ln=asg["ln"], l=1)
 
-    def _update_cumuls(self, h1, c1, ln, weight):
+    def _update_cumuls(self, h1, ln, weight):
         self.cumul_h1_pow1 += h1 * weight
-        self.cumul_c1_pow1 += c1 * weight
         self.cumul_ln_pow1 += ln * weight
 
-    def _update_strain_stats(self, isolates, h1, c1, ln, l):
+    def _update_strain_stats(self, isolates, h1, ln, l):
         for isolate in isolates:
             self.stats_h1_pow0[isolate] += 1.0 / l
             self.stats_h1_pow1[isolate] += 1.0 * (h1 / l)
-            self.stats_c1_pow1[isolate] += 1.0 * (c1 / l)
             self.stats_ln_pow1[isolate] += 1.0 * (ln / l)
 
     def print(self, file):
@@ -205,7 +199,7 @@ class Stats:
         Args:
             file (file): Output file.
         """
-        print("taxid", "count", "count_norm", "ln", "ln_norm", "h1", "h1_norm", "c1", "c1_norm", sep="\t", file=file)
+        print("taxid", "count", "count_norm", "ln", "ln_norm", "h1", "h1_norm", sep="\t", file=file)
         table = []
         for isolate in self.isolates + [FAKE_ISOLATE_UNASSIGNED]:
             table.append(
@@ -217,8 +211,6 @@ class Stats:
                     self.stats_ln_pow1[isolate] / self.cumul_ln_pow1 if self.cumul_ln_pow1 != 0 else 0,
                     self.stats_h1_pow1[isolate],
                     self.stats_h1_pow1[isolate] / self.cumul_h1_pow1 if self.cumul_h1_pow1 != 0 else 0,
-                    self.stats_c1_pow1[isolate],
-                    self.stats_c1_pow1[isolate] / self.cumul_c1_pow1 if self.cumul_c1_pow1 != 0 else 0,
                 ]
             )
 
@@ -306,7 +298,7 @@ class SingleAssignmentReader:
         """Get next assignment.
 
         Returns:
-            assignment (dict): A dict with the following keys: "rname", "qname", "qlen, "assigned", "h1", "c1".
+            assignment (dict): A dict with the following keys: "rname", "qname", "qlen, "assigned", "h1".
         """
 
         # 1) acquire a new alignment from SAM
@@ -336,7 +328,6 @@ class SingleAssignmentReader:
                 "assigned": True,
                 "ln": self.read_ln,
                 "h1": alignment.get_tag("h1"),
-                "c1": alignment.get_tag("c1"),
             }
         else:
             asg = {
@@ -345,7 +336,6 @@ class SingleAssignmentReader:
                 "assigned": False,
                 "ln": self.read_ln,
                 "h1": None,
-                "c1": None,
             }
 
         return asg
@@ -410,8 +400,6 @@ class AssignmentStatisticsSnapshot:
                 rd['ln'] = float(r['ln'])
                 # h1
                 rd['h1'] = float(r['h1'])
-                # c1
-                rd['c1'] = float(r['c1'])
                 rows.append(rd)
 
         rows.sort(key=lambda x: x['h1'], reverse=True)
@@ -439,7 +427,6 @@ class AssignmentStatisticsSnapshot:
         summary['datetime'] = self.datetime
         summary['read count'] = int(self.cumul_count())
         summary['read len'] = int(self.cumul_ln())
-        summary['used bases'] = int(self.cumul_c1())
 
         summary['PG1'] = sorted_pgs[0]
         summary['PG1_meas'] = round(pg1_measmax)
@@ -566,9 +553,6 @@ class AssignmentStatisticsSnapshot:
 
     def cumul_ln(self):
         return sum([self.measures[taxid]['ln'] for taxid in self.measures])
-
-    def cumul_c1(self):
-        return sum([self.measures[taxid]['c1'] for taxid in self.measures])
 
 
 def main():
