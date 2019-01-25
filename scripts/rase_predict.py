@@ -163,8 +163,10 @@ class Stats:
 
         assert len(asgs) > 0, "No assignments provided"
 
-        is_assigned = asgs[0]["assigned"]
+        asg0 = asgs[0]
+        is_assigned = asg0["assigned"]
 
+        # is read is assigned to at least 1 node?
         if is_assigned:
             l = self._get_number_of_assigned_isolates(asgs)
 
@@ -172,12 +174,13 @@ class Stats:
             self.nb_nonprop_asgs += len(asgs)
             self.nb_asgs += l
 
+            self.cumul_h1_pow1 += asg0['h1']
+            self.cumul_ln_pow1 += asg0['ln']
+
             for asg in asgs:
                 nname = asg["rname"]
                 descending_isolates = self._descending_isolates[nname]
-                self._update_cumuls(h1=asg["h1"], ln=asg["ln"], weight=len(descending_isolates) / l)
                 self._update_isolate_stats(descending_isolates, h1=asg["h1"], ln=asg["ln"], l=l)
-
         else:
             assert len(
                 asgs
@@ -185,10 +188,6 @@ class Stats:
             asg = asgs[0]
             self.nb_unassigned_reads += 1
             self.update_isolate_stats([FAKE_ISOLATE_UNASSIGNED], h1=0, ln=asg["ln"], l=1)
-
-    def _update_cumuls(self, h1, ln, weight):
-        self.cumul_h1_pow1 += h1 * weight
-        self.cumul_ln_pow1 += ln * weight
 
     def _update_isolate_stats(self, isolates, h1, ln, l):
         for isolate in isolates:
