@@ -10,6 +10,7 @@ import collections
 import csv
 import datetime
 import ete3
+import itertools
 import glob
 import json
 import os
@@ -156,7 +157,7 @@ class Stats:
             isolates |= self._descending_isolates(nname)
         return sorted(isolates)
 
-    def update_from_one_read(self, asgs):
+    def update(self, asgs):
         """Update statistics from assignments of a single read.
 
         Params:
@@ -198,7 +199,7 @@ class Stats:
             self.update_isolate_stats([FAKE_ISOLATE_UNASSIGNED], h1=0, ln=asg0["ln"], l=1)
 
     def print(self, file):
-        """Print statistics.
+        """Print statistics to a file.
 
         Args:
             file (file): Output file.
