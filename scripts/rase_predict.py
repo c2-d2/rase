@@ -9,7 +9,6 @@ License: MIT
 
 # todo: add non-susc threshold as a param
 
-
 import argparse
 import collections
 import csv
@@ -27,6 +26,7 @@ import warnings
 FAKE_ISOLATE_UNASSIGNED = "_unassigned_"
 HEADER_PRINTED = False
 re_timestamp = re.compile(r'.*/(\d{10})\.tsv')
+
 
 def timestamp_from_qname(qname):
     return int(qname.partition("_")[0])
@@ -121,10 +121,10 @@ class Predict:
 
         ppgs = stats.pgs_by_weight()
         sorted_pgs = list(ppgs)
-        predicted_pg = sorted_pgs[0]
-        pg1_taxid, pg1_measmax = ppgs[sorted_pgs[0]]
-        pg2_taxid, pg2_measmax = ppgs[sorted_pgs[1]]
-        predicted_taxid = pg1_taxid
+        pg1 = sorted_pgs[0]
+        pg1_pivot, pg1_weight = ppgs[pg1]
+        pg2 = sorted_pgs[1]
+        pg2_pivot, pg2_weight = ppgs[pg2]
 
         #predicted_serotype = self.rtbl.serotype[predicted_taxid]
         #predicted_st = self.rtbl.st[predicted_taxid]
@@ -133,46 +133,45 @@ class Predict:
 
         current_dt, _, _ = str(datetime.datetime.now()).partition(".")
 
-
-        self.summary['datetime'] = current_dt #"now" #todo: self.datetime
+        self.summary['datetime'] = current_dt  #"now" #todo: self.datetime
         #self.summary['read count'] = int(self.cumul_count())
         #self.summary['read len'] = int(self.cumul_ln())
-        self.summary['PG1'] = sorted_pgs[0]
-        self.summary['PG1_w'] = round(pg1_measmax)
-        self.summary['PG2'] = sorted_pgs[1]
-        self.summary['PG2_w'] = round(pg2_measmax)
-        self.summary['taxid'] = predicted_taxid
+        self.summary['PG1'] = pg1
+        self.summary['PG1_w'] = round(pg1_weight)
+        self.summary['PG2'] = pg2
+        self.summary['PG2_w'] = round(pg2_weight)
+        self.summary['taxid'] = pg1_pivot
         #self.summary['serotype'] = predicted_serotype
         #self.summary['ST'] = predicted_st
 
-        if pg1_measmax == 0:
+        if pg1_weight == 0:
             self.summary['PG1'] = "NA"
             self.summary['taxid'] = "NA"
             #self.summary['serotype'] = "NA"
             #self.summary['ST'] = "NA"
-        if pg2_measmax == 0:
+        if pg2_weight == 0:
             self.summary['PG2'] = "NA"
             # todo: PG2 taxid
-        if pg1_measmax > 0:
-            self.summary['PGS'] = 2 * (round(pg1_measmax / (pg1_measmax + pg2_measmax) * 1000) / 1000) - 1
+        if pg1_weight > 0:
+            self.summary['PGS'] = 2 * (round(pg1_weight / (pg1_weight + pg2_weight) * 1000) / 1000) - 1
         else:
             self.summary['PGS'] = 0
 
         for ant in self.rtbl.ants:
-            pres = stats.res_by_weight(predicted_pg, ant)
+            pres = stats.res_by_weight(pg1, ant)
 
             # ant category
             cat_col = ant.upper() + "_cat"
-            if pg1_measmax > 0:
-                predict_cat = self.rtbl.rcat[predicted_taxid][ant]
+            if pg1_weight > 0:
+                predict_cat = self.rtbl.rcat[pg1_pivot][ant]
             else:
                 predict_cat = "NA"
             self.summary[cat_col] = predict_cat
 
             # todo: add a comment that we take the category of the best isolate; not the same as in the plots
 
-            # susc score
-            score_col = ant.upper() + "_susc"
+            # susceptibility score (sus)
+            score_col = ant.upper() + "_sus"
             try:
                 s_meas = pres['S'][1]
                 r_meas = pres['R'][1]
@@ -181,12 +180,12 @@ class Predict:
                 else:
                     susc_score = 0
             except KeyError:
-                # computing susc score fails
+                # computing sus fails
                 if predict_cat == 'R':
                     susc_score = 0.0
                 elif predict_cat == 'S':
                     susc_score = 1.0
-                elif predict_cat == 'NA' and pg1_measmax == 0:
+                elif predict_cat == 'NA' and pg1_weight == 0:
                     susc_score = 0.0
                 elif predict_cat == 'NA':
                     susc_score = 'NA'
@@ -207,7 +206,6 @@ class Predict:
             print(*keys, sep="\t")
             HEADER_PRINTED = True
         print(*values, sep="\t")
-
 
     #def cumul_count(self):
     #    return sum([self.measures[taxid]['count'] for taxid in self.measures])
