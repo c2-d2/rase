@@ -165,7 +165,9 @@ class Predict:
             # susceptibility score (sus)
             try:
                 # S/R pivots
+                s_bm = pres['S'][0]
                 s_w = pres['S'][1]
+                r_bm = pres['R'][0]
                 r_w = pres['R'][1]
                 if r_w + s_w > 0:
                     sus = round(s_w / (r_w + s_w), 3)
@@ -174,18 +176,26 @@ class Predict:
             except KeyError:
                 # computing sus fails
                 if bm_cat == 'R':
-                    # everything R
+                    # everything R                    
                     sus = 0.0
+                    s_w, s_bm = "NA", "NA"
                 elif bm_cat == 'S':
                     # everything S
                     sus = 1.0
+                    r_w, r_bm = "NA", "NA", "NA", "NA"
                 elif bm_cat == 'NA' and pg1_w == 0:
-                    # not enough info yet
+                    # not enough info yet (no match)
                     sus = 0.0
+                    r_w, r_bm, s_w, s_bm = "NA", "NA", "NA", "NA"
                 elif bm_cat == 'NA':
                     # ????
                     sus = 'NA'
+                    r_w, r_bm, s_w, s_bm = "NA", "NA", "NA", "NA"
 
+            self.summary[ant + "_r_bm"] = r_bm
+            self.summary[ant + "_r_w"] = round(r_w)
+            self.summary[ant + "_s_bm"] = s_bm
+            self.summary[ant + "_s_w"] = round(s_w)
             self.summary[ant + "_sus"] = sus
 
             # best-match category
