@@ -40,7 +40,7 @@ def format_time(seconds):
 class Runner:
     def __init__(self, metadata_fn, tree_fn, bam_fn, pref, delta, first_read_delay):
         self.metadata = RaseMetadataTable(metadata_fn)
-        self.stats = Stats(tree_fn)
+        self.stats = Stats(tree_fn, self.metadata)
         self.predict = Predict(self.metadata)
         self.rase_bam_reader = RaseBamReader(bam_fn)
         self.pref = pref
@@ -105,7 +105,6 @@ class Predict:
         filename: TSV filename
         timestamp: Unix timestamp of that sequencing time
         datetime: The corresponding datetime
-        weight: taxid -> weight
     """
 
     def __init__(self, rtbl):
@@ -118,7 +117,7 @@ class Predict:
         """Predict.
         """
 
-        ppgs = self._predict_pg(stats.stats_h1)
+        ppgs = stats.pgs_by_weight()
         sorted_pgs = list(ppgs)
         predicted_pg = sorted_pgs[0]
         pg1_taxid, pg1_measmax = ppgs[sorted_pgs[0]]
@@ -137,9 +136,9 @@ class Predict:
         #self.summary['read count'] = int(self.cumul_count())
         #self.summary['read len'] = int(self.cumul_ln())
         self.summary['PG1'] = sorted_pgs[0]
-        self.summary['PG1_meas'] = round(pg1_measmax)
+        self.summary['PG1_w'] = round(pg1_measmax)
         self.summary['PG2'] = sorted_pgs[1]
-        self.summary['PG2_meas'] = round(pg2_measmax)
+        self.summary['PG2_w'] = round(pg2_measmax)
         self.summary['taxid'] = predicted_taxid
         #self.summary['serotype'] = predicted_serotype
         #self.summary['ST'] = predicted_st
@@ -153,9 +152,9 @@ class Predict:
             self.summary['PG2'] = "NA"
             # todo: PG2 taxid
         if pg1_measmax > 0:
-            self.summary['PG_score'] = 2 * (round(pg1_measmax / (pg1_measmax + pg2_measmax) * 1000) / 1000) - 1
+            self.summary['PGS'] = 2 * (round(pg1_measmax / (pg1_measmax + pg2_measmax) * 1000) / 1000) - 1
         else:
-            self.summary['PG_score'] = 0
+            self.summary['PGS'] = 0
 
 #        for ant in self.rtbl.ants:
 #            pres = self._predict_resistance(predicted_pg, ant)
@@ -266,7 +265,7 @@ class Stats:
         tree_fn (str): Filename of the Newick tree.
 
     Attributes:
-        nb_reads (int): Number of processed reads.
+        nb_assigned_reads (int): Number of processed reads.
         nb_nonprop_asgs (int): Number of processed alignments (before propagation).
         nb_asgs (int): Number of processed alignments (after propagation).
 
@@ -274,11 +273,12 @@ class Stats:
         cumul_h1 (float): Cumulative weighted hit count.
 
         stats_ct (dict): isolate -> number of processed reads
-        stats_h1 (dict): isolate -> squared h1
+        stats_h1 (dict): isolate -> weighted h1
         stats_ln (dict): isolate -> weighted qlen
     """
 
-    def __init__(self, tree_fn):
+    def __init__(self, tree_fn, rtbl):
+        self._rtbl = rtbl
         self._tree = ete3.Tree(tree_fn, format=1)
         self._isolates = sorted([isolate.name for isolate in self._tree])
         self._descending_isolates_d = self._precompute_descendants(self._tree)
@@ -300,6 +300,12 @@ class Stats:
         self.stats_h1 = collections.defaultdict(lambda: 0.0)
         self.stats_ln = collections.defaultdict(lambda: 0.0)
 
+    def weight(self, isolate):
+        """Get weight of an isolate.
+        """
+        # currently we define weight as stats_h1, but can be changed
+        return self.stats_h1[isolate]
+
     @staticmethod
     def _precompute_descendants(tree):
         descending_leaves = {}
@@ -312,6 +318,28 @@ class Stats:
         for nname in nnames:
             isolates |= self._descending_isolates_d[nname]
         return sorted(isolates)
+
+    def pgs_by_weight(self):
+        """Sort phylogroups by weight.
+
+        Returns:
+            OrderedDict: pg -> (taxid, weight)
+        """
+
+        d = collections.defaultdict(lambda: [None, -1])
+
+        for taxid in self._isolates:
+            if taxid == "_unassigned_":
+                continue
+            pg = self._rtbl.pg[taxid]
+            val = self.weight(taxid)
+
+            if val > d[pg][1]:
+                d[pg] = taxid, val
+
+        l = list(d.items())
+        l.sort(key=lambda x: x[1][1], reverse=True)
+        return collections.OrderedDict(l)
 
     def update_from_read(self, asgs):
         """Update statistics from assignments of a single read.
