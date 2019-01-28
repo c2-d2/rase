@@ -134,8 +134,9 @@ class Predict:
         current_dt, _, _ = str(datetime.datetime.now()).partition(".")
 
         self.summary['datetime'] = current_dt  #"now" #todo: self.datetime
-        #self.summary['read count'] = int(self.cumul_count())
-        #self.summary['read len'] = int(self.cumul_ln())
+        self.summary['reads'] = stats.nb_assigned_reads + stats.nb_unassigned_reads
+        self.summary['bps'] = stats.cumul_ln
+        self.summary['matched bps'] = stats.cumul_h1
         self.summary['pg1'] = pg1
         self.summary['pg1_bm'] = pg1_bm
         self.summary['pg1_w'] = round(pg1_w)
@@ -239,8 +240,8 @@ class Stats:
         nb_nonprop_asgs (int): Number of processed alignments (before propagation).
         nb_asgs (int): Number of processed alignments (after propagation).
 
-        cumul_qlen (float): Cumulative weighted read length.
-        cumul_h1 (float): Cumulative weighted hit count.
+        cumul_h1 (float): Cumulative hit count.
+        cumul_ln (float): Cumulative read length.
 
         stats_ct (dict): isolate -> number of processed reads
         stats_h1 (dict): isolate -> weighted h1
@@ -262,8 +263,8 @@ class Stats:
         self.nb_unassigned_reads = 0
 
         # cumulative statistics for assigned reads
-        self.cumul_h1 = 0.0
-        self.cumul_ln = 0.0
+        self.cumul_h1 = 0
+        self.cumul_ln = 0
 
         # statistics for individual isolates, "_unassigned_" for unassigned
         self.stats_ct = collections.defaultdict(lambda: 0.0)
@@ -299,7 +300,7 @@ class Stats:
         d = collections.defaultdict(lambda: [None, -1])
 
         for isolate in self._isolates:
-            if isolate == "_unassigned_":
+            if isolate == FAKE_ISOLATE_UNASSIGNED:
                 continue
             pg = self._rtbl.pg[isolate]
             val = self.weight(isolate)
