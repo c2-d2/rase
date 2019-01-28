@@ -126,57 +126,61 @@ class Predict:
         pg2 = sorted_pgs[1]
         pg2_bm, pg2_w = ppgs[pg2]
 
-        #predicted_serotype = self.rtbl.serotype[predicted_taxid]
-        #predicted_st = self.rtbl.st[predicted_taxid]
-
-        ####
-
         current_dt, _, _ = str(datetime.datetime.now()).partition(".")
+
+        ## 1) GENERAL & CUMULATIVE STATS
 
         self.summary['datetime'] = current_dt  #"now" #todo: self.datetime
         self.summary['reads'] = stats.nb_assigned_reads + stats.nb_unassigned_reads
         self.summary['bps'] = stats.cumul_ln
         self.summary['matched bps'] = stats.cumul_h1
+
+        ## 2) PG PREDICTION
+
+        ## 2a) Find best and 2nd best PG
         self.summary['pg1'] = pg1
         self.summary['pg1_bm'] = pg1_bm
         self.summary['pg1_w'] = round(pg1_w)
         self.summary['pg2'] = pg2
         self.summary['pg2_bm'] = pg2_bm
         self.summary['pg2_w'] = round(pg2_w)
-        #self.summary['serotype'] = predicted_serotype
-        #self.summary['ST'] = predicted_st
 
+        ## 2b) Correct for missing data
         if pg1_w == 0:
             self.summary['pg1'] = "NA"
-            self.summary['taxid'] = "NA"
-            #self.summary['serotype'] = "NA"
-            #self.summary['ST'] = "NA"
+            self.summary['pg1_bm'] = "NA"
         if pg2_w == 0:
             self.summary['pg2'] = "NA"
+            self.summary['pg2_bm'] = "NA"
             # todo: PG2 taxid
+
+        ## 2c) Calculate PGS
         if pg1_w > 0:
             self.summary['pgs'] = 2 * round(pg1_w / (pg1_w + pg2_w), 3) - 1
         else:
             self.summary['pgs'] = 0
 
+        ## 2) ANTIBIOTIC RESISTANCE PREDICTION
+
         for ant in self.rtbl.ants:
             pres = stats.res_by_weight(pg1, ant)
 
-            # susceptibility score (sus)
+            ##  2a) Calculate susceptibility score (sus) & correct for missing data
             try:
-                # S/R pivots
+                # Identify S/R pivots
                 s_bm = pres['S'][0]
                 s_w = pres['S'][1]
                 r_bm = pres['R'][0]
                 r_w = pres['R'][1]
+                # Calculate SUS
                 if r_w + s_w > 0:
                     sus = round(s_w / (r_w + s_w), 3)
                 else:
                     sus = 0
             except KeyError:
-                # computing sus fails
+                # Some data were missing.
                 if bm_cat == 'R':
-                    # everything R                    
+                    # everything R
                     sus = 0.0
                     s_w, s_bm = "NA", "NA"
                 elif bm_cat == 'S':
@@ -198,6 +202,8 @@ class Predict:
             self.summary[ant + "_s_w"] = round(s_w)
             self.summary[ant + "_sus"] = sus
 
+            ##  2b) Predict based on the collected info
+
             # best-match category
             if pg1_w > 0:
                 bm_cat = self.rtbl.rcat[pg1_bm][ant]
@@ -208,7 +214,7 @@ class Predict:
             # prediction
             if sus > 0.6:
                 pr_cat = "S"
-            elif sus>=0.5:
+            elif sus >= 0.5:
                 pr_cat = "S!"
             else:
                 pr_cat = "R"
@@ -228,12 +234,6 @@ class Predict:
             print(*keys, sep="\t")
             HEADER_PRINTED = True
         print(*values, sep="\t")
-
-    #def cumul_count(self):
-    #    return sum([self.measures[taxid]['count'] for taxid in self.measures])
-    #
-    #def cumul_ln(self):
-    #    return sum([self.measures[taxid]['ln'] for taxid in self.measures])
 
 
 class Stats:
@@ -418,8 +418,6 @@ class RaseMetadataTable:
     Attributes:
         pg: taxid -> phylogroup
         pgset: phylogroup -> set of taxids
-        serotype: taxid -> serotype
-        st: taxid -> sequence type
         rcat: taxid -> antibiotic -> category
         weight: taxid -> weight
         ants: List of antibiotics.
@@ -429,8 +427,6 @@ class RaseMetadataTable:
 
         self.pg = {}
         self.pgset = collections.defaultdict(set)
-        self.serotype = {}
-        self.st = {}
 
         self.rcat = collections.defaultdict(dict)
 
@@ -442,24 +438,11 @@ class RaseMetadataTable:
             ants = filter(lambda x: x.find("_mic") != -1, tsv_reader.fieldnames)
             self.ants = list(map(lambda x: x.replace("_mic", ""), ants))
 
-            #print(dir(tsv_reader))
             for x in tsv_reader:
                 taxid = x['taxid']
 
-#                try:
-#                    serotype = x['serotype']
-#                except KeyError:
-#                    serotype = "NA"
-#
-#                try:
-#                    st = x['ST']
-#                except KeyError:
-#                    st = "NA"
-
                 pg = x['phylogroup']
                 self.pg[taxid] = pg
-                #self.st[taxid] = st
-                #self.serotype[taxid] = serotype
                 self.pgset[pg].add(taxid)
 
                 for a in self.ants:
