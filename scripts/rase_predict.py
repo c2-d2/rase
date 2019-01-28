@@ -164,12 +164,12 @@ class Predict:
             tbl['pg2'] = "NA"
             tbl['pg2_bm'] = "NA"
 
-        ## 2) ANTIBIOTIC RESISTANCE PREDICTION
+        ## 3) ANTIBIOTIC RESISTANCE PREDICTION
 
         for ant in self.rtbl.ants:
             pres = stats.res_by_weight(pg1, ant)
 
-            ##  2a) Calculate susceptibility score (sus) & correct for missing data
+            ##  3a) Calculate susceptibility score (sus) & correct for missing data
             try:
                 # Identify S/R pivots
                 s_bm = pres['S'][0]
@@ -200,20 +200,13 @@ class Predict:
                     sus = 'NA'
                     r_w, r_bm, s_w, s_bm = "NA", "NA", "NA", "NA"
 
-            tbl[ant + "_r_bm"] = r_bm
-            tbl[ant + "_s_bm"] = s_bm
-            tbl[ant + "_r_w"] = round(r_w)
-            tbl[ant + "_s_w"] = round(s_w)
-            tbl[ant + "_sus"] = sus
-
-            ##  2b) Predict based on the collected info
+            ##  3b) Predict based on the collected info
 
             # best-match category
             if pg1_w > 0:
                 bm_cat = self.rtbl.rcat[pg1_bm][ant]
             else:
                 bm_cat = "NA"
-            tbl[ant + "_bm_cat"] = bm_cat
 
             # prediction
             if sus > 0.6:
@@ -222,7 +215,14 @@ class Predict:
                 pr_cat = "S!"
             else:
                 pr_cat = "R"
+
+            tbl[ant + "_sus"] = sus
             tbl[ant + "_pr_cat"] = pr_cat
+            tbl[ant + "_bm_cat"] = bm_cat
+            tbl[ant + "_r_bm"] = r_bm
+            tbl[ant + "_s_bm"] = s_bm
+            tbl[ant + "_r_w"] = round(r_w)
+            tbl[ant + "_s_w"] = round(s_w)
 
             self.summary = tbl
 
