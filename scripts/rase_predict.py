@@ -7,6 +7,9 @@ License: MIT
 
 # ./scripts/rase_predict.py ~/github/my/rase-predict/database/spneumoniae_sparc.k18/tree.nw ~/github/my/rase-predict/prediction/sp10_norwich_P33.filtered__spneumoniae_sparc.k18.bam ~/github/my/rase-predict/database/spneumoniae_sparc.k18.tsv | tL
 
+# todo: add non-susc threshold as a param
+
+
 import argparse
 import collections
 import csv
@@ -24,7 +27,6 @@ import warnings
 FAKE_ISOLATE_UNASSIGNED = "_unassigned_"
 HEADER_PRINTED = False
 re_timestamp = re.compile(r'.*/(\d{10})\.tsv')
-
 
 def timestamp_from_qname(qname):
     return int(qname.partition("_")[0])
@@ -156,40 +158,40 @@ class Predict:
         else:
             self.summary['PGS'] = 0
 
-#        for ant in self.rtbl.ants:
-#            pres = self._predict_resistance(predicted_pg, ant)
-#
-#            # ant category
-#            cat_col = ant.upper() + "_cat"
-#            if pg1_measmax > 0:
-#                predict_cat = self.rtbl.rcat[predicted_taxid][ant]
-#            else:
-#                predict_cat = "NA"
-#            self.summary[cat_col] = predict_cat
-#
-#            # todo: add a comment that we take the category of the best isolate; not the same as in the plots
-#
-#            # susc score
-#            score_col = ant.upper() + "_susc"
-#            try:
-#                s_meas = pres['S'][1]
-#                r_meas = pres['R'][1]
-#                if r_meas + s_meas > 0:
-#                    susc_score = round(1000 * s_meas / (r_meas + s_meas)) / 1000
-#                else:
-#                    susc_score = 0
-#            except KeyError:
-#                # computing susc score fails
-#                if predict_cat == 'R':
-#                    susc_score = 0.0
-#                elif predict_cat == 'S':
-#                    susc_score = 1.0
-#                elif predict_cat == 'NA' and pg1_measmax == 0:
-#                    susc_score = 0.0
-#                elif predict_cat == 'NA':
-#                    susc_score = 'NA'
-#
-#            self.summary[score_col] = susc_score
+        for ant in self.rtbl.ants:
+            pres = stats.res_by_weight(predicted_pg, ant)
+
+            # ant category
+            cat_col = ant.upper() + "_cat"
+            if pg1_measmax > 0:
+                predict_cat = self.rtbl.rcat[predicted_taxid][ant]
+            else:
+                predict_cat = "NA"
+            self.summary[cat_col] = predict_cat
+
+            # todo: add a comment that we take the category of the best isolate; not the same as in the plots
+
+            # susc score
+            score_col = ant.upper() + "_susc"
+            try:
+                s_meas = pres['S'][1]
+                r_meas = pres['R'][1]
+                if r_meas + s_meas > 0:
+                    susc_score = round(1000 * s_meas / (r_meas + s_meas)) / 1000
+                else:
+                    susc_score = 0
+            except KeyError:
+                # computing susc score fails
+                if predict_cat == 'R':
+                    susc_score = 0.0
+                elif predict_cat == 'S':
+                    susc_score = 1.0
+                elif predict_cat == 'NA' and pg1_measmax == 0:
+                    susc_score = 0.0
+                elif predict_cat == 'NA':
+                    susc_score = 'NA'
+
+            self.summary[score_col] = susc_score
 
     def print(self):
         """Print.
@@ -206,47 +208,6 @@ class Predict:
             HEADER_PRINTED = True
         print(*values, sep="\t")
 
-    def _predict_pg(self, weight):
-        """Predict phylogroup.
-
-        Returns:
-            SortedDict: pg -> (taxid, val)
-        """
-
-        d = collections.defaultdict(lambda: [None, -1])
-
-        for taxid in self.taxids:
-            if taxid == "_unassigned_":
-                continue
-            pg = self.rtbl.pg[taxid]
-            val = weight[taxid]
-
-            if val > d[pg][1]:
-                d[pg] = taxid, val
-
-        l = list(d.items())
-        l.sort(key=lambda x: x[1][1], reverse=True)
-        return collections.OrderedDict(l)
-
-    def _predict_resistance(self, pg, ant):
-        """Predict resistance for a given phylogroup.
-
-        ...for given antibiotics and with respect to h1.
-
-        Returns:
-            category -> (taxid, val)
-        """
-
-        d = collections.defaultdict(lambda: (None, -1))
-
-        for taxid in self.rtbl.pgset[pg]:
-            val = self.weight[taxid]
-            cat = self.rtbl.rcat[taxid][ant]
-
-            if val > d[cat][1]:
-                d[cat] = taxid, val
-
-        return dict(d)
 
     #def cumul_count(self):
     #    return sum([self.measures[taxid]['count'] for taxid in self.measures])
@@ -323,23 +284,41 @@ class Stats:
         """Sort phylogroups by weight.
 
         Returns:
-            OrderedDict: pg -> (taxid, weight)
+            OrderedDict: pg -> (isolate, weight)
         """
 
         d = collections.defaultdict(lambda: [None, -1])
 
-        for taxid in self._isolates:
-            if taxid == "_unassigned_":
+        for isolate in self._isolates:
+            if isolate == "_unassigned_":
                 continue
-            pg = self._rtbl.pg[taxid]
-            val = self.weight(taxid)
+            pg = self._rtbl.pg[isolate]
+            val = self.weight(isolate)
 
             if val > d[pg][1]:
-                d[pg] = taxid, val
+                d[pg] = isolate, val
 
         l = list(d.items())
         l.sort(key=lambda x: x[1][1], reverse=True)
         return collections.OrderedDict(l)
+
+    def res_by_weight(self, pg, ant):
+        """Return heaviest R/S isolates for a given antibiotic.
+
+        Returns:
+            dict: category -> (taxid, val)
+        """
+
+        d = collections.defaultdict(lambda: (None, -1))
+
+        for isolate in self._rtbl.pgset[pg]:
+            val = self.weight(isolate)
+            cat = self._rtbl.rcat[isolate][ant]
+
+            if val > d[cat][1]:
+                d[cat] = isolate, val
+
+        return dict(d)
 
     def update_from_read(self, asgs):
         """Update statistics from assignments of a single read.
