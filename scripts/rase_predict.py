@@ -122,9 +122,9 @@ class Predict:
         ppgs = stats.pgs_by_weight()
         sorted_pgs = list(ppgs)
         pg1 = sorted_pgs[0]
-        pg1_pivot, pg1_weight = ppgs[pg1]
+        pg1_bm, pg1_w = ppgs[pg1]
         pg2 = sorted_pgs[1]
-        pg2_pivot, pg2_weight = ppgs[pg2]
+        pg2_bm, pg2_w = ppgs[pg2]
 
         #predicted_serotype = self.rtbl.serotype[predicted_taxid]
         #predicted_st = self.rtbl.st[predicted_taxid]
@@ -136,65 +136,72 @@ class Predict:
         self.summary['datetime'] = current_dt  #"now" #todo: self.datetime
         #self.summary['read count'] = int(self.cumul_count())
         #self.summary['read len'] = int(self.cumul_ln())
-        self.summary['PG1'] = pg1
-        self.summary['PG1_w'] = round(pg1_weight)
-        self.summary['PG2'] = pg2
-        self.summary['PG2_w'] = round(pg2_weight)
-        self.summary['taxid'] = pg1_pivot
+        self.summary['pg1'] = pg1
+        self.summary['pg1_bm'] = pg1_bm
+        self.summary['pg1_w'] = round(pg1_w)
+        self.summary['pg2'] = pg2
+        self.summary['pg2_bm'] = pg2_bm
+        self.summary['pg2_w'] = round(pg2_w)
         #self.summary['serotype'] = predicted_serotype
         #self.summary['ST'] = predicted_st
 
-        if pg1_weight == 0:
-            self.summary['PG1'] = "NA"
+        if pg1_w == 0:
+            self.summary['pg1'] = "NA"
             self.summary['taxid'] = "NA"
             #self.summary['serotype'] = "NA"
             #self.summary['ST'] = "NA"
-        if pg2_weight == 0:
-            self.summary['PG2'] = "NA"
+        if pg2_w == 0:
+            self.summary['pg2'] = "NA"
             # todo: PG2 taxid
-        if pg1_weight > 0:
-            self.summary['PGS'] = 2 * (round(pg1_weight / (pg1_weight + pg2_weight), 3)) - 1
+        if pg1_w > 0:
+            self.summary['pgs'] = 2 * round(pg1_w / (pg1_w + pg2_w), 3) - 1
         else:
-            self.summary['PGS'] = 0
+            self.summary['pgs'] = 0
 
         for ant in self.rtbl.ants:
             pres = stats.res_by_weight(pg1, ant)
 
-            # ant category
-            cat_col = ant.upper() + "_cat"
-            if pg1_weight > 0:
-                predict_cat = self.rtbl.rcat[pg1_pivot][ant]
-            else:
-                predict_cat = "NA"
-            self.summary[cat_col] = predict_cat
-
-            # todo: add a comment that we take the category of the best isolate; not the same as in the plots
-
             # susceptibility score (sus)
-            score_col = ant.upper() + "_sus"
             try:
-                s_meas = pres['S'][1]
-                r_meas = pres['R'][1]
-                if r_meas + s_meas > 0:
-                    susc_score = round(s_meas / (r_meas + s_meas), 3)
+                # S/R pivots
+                s_w = pres['S'][1]
+                r_w = pres['R'][1]
+                if r_w + s_w > 0:
+                    sus = round(s_w / (r_w + s_w), 3)
                 else:
-                    susc_score = 0
+                    sus = 0
             except KeyError:
                 # computing sus fails
-                if predict_cat == 'R':
+                if bm_cat == 'R':
                     # everything R
-                    susc_score = 0.0
-                elif predict_cat == 'S':
+                    sus = 0.0
+                elif bm_cat == 'S':
                     # everything S
-                    susc_score = 1.0
-                elif predict_cat == 'NA' and pg1_weight == 0:
+                    sus = 1.0
+                elif bm_cat == 'NA' and pg1_w == 0:
                     # not enough info yet
-                    susc_score = 0.0
-                elif predict_cat == 'NA':
+                    sus = 0.0
+                elif bm_cat == 'NA':
                     # ????
-                    susc_score = 'NA'
+                    sus = 'NA'
 
-            self.summary[score_col] = susc_score
+            self.summary[ant + "_sus"] = sus
+
+            # best-match category
+            if pg1_w > 0:
+                bm_cat = self.rtbl.rcat[pg1_bm][ant]
+            else:
+                bm_cat = "NA"
+            self.summary[ant + "_bm_cat"] = bm_cat
+
+            # prediction
+            if sus > 0.6:
+                pr_cat = "S"
+            elif sus>=0.5:
+                pr_cat = "S!"
+            else:
+                pr_cat = "R"
+            self.summary[ant + "_pr_cat"] = pr_cat
 
     def print(self):
         """Print.
@@ -286,7 +293,7 @@ class Stats:
         """Sort phylogroups by weight.
 
         Returns:
-            OrderedDict: pg -> (isolate, weight)
+            OrderedDict: pg -> (pivot_isolate, weight)
         """
 
         d = collections.defaultdict(lambda: [None, -1])
@@ -315,7 +322,7 @@ class Stats:
 
         for isolate in self._rtbl.pgset[pg]:
             val = self.weight(isolate)
-            cat = self._rtbl.rcat[isolate][ant]
+            cat = self._rtbl.rcat[isolate][ant].upper()
 
             if val > d[cat][1]:
                 d[cat] = isolate, val
@@ -428,25 +435,25 @@ class RaseMetadataTable:
             for x in tsv_reader:
                 taxid = x['taxid']
 
-                try:
-                    serotype = x['serotype']
-                except KeyError:
-                    serotype = "NA"
-
-                try:
-                    st = x['ST']
-                except KeyError:
-                    st = "NA"
+#                try:
+#                    serotype = x['serotype']
+#                except KeyError:
+#                    serotype = "NA"
+#
+#                try:
+#                    st = x['ST']
+#                except KeyError:
+#                    st = "NA"
 
                 pg = x['phylogroup']
                 self.pg[taxid] = pg
-                self.st[taxid] = st
-                self.serotype[taxid] = serotype
+                #self.st[taxid] = st
+                #self.serotype[taxid] = serotype
                 self.pgset[pg].add(taxid)
 
                 for a in self.ants:
-                    cat = x[a + "_cat"].upper()
-                    assert cat in set(["NA", "S", "R"])
+                    cat = x[a + "_cat"]
+                    assert cat in set(["NA", "S", "R", "s", "r"])
                     self.rcat[taxid][a] = cat
 
 
