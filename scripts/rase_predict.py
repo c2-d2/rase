@@ -153,7 +153,7 @@ class Predict:
             self.summary['PG2'] = "NA"
             # todo: PG2 taxid
         if pg1_weight > 0:
-            self.summary['PGS'] = 2 * (round(pg1_weight / (pg1_weight + pg2_weight) * 1000) / 1000) - 1
+            self.summary['PGS'] = 2 * (round(pg1_weight / (pg1_weight + pg2_weight), 3)) - 1
         else:
             self.summary['PGS'] = 0
 
@@ -176,18 +176,22 @@ class Predict:
                 s_meas = pres['S'][1]
                 r_meas = pres['R'][1]
                 if r_meas + s_meas > 0:
-                    susc_score = round(1000 * s_meas / (r_meas + s_meas)) / 1000
+                    susc_score = round(s_meas / (r_meas + s_meas), 3)
                 else:
                     susc_score = 0
             except KeyError:
                 # computing sus fails
                 if predict_cat == 'R':
+                    # everything R
                     susc_score = 0.0
                 elif predict_cat == 'S':
+                    # everything S
                     susc_score = 1.0
                 elif predict_cat == 'NA' and pg1_weight == 0:
+                    # not enough info yet
                     susc_score = 0.0
                 elif predict_cat == 'NA':
+                    # ????
                     susc_score = 'NA'
 
             self.summary[score_col] = susc_score
