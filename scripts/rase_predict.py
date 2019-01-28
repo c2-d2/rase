@@ -5,7 +5,7 @@ Author:  Karel Brinda <kbrinda@hsph.harvard.edu>
 License: MIT
 """
 
-# ./scripts/rase_predict.py ~/github/my/rase-predict/database/spneumoniae_sparc.k18/tree.nw ~/github/my/rase-predict/prediction/sp10_norwich_P33.filtered__spneumoniae_sparc.k18.bam ~/github/my/rase-predict/database/spneumoniae_sparc.k18.tsv | tL
+# ./scripts/rase_predict.py ~/github/my/rase-predict/database/spneumoniae_sparc.k18/tree.nw ~/github/my/rase-predict/database/spneumoniae_sparc.k18.tsv  ~/github/my/rase-predict/prediction/sp10_norwich_P33.filtered__spneumoniae_sparc.k18.bam | tL
 
 # todo: add non-susc threshold as a param
 
@@ -119,6 +119,19 @@ class Predict:
         """Predict.
         """
 
+        tbl = self.summary
+
+        ## 1) GENERAL & CUMULATIVE STATS
+
+        current_dt, _, _ = str(datetime.datetime.now()).partition(".")
+        tbl['datetime'] = current_dt  #"now" #todo: self.datetime
+        tbl['reads'] = stats.nb_assigned_reads + stats.nb_unassigned_reads
+        tbl['bps'] = stats.cumul_ln
+        tbl['matched bps'] = stats.cumul_h1
+
+        ## 2) PG PREDICTION
+
+        ## 2a) Find best and 2nd best PG
         ppgs = stats.pgs_by_weight()
         sorted_pgs = list(ppgs)
         pg1 = sorted_pgs[0]
@@ -126,39 +139,30 @@ class Predict:
         pg2 = sorted_pgs[1]
         pg2_bm, pg2_w = ppgs[pg2]
 
-        current_dt, _, _ = str(datetime.datetime.now()).partition(".")
-
-        ## 1) GENERAL & CUMULATIVE STATS
-
-        self.summary['datetime'] = current_dt  #"now" #todo: self.datetime
-        self.summary['reads'] = stats.nb_assigned_reads + stats.nb_unassigned_reads
-        self.summary['bps'] = stats.cumul_ln
-        self.summary['matched bps'] = stats.cumul_h1
-
-        ## 2) PG PREDICTION
-
-        ## 2a) Find best and 2nd best PG
-        self.summary['pg1'] = pg1
-        self.summary['pg1_bm'] = pg1_bm
-        self.summary['pg1_w'] = round(pg1_w)
-        self.summary['pg2'] = pg2
-        self.summary['pg2_bm'] = pg2_bm
-        self.summary['pg2_w'] = round(pg2_w)
-
-        ## 2b) Correct for missing data
-        if pg1_w == 0:
-            self.summary['pg1'] = "NA"
-            self.summary['pg1_bm'] = "NA"
-        if pg2_w == 0:
-            self.summary['pg2'] = "NA"
-            self.summary['pg2_bm'] = "NA"
-            # todo: PG2 taxid
-
-        ## 2c) Calculate PGS
+        ## 2b) Calculate PGS
         if pg1_w > 0:
-            self.summary['pgs'] = 2 * round(pg1_w / (pg1_w + pg2_w), 3) - 1
+            pgs = 2 * round(pg1_w / (pg1_w + pg2_w), 3) - 1
         else:
-            self.summary['pgs'] = 0
+            pgs = 0
+
+        ## 2c) Save values
+
+        tbl['pgs'] = pgs
+        tbl['pgs_ok'] = "yes" if pgs > 0.5 else "no"
+        tbl['pg1'] = pg1
+        tbl['pg2'] = pg2
+        tbl['pg1_bm'] = pg1_bm
+        tbl['pg2_bm'] = pg2_bm
+        tbl['pg1_w'] = round(pg1_w)
+        tbl['pg2_w'] = round(pg2_w)
+
+        ## 2c) Correct for missing data
+        if pg1_w == 0:
+            tbl['pg1'] = "NA"
+            tbl['pg1_bm'] = "NA"
+        if pg2_w == 0:
+            tbl['pg2'] = "NA"
+            tbl['pg2_bm'] = "NA"
 
         ## 2) ANTIBIOTIC RESISTANCE PREDICTION
 
@@ -196,11 +200,11 @@ class Predict:
                     sus = 'NA'
                     r_w, r_bm, s_w, s_bm = "NA", "NA", "NA", "NA"
 
-            self.summary[ant + "_r_bm"] = r_bm
-            self.summary[ant + "_r_w"] = round(r_w)
-            self.summary[ant + "_s_bm"] = s_bm
-            self.summary[ant + "_s_w"] = round(s_w)
-            self.summary[ant + "_sus"] = sus
+            tbl[ant + "_r_bm"] = r_bm
+            tbl[ant + "_s_bm"] = s_bm
+            tbl[ant + "_r_w"] = round(r_w)
+            tbl[ant + "_s_w"] = round(s_w)
+            tbl[ant + "_sus"] = sus
 
             ##  2b) Predict based on the collected info
 
@@ -209,7 +213,7 @@ class Predict:
                 bm_cat = self.rtbl.rcat[pg1_bm][ant]
             else:
                 bm_cat = "NA"
-            self.summary[ant + "_bm_cat"] = bm_cat
+            tbl[ant + "_bm_cat"] = bm_cat
 
             # prediction
             if sus > 0.6:
@@ -218,7 +222,9 @@ class Predict:
                 pr_cat = "S!"
             else:
                 pr_cat = "R"
-            self.summary[ant + "_pr_cat"] = pr_cat
+            tbl[ant + "_pr_cat"] = pr_cat
+
+            self.summary = tbl
 
     def print(self):
         """Print.
@@ -581,15 +587,14 @@ def main():
     )
 
     parser.add_argument(
+        'metadata',
+        type=str,
+        metavar='<db.tsv>',
+    )
+    parser.add_argument(
         'bam',
         type=argparse.FileType('r'),
         metavar='<assignments.bam>',
-    )
-
-    parser.add_argument(
-        'metadata',
-        type=str,
-        metavar='metadata.tsv',
     )
 
     parser.add_argument('-p', type=str, dest='pref', metavar='STR', help="Output dir for samplings", default=None)
