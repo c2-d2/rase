@@ -79,7 +79,6 @@ rule all:
                 [
                     "prediction/.{}.fq.complete".format(e),
                     "prediction/.{}__{}.bam.complete".format(e, i),
-                    "prediction/.{}__{}.quantify.complete".format(e, i),
                     "prediction/.{}__{}.predict.complete".format(e, i),
                     "plots/{}__{}.timeline.pdf".format(e, i),
                 ]
@@ -96,7 +95,6 @@ rule test:
                 [
                     "prediction/.{}.fq.complete".format(e),
                     "prediction/.{}__{}.bam.complete".format(e, i),
-                    "prediction/.{}__{}.quantify.complete".format(e, i),
                     "prediction/.{}__{}.predict.complete".format(e, i),
                     "plots/{}__{}.timeline.pdf".format(e, i),
                 ]
@@ -144,40 +142,26 @@ rule classify:
         """
 
 
-rule quantify:
-    priority: 70
-    input:
-        "prediction/.{pref}__{index}.bam.complete",
-        "database/.{index}.complete",
-    output:
-        t="prediction/.{pref}__{index}.quantify.complete"
-    params:
-        bam="prediction/{pref}__{index}.bam",
-    benchmark:
-        "benchmarks/{pref}__{index}.quantify.log"
-    shell:
-        """
-            mkdir -p "prediction/{wildcards.pref}__{wildcards.index}"
-            ../scripts/rase_prophyle_quantify.py -p 'prediction/{wildcards.pref}__{wildcards.index}/' -i 60 "database/{wildcards.index}/tree.nw" "{params.bam}" /dev/null
-            touch "{output.t}"
-        """
-
 
 rule predict:
     priority: 80
     input:
-        "prediction/.{pref}__{index}.quantify.complete",
+        "prediction/.{pref}__{index}.bam.complete",
         "database/.{index}.complete",
     output:
         t="prediction/.{pref}__{index}.predict.complete",
     params:
+        bam="prediction/{pref}__{index}.bam",
+        tree="database/{index}/tree.nw",
+        metadata="database/{index}.tsv",
         tsv1="prediction/{pref}__{index}.predict_without_flags.tsv",
         tsv2="prediction/{pref}__{index}.predict.tsv",
     benchmark:
         "benchmarks/{pref}__{index}.predict.log"
     shell:
         """
-            ../scripts/rase_predict.py database/{wildcards.index}.tsv prediction/{wildcards.pref}__{wildcards.index}/*.tsv > "{params.tsv1}"
+            mkdir -p "prediction/{wildcards.pref}__{wildcards.index}"
+            ../scripts/rase_predict.py {params.tree} {params.metadata} {params.bam} >  {params.tsv1}
             ../scripts/rase_prediction_add_flags.py  {params.tsv1} > {params.tsv2}
             rm {params.tsv1}
             touch "{output.t}"
