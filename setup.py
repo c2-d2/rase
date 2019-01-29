@@ -11,8 +11,8 @@ if sys.version_info < (3, 2):
 here = os.path.abspath(os.path.dirname(__file__))
 
 # Get the long description from the README file
-with open(os.path.join(here, 'README.rst'), encoding='utf-8') as f:
-    long_description = f.read()
+#with open(os.path.join(here, 'README.rst'), encoding='utf-8') as f:
+#    long_description = f.read()
 
 # Get the current version
 exec(open("rase/version.py").read())
@@ -21,7 +21,7 @@ setuptools.setup(
     name='rase',
     version=VERSION,
     description='description',
-    long_description=long_description,
+    #long_description=long_description,
     url='https://github.com/karel-brinda/rase',
     author='Karel Brinda',
     author_email='kbrinda@hsph.harvard.edu',
