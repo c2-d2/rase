@@ -1,8 +1,8 @@
 # see https://github.com/pypa/sampleproject
 
-import setuptools
-
+import glob
 import os
+import setuptools
 import sys
 
 if sys.version_info < (3, 2):
@@ -45,6 +45,7 @@ setuptools.setup(
             '*.py',
         ],
     },
+    scripts=glob.glob("scripts/*"),
     entry_points={
         'console_scripts': [
             'rase = rase.rase:main',
