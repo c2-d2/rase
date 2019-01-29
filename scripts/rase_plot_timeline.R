@@ -8,7 +8,8 @@
 
 library(optparse)
 
-# CLI PARSING
+
+# CLI-parsing-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 kIsRStudio <- Sys.getenv("RSTUDIO") == "1"
 
@@ -30,7 +31,8 @@ if (kIsRStudio) {
 }
 
 
-# CONFIGURATION
+
+# CONFIGURATION-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 set.seed(42)
 
@@ -61,10 +63,14 @@ par(mgp = c(2, 0.6, 0))
 
 
 
-#
-# FUNCTIONS
-#
+# FUNCTIONS-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+#' Load output of RASE prediction
+#'
+#' @param src.file TSV table with the output
+#'
+#' @return Data frame with loaded prediction data
+#' 
 LoadTimelineData <- function(src.file) {
    df <- read.delim(src.file, header = TRUE)
    df$datetime <- as.POSIXct(strptime(df$datetime, "%Y-%m-%d %H:%M:%S"))
@@ -85,13 +91,27 @@ LoadTimelineData <- function(src.file) {
    df
 }
 
-DfToAnts <- function(dataframe) {
-   cols <- colnames(dataframe)
+
+#' Extract antibiotics from a data frame
+#'
+#' @param df Input dataframe
+#'
+#' @return List of antibiotics
+#' 
+DfToAnts <- function(df) {
+   cols <- colnames(df)
    antcols <- cols[grepl("sus", cols)]
    ants <- gsub("_sus", "", antcols)
    ants
 }
 
+
+#' Create a data frame with flag points
+#'
+#' @param df Input dataframe
+#'
+#' @return Dataframe with flag points to plot
+#'
 DfToFlags <- function(dataframe) {
    df.1 <- dataframe[grep("S:PG1", dataframe$flags), ]
    df.1$pch <- rep(4, nrow(df.1))
@@ -103,21 +123,33 @@ DfToFlags <- function(dataframe) {
    df.3$pch <- rep(0, nrow(df.3))
    
    df <- rbind(df.1, df.2, df.3)
+   print(df)
    df
 }
 
-# plots vertical ablines
+
+#' Plot vertical ablines (displayed snapshots)
+#'
+#' @param x Snapshots (time)
+#'
 TimeAblines <- function(x) {
    abline(v = as.numeric(unlist(x)), lty = 2, col = "grey", lwd = 2)
 }
 
-# plots horizontal ablines
+
+#' Plots horizontal ablines
+#'
+#' @param y SUS thresholds
+#'
 ThresholdAbline <- function(y) {
    abline(h = c(y), lty = 1, col = "grey")
 }
 
 
-# set margins for a subfigure
+#' Set margins for a subfigure
+#'
+#' @param i Position: 1=left, 2=right
+#'
 margin <- function(i) {
    if (i == 1) {
       par(mar = c(0, 0, 0, 0))
@@ -127,7 +159,11 @@ margin <- function(i) {
 }
 
 
-# plot res color boxes
+#' Plot resistance color boxes (if predicted as resistance)
+#'
+#' @param df2 Dataframe
+#' @param threshold Threshold of resistance
+#'
 RedBox <- function(df2, threshold) {
    mx <- max(df2$time.mins) + 15
    rect(-mx, -0.1, mx, threshold, col = rgb(1, 0, 0, alpha = 0.1), border = "NA")
@@ -139,9 +175,11 @@ GreenBox <- function(df2, threshold) {
 }
 
 
-# plots curve for nb of reads
-
-PlotReads <- function(i) {
+#' Plot nb of reads
+#'
+#' @param i Position: 1=left, 2=right
+#'
+PlotReads <- function(df1, i) {
    margin(i)
    reads.ylim <- c(0, max(df$reads)/1000)
    if (i == 1) {
@@ -166,7 +204,14 @@ PlotReads <- function(i) {
 }
 
 
-# plots curve for PG score df.flag=DfToFlags(df)
+#' Plot PGS
+#'
+#' @param i 
+#'
+#' @return
+#' @export
+#'
+#' @examples
 PlotPG <- function(i) {
    last_pg_predicted <- tail(df, n = 1)["pgs"] >= 0.6
    margin(i)
@@ -195,7 +240,16 @@ PlotPG <- function(i) {
 }
 
 
-# plots curve for an antibiotic
+#' Plot SUS
+#'
+#' @param ant 
+#' @param i 
+#' @param is.last 
+#'
+#' @return
+#' @export
+#'
+#' @examples
 PlotAntibiotic <- function(ant, i, is.last) {
    antcol <- paste(ant, "_sus", sep = "")
    print(paste(ant, antcol))
@@ -244,7 +298,7 @@ PlotAntibiotic <- function(ant, i, is.last) {
 }
 
 
-# PLOTTING
+# PLOTTING-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 df <- LoadTimelineData(src.file)
 
@@ -271,27 +325,17 @@ ants <- DfToAnts(df)
 
 par(mfrow = c(length(ants) + 2, 2), tcl = -0.5)
 
-
-
 # 1) reads
-
-
 for (i in c(1, 2)) {
-   PlotReads(i)
+   PlotReads(df1, i)
 }
 
-
 # 2) pgs
-
-
 for (i in c(1, 2)) {
    PlotPG(i)
 }
 
-
 # 3) sus
-
-
 last.ant <- tail(ants, 1)
 for (ant in ants) {
    is.last <- ant == last.ant
