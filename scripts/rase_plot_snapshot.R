@@ -20,7 +20,7 @@ kResGridHeight <- 0.045  # heigth of a resistance cell, fraction of the height o
 kGridShift <- 2
 kPalette <- rep(c("#d95f02", "#7570b3", "#222222", "#e7298a"), times = 2)
 kRStudio <- Sys.getenv("RSTUDIO") == "1"
-kCatColors <- c("#ff0000", "#0000aa", "#00aa00") # R / S / NA
+kCatColors <- c("#ff0000", "#0000aa", "#00aa00")  # R / S / NA
 
 
 # FUNCTIONS-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -47,6 +47,11 @@ DfToAnts <- function(dataframe) {
    ants <- ants[ants != "CHL"]
    ants <- ants[ants != "chl"]
    ants
+}
+
+LastLine <- function(ct, bps.total, bps.matched) {
+   paste("Reads: ", format(as.integer(ct), big.mark = ","), "       Bps: ", format(as.integer(bps.total), big.mark = ","), 
+      "       Matched bps: ", round(100 * as.double(bps.matched)/as.double(bps.total)), "%", sep = "")
 }
 
 
@@ -145,7 +150,7 @@ line1 <- paste0("Test sample: ", sample.desc)
 line2 <- paste0("Results after 5 mins: Penicillin ", first.res, ", lineage ", first.phylogroup, ", serotype ", first.serotype)
 
 
-mtext("Relative similarity to sample", side = 2, line = -0.3, cex.lab = 2, las = 3, cex = 1.6)
+mtext("Weight (normalized)", side = 2, line = -0.3, cex.lab = 2, las = 3, cex = 1.6)
 
 
 
@@ -159,20 +164,17 @@ text(y = -kGridShift * 0.5 * AbsResGridHeight, x = 35, labels = "Isolate", cex =
 
 
 bps.total <- sum(dfsnap_with_unassigned[c("ln")])
-bps.voting <- sum(dfsnap_with_unassigned[c("h1")])
+bps.matched <- sum(dfsnap_with_unassigned[c("h1")])
 reads <- sum(dfsnap_with_unassigned[c("count")])
-subtitle <- paste("Reads: ", format(as.integer(reads), big.mark = ","), "       Bps: ", format(as.integer(bps.total), big.mark = ","), 
-   "       Useful bps: ", round(100 * as.double(bps.voting)/as.double(bps.total)), "%", sep = "")
-
+subtitle <- LastLine(reads, bps.total, bps.matched)
 
 # bps. etc.
 mtext(side = 1, text = subtitle, line = 0.8, cex = 0.95)
 
 
-# # legend - resistance
+# legend - resistance
 legend(x = "topright", title = "Susceptibility", legend = c(CatToCatName("R"), CatToCatName("S")), cex = 1.5, fill = kCatColors, 
    y.intersp = 0.8, yjust = 3, border = NA, box.col = NA, inset = c(0, 0.25), title.adj = 0)
-
 
 # legend - seq. phylogroups
 legend(x = "topright", title = "Phylogroup", legend = c(first.phylogroup, second.phylogroup, "Others"), cex = 1.5, fill = c(1, 
