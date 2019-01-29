@@ -212,7 +212,7 @@ PlotReads <- function(df1, i) {
 #' @export
 #'
 #' @examples
-PlotPG <- function(i) {
+PlotPGS <- function(i) {
    last_pg_predicted <- tail(df, n = 1)["pgs"] >= 0.6
    margin(i)
    if (i == 1) {
@@ -252,10 +252,7 @@ PlotPG <- function(i) {
 #' @examples
 PlotAntibiotic <- function(ant, i, is.last) {
    antcol <- paste(ant, "_sus", sep = "")
-   print(paste(ant, antcol))
-   
    last_is_resistant <- tail(df, n = 1)[antcol] <= 0.6
-   
    par(bty = "l")
    margin(i)
    if (i == 1) {
@@ -327,21 +324,20 @@ par(mfrow = c(length(ants) + 2, 2), tcl = -0.5)
 
 # 1) reads
 for (i in c(1, 2)) {
-   PlotReads(df1, i)
 }
+PlotReads(df1, 1)
+PlotReads(df1, 2)
 
 # 2) pgs
-for (i in c(1, 2)) {
-   PlotPG(i)
-}
+PlotPGS(1)
+PlotPGS(2)
 
 # 3) sus
 last.ant <- tail(ants, 1)
 for (ant in ants) {
    is.last <- ant == last.ant
-   for (i in c(1, 2)) {
-      PlotAntibiotic(ant, i, is.last)
-   }
+   PlotAntibiotic(ant, 1, is.last)
+   PlotAntibiotic(ant, 2, is.last)
 }
 
 if (!kIsRStudio) {
