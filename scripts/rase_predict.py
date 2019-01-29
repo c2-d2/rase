@@ -68,7 +68,7 @@ class Runner:
                 if self.pref is not None:
                     self.stats.print(file=f)
                 self.predict.predict(self.stats)
-                self.predict.print()
+                self.predict.print(read_timestamp)
                 if self.pref is not None:
                     f.close()
                 while read_timestamp >= current_window[1]:
@@ -123,8 +123,7 @@ class Predict:
 
         ## 1) GENERAL & CUMULATIVE STATS
 
-        current_dt, _, _ = str(datetime.datetime.now()).partition(".")
-        tbl['datetime'] = current_dt  #"now" #todo: self.datetime
+        tbl['datetime'] = "NA"
         tbl['reads'] = stats.nb_assigned_reads + stats.nb_unassigned_reads
         tbl['bps'] = stats.cumul_ln
         tbl['matched bps'] = stats.cumul_h1
@@ -226,13 +225,22 @@ class Predict:
 
             self.summary = tbl
 
-    def print(self):
+    def print(self, timestamp):
         """Print.
         """
 
         global HEADER_PRINTED
 
+
         summary = self.summary
+
+        if timestamp is None:
+            current_dt, _, _ = str(datetime.datetime.now()).partition(".")
+            summary['datetime'] = current_dt
+        else:
+            odt=datetime.datetime.fromtimestamp(timestamp)
+            original_dt = odt.strftime('%Y-%m-%d %H:%M:%S')
+            summary['datetime'] = original_dt
 
         keys = list(summary)
         values = [summary[k] for k in summary]
