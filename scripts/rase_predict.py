@@ -147,7 +147,7 @@ class Predict:
         ## 2c) Save values
 
         tbl['pgs'] = pgs
-        tbl['pgs_ok'] = "yes" if pgs > 0.5 else "no"
+        tbl['pgs_ok'] = "pass" if pgs > 0.5 else "fail"
         tbl['pg1'] = pg1
         tbl['pg2'] = pg2
         tbl['pg1_bm'] = pg1_bm
@@ -231,14 +231,13 @@ class Predict:
 
         global HEADER_PRINTED
 
-
         summary = self.summary
 
         if timestamp is None:
             current_dt, _, _ = str(datetime.datetime.now()).partition(".")
             summary['datetime'] = current_dt
         else:
-            odt=datetime.datetime.fromtimestamp(timestamp)
+            odt = datetime.datetime.fromtimestamp(timestamp)
             original_dt = odt.strftime('%Y-%m-%d %H:%M:%S')
             summary['datetime'] = original_dt
 
