@@ -1,17 +1,15 @@
 #!/usr/bin/env Rscript
 
-#
-# Author: Karel Brinda <kbrinda@hsph.harvard.edu>
-#
-# License: MIT
-#
+#' Plot RASE prediction snapshot.
+#'
+#' Author: Karel Brinda <kbrinda@hsph.harvard.edu>
+#'
+#' License: MIT
+#'
 
 library(optparse)
 
-
-#################
-# CONFIGURATION #
-#################
+# CONFIGURATION-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 set.seed(42)
 
@@ -48,9 +46,7 @@ kRStudio <- Sys.getenv("RSTUDIO") == "1"
 kCatColors <- c("#ff0000", "#0000aa", '#00aa00')
 
 
-#############
-# FUNCTIONS #
-#############
+# FUNCTIONS-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 CatToColor <- function(cat) {
   catu = toupper(cat)
@@ -80,9 +76,7 @@ DfToAnts <- function(dataframe) {
 }
 
 
-###############
-# CLI PARSING #
-###############
+# CLI-parsing-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 if (kRStudio) {
   src.file <- "../tests/test.timestamp.tsv"
@@ -117,10 +111,7 @@ if (kRStudio) {
 }
 
 
-
-############
-# PLOTTING #
-############
+# PLOTTING-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 palette(kPalette)
 
@@ -214,14 +205,6 @@ xx <- barplot(
   add = T
 )
 
-#ablines(c(0,0.01), col="white")
-
-# grid(lwd = 1,
-#      ny = maxval / 0.01,
-#      nx = NA)
-
-
-
 axis(
   side = 2,
   pos = -0.2,
@@ -252,15 +235,6 @@ mtext(
 )
 
 
-# mtext(
-#   "(arbitrary units)",
-#   side = 2,
-#   line = -0.0,
-#   cex.lab = 1,
-#   cex = 1.15,
-#   las = 3
-# )
-
 
 ## taxid
 text(
@@ -272,35 +246,8 @@ text(
   cex = 0.05,
   offset = 0.35,
   col = "#eeeeee"
-  #srt = 40
 )
 
-#tmp <- sel$h1_norm
-# # serotype
-# text(
-#   y = tmp,
-#   x = x + 0.6,
-#   labels = sel$Serotype.From.Reads,
-#   pos = 3,
-#   cex = 0.75,
-#   offset = 0.35,
-#   col = "#000000",
-#   srt = 40
-# )
-
-
-
-# # phylogroup
-# text(
-#   x = xx,
-#   y = 0,
-#   col = "#ffffff",
-#   labels = as.numeric(sel$phylogroup),
-#   pos = 1,
-#   offset = -0.35,
-#   srt = 00,
-#   cex = 0.45
-# )
 
 abline(v = seq(0:kSelected),
        col = "white")
@@ -339,7 +286,6 @@ mtext(
 
 
 # # legend - resistance
-#par(lend = 1)
 legend(
   x = "topright",
   title = "Susceptibility",
@@ -347,8 +293,6 @@ legend(
   cex = 1.5,
   fill = kCatColors,
   y.intersp = 0.8,
-  #lty = 1,
-  #lwd = 10,
   yjust = 3,
   border = NA,
   box.col = NA,
@@ -358,7 +302,6 @@ legend(
 
 
 # legend - seq. phylogroups
-
 legend(
   x = "topright",
   title = "Phylogroup",
@@ -371,9 +314,6 @@ legend(
   inset = c(0.142, 0.00),
   title.adj = 0
 )
-
-
-
 
 # timestamp
 mtext(

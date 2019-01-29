@@ -1,5 +1,6 @@
 #!/usr/bin/env Rscript
 
+#' Plot RASE prediction timeline.
 #'
 #' Author: Karel Brinda <kbrinda@hsph.harvard.edu>
 #'
