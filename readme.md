@@ -1,6 +1,20 @@
 # RASE prediction pipeline
 
 
+* [Introduction](#introduction)
+* [Quick example](#quick-example)
+* [Installing of RASE](#installing-of-rase)
+* [Running RASE](#running-rase)
+* [Files and directories](#files-and-directories)
+* [Formats](#formats)
+  * [Prediction output](#prediction-output)
+* [FAQs](#faqs)
+* [Related repositories](#related-repositories)
+* [Citing RASE](#citing-rase)
+* [License](#license)
+* [Contact](#contact)
+
+<!-- vim-markdown-toc -->
 ## Introduction
 
 This repository contains the RASE prediction pipeline. The method uses lineage
