@@ -159,6 +159,26 @@ help`.
 * `tests` - Testing data for scripts.
 
 
+## Formats
+
+### Prediction output
+
+* `datetime` - datetime
+* `reads` - number of reads
+* `bps` - number of basepairs
+* `matched bps` - number of matching basepairs (via k-mers)
+* `pgs` - phylogroup score
+* `pgs_ok` - phylogroup score ok
+* `pg1`, `pg2` - predicted and alternative phylogroup
+* `pg1_bm`, `pg2_bm` - best matching isolate within the predicted and alternative phylogroup, respectively
+* `pg1_w`, `pg2_w` - weight of the predicted and alternative phylogroup, respectively
+* `{ant}_sus` - susceptibility score of ant
+* `{ant}_pr_cat` - prediction: `S` - susceptible, `S!` - best match susceptible but risk of resistance, `R` resistant
+* `{ant}_bm_cat` - category of the best matching isolate: `R`, `S`, `r`, `s` for resistant, susceptible, NA and inferred as resistant, and NA and inferred as susceptible, respectively
+* `{ant}_r_bm`, `{ant}_s_bm` - resistant and susceptible best match within the phylogroup, respectively
+* `{ant}_r_w`, `{ant}_s_w` - weight of the resistant and susceptible best match within the phylogroup, respectively
+
+
 ## FAQs
 
 > Can I run RASE on a laptop?
