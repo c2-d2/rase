@@ -366,9 +366,9 @@ class Stats:
         is_assigned = asg0["assigned"]
 
         # is read is assigned to at least 1 node?
+        ln = asg0['ln']
         if is_assigned:
             h1 = asg0['h1']
-            ln = asg0['ln']
 
             # 1) update cumulative stats
             self.nb_assigned_reads += 1
@@ -392,7 +392,9 @@ class Stats:
             if len(asgs) != 1:
                 warnings.warn("A single read shouldn't be reported as unassigned multiple times ({})".format(asgs))
             self.nb_unassigned_reads += 1
-            self.update_isolate_stats([FAKE_ISOLATE_UNASSIGNED], h1=0, ln=asg0["ln"], l=1)
+            self.cumul_ln += ln
+            self.stats_ct[FAKE_ISOLATE_UNASSIGNED] += 1
+            self.stats_ln[FAKE_ISOLATE_UNASSIGNED] += ln
 
     def print(self, file):
         """Print statistics to a file.
