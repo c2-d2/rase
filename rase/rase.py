@@ -19,6 +19,8 @@ PROGRAM = 'rase'
 VERSION = version.VERSION
 DESC = ''
 
+script_dir = os.path.dirname(os.path.realpath(__file__))
+
 
 def run(*args):
     print("Running: '{}'".format(' '.join(args)), file=sys.stderr)
@@ -26,9 +28,11 @@ def run(*args):
 
 
 def rase(db, reads):
-    run(*['prophyle', 'decompress', db+".tar.gz"])
+    db_dir = os.path.dirname(db)
+    db_pref = os.path.basename(db)
+    run(*['cd', db_dir, '&&', 'prophyle', 'decompress', db_pref+".tar.gz"])
     run(*['prophyle', 'classify', db, reads,
-          '|', '../scripts/rase_predict.py', db+"/tree.nw", db+'.tsv', '-', #'-p', prediction/{wildcards.pref}__{wildcards.index}/
+          '|', script_dir+'/../scripts/rase_predict.py', db+"/tree.nw", db+'.tsv', '-', #'-p', prediction/{wildcards.pref}__{wildcards.index}/
           ])
           #> {params.tsv1}
 
