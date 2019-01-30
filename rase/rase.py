@@ -9,6 +9,7 @@ License: MIT
 
 import argparse
 import os
+import subprocess
 import sys
 
 sys.path.append(os.path.dirname(__file__))
@@ -18,14 +19,18 @@ PROGRAM = 'rase'
 VERSION = version.VERSION
 DESC = ''
 
-def rase(db, reads):
-    cmd='prophyle decompress "{}"'.format(db)
-    cmd="""
-    prophyle decompress
-    prophyle classify {index} {reads}
-    ../scripts/rase_predict.py {params.tree} {params.metadata} {params.bam} -p prediction/{wildcards.pref}__{wildcards.index}/ > {params.tsv1}
-    """
 
+def run(*args):
+    print("Running: '{}'".format(' '.join(args)), file=sys.stderr)
+    subprocess.call(args)
+
+
+def rase(db, reads):
+    run(*['prophyle', 'decompress', db+".tar.gz"])
+    run(*['prophyle', 'classify', db, reads,
+          '|', '../scripts/rase_predict.py', db+"/tree.nw", db+'.tsv', '-', #'-p', prediction/{wildcards.pref}__{wildcards.index}/
+          ])
+          #> {params.tsv1}
 
 def main():
     parser = argparse.ArgumentParser(description="")
@@ -37,13 +42,6 @@ def main():
     parser.add_argument(
         'reads',
     )
-
-    #parser.add_argument(
-    #    '-v',
-    #    '--version',
-    #    action='version',
-    #    version='{} {}'.format(PROGRAM, VERSION),
-    #)
 
     args = parser.parse_args()
     rase(db=args.rase_db, reads=args.reads)
