@@ -547,6 +547,13 @@ class SingleAssignmentReader:
             assignment (dict): A dict with the following keys: "rname", "qname", "qlen, "assigned", "h1".
         """
 
+        #
+        # Inferring length:
+        # 1) if tag ln present, use it
+        # 2) if seq present, use len (seq)
+        # 3) infer length from cigar
+        #
+
         # 1) acquire a new alignment from SAM
         try:
             alignment = next(self.alignments_iter)
@@ -559,10 +566,10 @@ class SingleAssignmentReader:
             try:
                 self.read_ln = alignment.get_tag("ln")
             except KeyError:  # a ln tag is not present
-                if alignment.seq != "*":
+                if alignment.seq is not None:
                     self.read_ln = len(alignment.seq)
                 else:
-                    self.read_ln = read.infer_read_length()
+                    self.read_ln = alignment.infer_read_length()
         self.last_qname = self.qname
 
         # 3) infer assignment-related variables
