@@ -34,7 +34,7 @@ def rase(db, reads):
     args_classify = ['prophyle', 'classify', db, reads]
 
     args_predict = [
-        script_dir + '/../scripts/rase_predict.py',
+        'rase_predict.py',
         '-t',
         'clock',
         '-i',

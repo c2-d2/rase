@@ -49,6 +49,7 @@ setuptools.setup(
     entry_points={
         'console_scripts': [
             'rase = rase.rase:main',
+            'rase_predict.py = rase.rase_predict:main',
         ],
     },
 )
