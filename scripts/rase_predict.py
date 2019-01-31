@@ -60,6 +60,17 @@ def format_time(seconds):
     return "{}h{}m".format(hours, minutes)
 
 
+def format_floats(*values, digits=3):
+    form_values = []
+    fstr = "{0:." + str(digits) + "f}"
+    for x in values:
+        if isinstance(x, float):
+            form_values.append(fstr.format(round(x, 3)))
+        else:
+            form_values.append(x)
+    return form_values
+
+
 class Runner:
     def __init__(self, metadata_fn, tree_fn, bam_fn, pref, mode, delta, first_read_delay):
         self.mode = mode
@@ -172,9 +183,9 @@ class Predict:
 
         ## 2b) Calculate PGS
         if pg1_w > 0:
-            pgs = 2 * round(pg1_w / (pg1_w + pg2_w), 3) - 1
+            pgs = 2.0 * round(pg1_w / (pg1_w + pg2_w), 3) - 1
         else:
-            pgs = 0
+            pgs = 0.0
 
         ## 2c) Save values
 
@@ -213,7 +224,7 @@ class Predict:
                 if r_w + s_w > 0:
                     sus = round(s_w / (r_w + s_w), 3)
                 else:
-                    sus = 0
+                    sus = 0.0
             except KeyError:
                 # Some data were missing.
                 if bm_cat == 'R':
@@ -280,13 +291,7 @@ class Predict:
         if not HEADER_PRINTED:
             print(*keys, sep="\t")
             HEADER_PRINTED = True
-        form_values=[]
-        for x in values:
-            if isinstance(x, float):
-                form_values.append("{0:.3f}".format(round(x, 3)))
-            else:
-                form_values.append(x)
-        print(*form_values, sep="\t")
+        print(*format_floats(*values), sep="\t")
         sys.stdout.flush()
 
 
@@ -449,19 +454,22 @@ class Stats:
             table.append(
                 [
                     isolate,
-                    self.stats_ct[isolate],
-                    1.0 * self.stats_ct[isolate] / self.nb_assigned_reads if self.nb_assigned_reads != 0 else 0,
-                    self.stats_ln[isolate],
-                    self.stats_ln[isolate] / self.cumul_ln if self.cumul_ln != 0 else 0,
-                    self.stats_h1[isolate],
-                    self.stats_h1[isolate] / self.cumul_h1 if self.cumul_h1 != 0 else 0,
+                    *format_floats(self.stats_ct[isolate], digits=0),
+                    *format_floats(
+                        1.0 * self.stats_ct[isolate] / self.nb_assigned_reads if self.nb_assigned_reads != 0 else 0.0,
+                        digits=3
+                    ),
+                    *format_floats(self.stats_ln[isolate], digits=0),
+                    *format_floats(self.stats_ln[isolate] / self.cumul_ln if self.cumul_ln != 0 else 0.0, digits=3),
+                    *format_floats(self.stats_h1[isolate], digits=0),
+                    *format_floats(self.stats_h1[isolate] / self.cumul_h1 if self.cumul_h1 != 0 else 0.0, digits=3),
                 ]
             )
 
-        table.sort(key=lambda x: x[5], reverse=True)
+        table.sort(key=lambda x: float(x[5]), reverse=True)
 
         for x in table:
-            print(*x, sep="\t", file=file)
+            print(*format_floats(*x, digits=5), sep="\t", file=file)
 
 
 class RaseMetadataTable:
