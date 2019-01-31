@@ -37,8 +37,7 @@ def delete_nodes(newick_in_fn, newick_out_fn, nodes):
     )
 
 
-if __name__ == "__main__":
-
+def main():
     parser = argparse.ArgumentParser(description='Delete children.')
 
     parser.add_argument(
@@ -79,3 +78,7 @@ if __name__ == "__main__":
         newick_out_fn=args.newick_out_fn,
         nodes=args.nodes,
     )
+
+
+if __name__ == "__main__":
+    main()

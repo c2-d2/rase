@@ -166,7 +166,7 @@ class Parsimony:
             self._propagate_categories(n)
 
 
-def main(tsv_fn, nhx_fn, pdf_fn, antibiotics):
+def ancestral_state_reconstruction(tsv_fn, nhx_fn, pdf_fn, antibiotics):
     parsimony = Parsimony(nhx_fn, tsv_fn, antibiotics)
     parsimony.infer_resistance_parsimony()
     print(parsimony.first_line)
@@ -176,8 +176,7 @@ def main(tsv_fn, nhx_fn, pdf_fn, antibiotics):
         parsimony.plot_tree(pdf_fn)
 
 
-if __name__ == "__main__":
-
+def main():
     parser = argparse.ArgumentParser(
         description="Read resistance categories and infer missing ones (NA) using parsimony."
     )
@@ -229,3 +228,7 @@ if __name__ == "__main__":
         pdf_fn=args.pdf_fn,
         antibiotics=args.antibiotics,
     )
+
+
+if __name__ == "__main__":
+    main()

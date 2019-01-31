@@ -27,8 +27,7 @@ def print_order(newick_in_fn):
         print("{}\t{}".format(l, i))
 
 
-if __name__ == "__main__":
-
+def main():
     parser = argparse.ArgumentParser(description='Print order of leaves')
 
     parser.add_argument(
@@ -44,3 +43,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     print_order(newick_in_fn=args.newick_in_fn, )
+
+
+if __name__ == "__main__":
+    main()

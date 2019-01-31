@@ -97,8 +97,7 @@ def assign_cat(
             print(line)
 
 
-if __name__ == "__main__":
-
+def main():
     parser = argparse.ArgumentParser(
         description="Read MICs from a TSV file and assign resistance categories (R / S / NA)."
     )
@@ -162,3 +161,7 @@ if __name__ == "__main__":
         miccol=args.miccol,
         taxidcol=args.taxidcol,
     )
+
+
+if __name__ == "__main__":
+    main()

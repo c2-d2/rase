@@ -84,8 +84,7 @@ def create_rase_tree(newick_in_fn, newick_out_fn, table_fn, node_col, taxid_col,
     )
 
 
-if __name__ == "__main__":
-
+def main():
     parser = argparse.ArgumentParser(
         description='Prepare a tree for RASE. Rename nodes and add names for internal nodes.'
     )
@@ -160,3 +159,7 @@ if __name__ == "__main__":
         taxid_col=args.taxid_col,
         pg_col=args.pg_col,
     )
+
+
+if __name__ == "__main__":
+    main()
