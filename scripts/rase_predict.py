@@ -280,7 +280,13 @@ class Predict:
         if not HEADER_PRINTED:
             print(*keys, sep="\t")
             HEADER_PRINTED = True
-        print(*values, sep="\t")
+        form_values=[]
+        for x in values:
+            if isinstance(x, float):
+                form_values.append("{0:.3f}".format(round(x, 3)))
+            else:
+                form_values.append(x)
+        print(*form_values, sep="\t")
         sys.stdout.flush()
 
 
