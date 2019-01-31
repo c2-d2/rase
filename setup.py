@@ -17,6 +17,13 @@ here = os.path.abspath(os.path.dirname(__file__))
 # Get the current version
 exec(open("rase/version.py").read())
 
+rase_pys = list(map(lambda x: x.split('/')[-1].replace(".py", ""), glob.glob('rase/rase_*.py')))
+rase_pys_strs = list(map(lambda x: '{z}.py = rase.{z}:main'.format(z=x), rase_pys))
+
+#print([
+#            'rase = rase.rase:main'
+#        ] + rase_pys_strs, file=sys.stderr)
+
 setuptools.setup(
     name='rase',
     version=VERSION,
@@ -47,9 +54,6 @@ setuptools.setup(
     },
     scripts=glob.glob("scripts/*"),
     entry_points={
-        'console_scripts': [
-            'rase = rase.rase:main',
-            'rase_predict.py = rase.rase_predict:main',
-        ],
+        'console_scripts': ['rase = rase.rase:main'] + rase_pys_strs,
     },
 )
