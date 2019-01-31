@@ -26,10 +26,28 @@ import warnings
 FAKE_ISOLATE_UNASSIGNED = "_unassigned_"
 HEADER_PRINTED = False
 re_timestamp = re.compile(r'.*/(\d{10})\.tsv')
+re_timestamped_read = re.compile(r'\d+_.*')
+
+
+def debug(*vals):
+    print("Debug:", *vals, file=sys.stderr)
 
 
 def timestamp_from_qname(qname):
-    return int(qname.partition("_")[0])
+    if re_timestamped_read.match(qname):
+        return int(qname.partition("_")[0])
+    else:
+        return None
+
+
+def current_datetime():
+    current_dt, _, _ = str(datetime.datetime.now()).partition(".")
+    return current_dt
+
+
+def current_timestamp():
+    dto = datetime.datetime.now()
+    return round(dto.timestamp())
 
 
 def format_time(seconds):
@@ -40,7 +58,8 @@ def format_time(seconds):
 
 
 class Runner:
-    def __init__(self, metadata_fn, tree_fn, bam_fn, pref, delta, first_read_delay):
+    def __init__(self, metadata_fn, tree_fn, bam_fn, pref, mode, delta, first_read_delay):
+        self.mode=mode
         self.metadata = RaseMetadataTable(metadata_fn)
         self.stats = Stats(tree_fn, self.metadata)
         self.predict = Predict(self.metadata)
@@ -52,7 +71,12 @@ class Runner:
     def run(self):
         # 1) set the initial window:
         #     [t0, t0+delta), where t0=time_of_first_read-first_read_delay
-        t0 = self.rase_bam_reader.t1 - self.first_read_delay
+        if self.mode=="clock":
+            t0 = current_timestamp() - self.first_read_delay
+        elif self.mode=="name":
+            t0 = self.rase_bam_reader.t1 - self.first_read_delay
+        else:
+            assert(1==2)
         current_window = [t0, t0 + self.delta]  # [x, y)
 
         if self.pref is not None:
@@ -61,7 +85,12 @@ class Runner:
         # 2) iterate through individual reads, and update and print statistics
         for read_stats in self.rase_bam_reader:
             assert len(read_stats) > 0
-            read_timestamp = timestamp_from_qname(read_stats[0]["qname"])
+            if self.mode=="clock":
+                read_timestamp = current_timestamp()
+            elif self.mode=="name":
+                read_timestamp = timestamp_from_qname(read_stats[0]["qname"])
+            else:
+                assert(1==2)
 
             # do we have to shift the window?
             if read_timestamp >= current_window[1]:
@@ -173,8 +202,10 @@ class Predict:
                 # Identify S/R pivots
                 s_bm = pres['S'][0]
                 s_w = pres['S'][1]
+                s_w_round = round(s_w)
                 r_bm = pres['R'][0]
                 r_w = pres['R'][1]
+                r_w_round = round(r_w)
                 # Calculate SUS
                 if r_w + s_w > 0:
                     sus = round(s_w / (r_w + s_w), 3)
@@ -220,8 +251,8 @@ class Predict:
             tbl[ant + "_bm_cat"] = bm_cat
             tbl[ant + "_r_bm"] = r_bm
             tbl[ant + "_s_bm"] = s_bm
-            tbl[ant + "_r_w"] = round(r_w)
-            tbl[ant + "_s_w"] = round(s_w)
+            tbl[ant + "_r_w"] = r_w_round
+            tbl[ant + "_s_w"] = s_w_round
 
             self.summary = tbl
 
@@ -247,6 +278,7 @@ class Predict:
             print(*keys, sep="\t")
             HEADER_PRINTED = True
         print(*values, sep="\t")
+        sys.stdout.flush()
 
 
 class Stats:
@@ -613,15 +645,23 @@ def main():
         metavar='<assignments.bam>',
     )
 
-    parser.add_argument('-p', type=str, dest='pref', metavar='STR', help="Output dir for samplings", default=None)
+    parser.add_argument('-p', type=str, dest='pref', metavar='STR', help="output dir for samplings", default=None)
+
+    parser.add_argument(
+        '-t',
+        dest='mode',
+        choices=['clock', 'read'],
+        help='time extraction mode',
+        default='auto',
+    )
 
     parser.add_argument(
         '-i',
         type=int,
         dest='delta',
         metavar='INT',
-        help='sampling interval (in seconds) [300]',
-        default=300,
+        help='sampling interval (seconds) [60]',
+        default=60,
     )
 
     parser.add_argument(
@@ -629,14 +669,14 @@ def main():
         type=int,
         dest='first_read_delay',
         metavar='INT',
-        help='delay of the first read [60]',
+        help='delay of the first read (seconds) [60]',
         default=60,
     )
 
     args = parser.parse_args()
 
     r = Runner(
-        metadata_fn=args.metadata, tree_fn=args.tree, bam_fn=args.bam, pref=args.pref, delta=args.delta,
+        metadata_fn=args.metadata, tree_fn=args.tree, bam_fn=args.bam, pref=args.pref, mode=args.mode, delta=args.delta,
         first_read_delay=args.first_read_delay
     )
     r.run()
