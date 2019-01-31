@@ -427,6 +427,7 @@ class Stats:
             nnames = [asg["rname"] for asg in asgs]
             bestmatching_isolates = self._descending_isolates(*nnames)
             l = len(bestmatching_isolates)
+            self.nb_asgs += l
             delta_ct = 1.0 / l
             delta_h1 = h1 / l
             delta_ln = ln / l
