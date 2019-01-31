@@ -23,6 +23,9 @@ import re
 import sys
 import warnings
 
+import signal
+signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+
 FAKE_ISOLATE_UNASSIGNED = "_unassigned_"
 HEADER_PRINTED = False
 re_timestamp = re.compile(r'.*/(\d{10})\.tsv')
@@ -59,7 +62,7 @@ def format_time(seconds):
 
 class Runner:
     def __init__(self, metadata_fn, tree_fn, bam_fn, pref, mode, delta, first_read_delay):
-        self.mode=mode
+        self.mode = mode
         self.metadata = RaseMetadataTable(metadata_fn)
         self.stats = Stats(tree_fn, self.metadata)
         self.predict = Predict(self.metadata)
@@ -71,12 +74,12 @@ class Runner:
     def run(self):
         # 1) set the initial window:
         #     [t0, t0+delta), where t0=time_of_first_read-first_read_delay
-        if self.mode=="clock":
+        if self.mode == "clock":
             t0 = current_timestamp() - self.first_read_delay
-        elif self.mode=="name":
+        elif self.mode == "name":
             t0 = self.rase_bam_reader.t1 - self.first_read_delay
         else:
-            assert(1==2)
+            assert (1 == 2)
         current_window = [t0, t0 + self.delta]  # [x, y)
 
         if self.pref is not None:
@@ -85,12 +88,12 @@ class Runner:
         # 2) iterate through individual reads, and update and print statistics
         for read_stats in self.rase_bam_reader:
             assert len(read_stats) > 0
-            if self.mode=="clock":
+            if self.mode == "clock":
                 read_timestamp = current_timestamp()
-            elif self.mode=="name":
+            elif self.mode == "name":
                 read_timestamp = timestamp_from_qname(read_stats[0]["qname"])
             else:
-                assert(1==2)
+                assert (1 == 2)
 
             # do we have to shift the window?
             if read_timestamp >= current_window[1]:
