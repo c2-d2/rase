@@ -69,7 +69,12 @@ def main():
     parser.add_argument('reads', )
 
     args = parser.parse_args()
-    rase(db=args.rase_db, reads=args.reads)
+
+    try:
+        rase(db=args.rase_db, reads=args.reads)
+    except:
+        print("Error: Keyboard interrupt", file=sys.stderr)
+        sys.exit(1)
 
 
 if __name__ == "__main__":

@@ -697,7 +697,12 @@ def main():
         metadata_fn=args.metadata, tree_fn=args.tree, bam_fn=args.bam, pref=args.pref, mode=args.mode, delta=args.delta,
         first_read_delay=args.first_read_delay
     )
-    r.run()
+
+    try:
+        r.run()
+    except KeyboardInterrupt:
+        print("Error: Keyboard interrupt", file=sys.stderr)
+        sys.exit(1)
 
 
 if __name__ == "__main__":
