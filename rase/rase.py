@@ -16,7 +16,7 @@ import version
 
 PROGRAM = 'rase'
 VERSION = version.VERSION
-DESC = ''
+DESC = 'RASE - rapid prediction of antibiotic resistance using lineage calling'
 
 script_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -33,6 +33,8 @@ def error(*msg, error_code=1):
 
 
 def rase(db, reads):
+
+    # 0) check correctness
 
     # 1) decompress prophyle index
 
@@ -67,11 +69,11 @@ def rase(db, reads):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="")
+    parser = argparse.ArgumentParser(description=DESC)
 
-    parser.add_argument('rase_db')
+    parser.add_argument('rase_db', help="prefix of the RASE database (<pref>.tar.gz, <pref>.tsv)")
 
-    parser.add_argument('reads', )
+    parser.add_argument('reads.fq', help="nanopore reads (- for stdin)")
 
     args = parser.parse_args()
 
