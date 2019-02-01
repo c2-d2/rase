@@ -18,7 +18,14 @@ PROGRAM = 'rase'
 VERSION = version.VERSION
 DESC = 'RASE - rapid prediction of antibiotic resistance using lineage calling'
 
-script_dir = os.path.dirname(os.path.realpath(__file__))
+GITDIR = os.path.basename(sys.argv[0])[-3:] == ".py"
+if GITDIR:
+    C_D = os.path.abspath(os.path.dirname(sys.argv[0]))
+else:
+    C_D = os.path.abspath(os.path.dirname(os.path.realpath(__file__)))
+
+RASE = os.path.join(C_D, "rase")
+RASE_PREDICT = os.path.join(C_D, "rase_predict.py")
 
 
 def debug(*vals):
@@ -56,7 +63,7 @@ def rase(db, reads_fn):
 
     cmd_classify = ['prophyle', 'classify', db, reads_fn]
     cmd_predict = [
-        'rase_predict.py',
+        RASE_PREDICT,
         '-t',
         'clock',
         '-i',
