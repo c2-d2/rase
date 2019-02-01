@@ -66,7 +66,7 @@ def rase(db, reads_fn):
         RASE_PREDICT,
         '-t',
         'clock',
-        '-i',
+        '-s',
         '1',
         db + "/tree.nw",
         db + '.tsv',

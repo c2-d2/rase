@@ -667,17 +667,25 @@ def main():
         'tree_fn',
         type=str,
         metavar='<tree.nw>',
+        help='RASE database newick tree',
     )
 
     parser.add_argument(
         'metadata_fn',
         type=str,
         metavar='<db.tsv>',
+        help='RASE database table with metadata',
     )
+
+    parser.add_argument('bam_fn', type=str, metavar='<in.asgs.bam>', help='input RASE assignments (- for stdin)')
+
     parser.add_argument(
-        'bam_fn',
+        'bam_fn_out',
         type=str,
-        metavar='<assignments.bam>',
+        metavar='<out.asgs.bam>',
+        help='output RASE assignments (to archive)',
+        default=None,
+        nargs='?',
     )
 
     parser.add_argument('-p', type=str, dest='pref', metavar='STR', help="output dir for samplings", default=None)
@@ -691,7 +699,7 @@ def main():
     )
 
     parser.add_argument(
-        '-i',
+        '-s',
         type=int,
         dest='delta',
         metavar='INT',
