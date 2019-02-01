@@ -539,7 +539,10 @@ class RaseBamReader:
         self.assignment_reader = SingleAssignmentReader(bam_fn)
         self._buffer = []
         self._finished = False
-        self._load_assignment()
+        try:
+            self._load_assignment()
+        except StopIteration:
+            error("No provided alignments in the SAM/BAM stream.")
         self._extract_t1()
 
     def __iter__(self):
@@ -566,7 +569,10 @@ class RaseBamReader:
         return buffer
 
     def _load_assignment(self):
-        asg = next(self.assignment_reader)
+        try:
+            asg = next(self.assignment_reader)
+        except StopIteration:
+            raise StopIteration
         self._buffer.append(asg)
 
     def _extract_t1(self):
