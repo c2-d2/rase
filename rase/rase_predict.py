@@ -234,7 +234,7 @@ class Predict:
                 elif bm_cat == 'S':
                     # everything S
                     sus = 1.0
-                    r_w, r_bm = "NA", "NA", "NA", "NA"
+                    r_w, r_bm = "NA", "NA"
                 elif bm_cat == 'NA' and pg1_w == 0:
                     # not enough info yet (no match)
                     sus = 0.0
