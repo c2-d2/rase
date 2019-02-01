@@ -23,6 +23,6 @@ DIR=`dirname $0`
 export -f test_script
 
 # argparse should return exit status 2
-ls "$DIR"/*.py | parallel test_script {} 2
-ls "$DIR"/*.R | parallel test_script {} 1
+ls "$DIR/../rase/"*.py | grep -v __ | grep -v version | parallel test_script {} 2
+ls "$DIR/"*.R | parallel test_script {} 1
 
