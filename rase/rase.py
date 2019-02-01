@@ -25,6 +25,13 @@ def debug(*vals):
     print("Debug:", *vals, file=sys.stderr)
 
 
+def error(*msg, error_code=1):
+    print('Rase Error:', *msg, file=sys.stderr)
+    sys.stdout.flush()
+    sys.stderr.flush()
+    sys.exit(error_code)
+
+
 def rase(db, reads):
 
     # 1) decompress prophyle index
@@ -50,15 +57,13 @@ def rase(db, reads):
     ]
 
     process_classify = subprocess.Popen(cmd_classify, stdout=subprocess.PIPE, shell=False)
-    process_predict = subprocess.Popen(
-        cmd_predict,
-        stdin=process_classify.stdout,
-        #stdout=subprocess.PIPE,
-        shell=False
-    )
+    process_predict = subprocess.Popen(cmd_predict, stdin=process_classify.stdout, shell=False)
+
+    print("Running:", *cmd_classify, "|", *cmd_predict, file=sys.stderr)
 
     process_classify.stdout.close()
-    process_predict.communicate()  # return ... [0]
+    a = process_predict.communicate()  # return ... [0]
+    #print(a)
 
 
 def main():
@@ -72,9 +77,8 @@ def main():
 
     try:
         rase(db=args.rase_db, reads=args.reads)
-    except:
-        print("Error: Keyboard interrupt", file=sys.stderr)
-        sys.exit(1)
+    except KeyboardInterrupt:
+        error("Keyboard interrupt")
 
 
 if __name__ == "__main__":

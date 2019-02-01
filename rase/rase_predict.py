@@ -36,6 +36,13 @@ def debug(*vals):
     print("Debug:", *vals, file=sys.stderr)
 
 
+def error(*msg, error_code=1):
+    print('Rase(predict) Error:', *msg, file=sys.stderr)
+    sys.stdout.flush()
+    sys.stderr.flush()
+    sys.exit(error_code)
+
+
 def timestamp_from_qname(qname):
     if re_timestamped_read.match(qname):
         return int(qname.partition("_")[0])
@@ -580,7 +587,11 @@ class SingleAssignmentReader:
     """
 
     def __init__(self, bam_fn):
-        self.samfile = pysam.AlignmentFile(bam_fn, "rb")
+        try:
+            self.samfile = pysam.AlignmentFile(bam_fn, "rb")
+        except ValueError as e:
+            error("SAM/BAM stream from '{}' could not be read:".format(bam_fn), str(e))
+
         self.alignments_iter = self.samfile.fetch(until_eof=True)
 
         self.qname = None
@@ -647,19 +658,19 @@ def main():
     parser = argparse.ArgumentParser(description="")
 
     parser.add_argument(
-        'tree',
+        'tree_fn',
         type=str,
         metavar='<tree.nw>',
     )
 
     parser.add_argument(
-        'metadata',
+        'metadata_fn',
         type=str,
         metavar='<db.tsv>',
     )
     parser.add_argument(
-        'bam',
-        type=argparse.FileType('r'),
+        'bam_fn',
+        type=str,
         metavar='<assignments.bam>',
     )
 
@@ -694,15 +705,14 @@ def main():
     args = parser.parse_args()
 
     r = Runner(
-        metadata_fn=args.metadata, tree_fn=args.tree, bam_fn=args.bam, pref=args.pref, mode=args.mode, delta=args.delta,
-        first_read_delay=args.first_read_delay
+        metadata_fn=args.metadata_fn, tree_fn=args.tree_fn, bam_fn=args.bam_fn, pref=args.pref, mode=args.mode,
+        delta=args.delta, first_read_delay=args.first_read_delay
     )
 
     try:
         r.run()
     except KeyboardInterrupt:
-        print("Error: Keyboard interrupt", file=sys.stderr)
-        sys.exit(1)
+        error("Keyboard interrupt")
 
 
 if __name__ == "__main__":
