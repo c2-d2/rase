@@ -595,6 +595,9 @@ class SingleAssignmentReader:
     """
 
     def __init__(self, bam_fn, out_bam_fn):
+        self.samfile = None
+        self.output_bamfile = None
+
         try:
             self.samfile = pysam.AlignmentFile(bam_fn, "rb")
         except ValueError as e:
@@ -605,14 +608,19 @@ class SingleAssignmentReader:
                 self.output_bamfile = pysam.AlignmentFile(out_bam_fn, "wb", header=self.samfile.header)
             except ValueError as e:
                 error("Output BAM file '{}' could not be created:".format(output_bam_fn), str(e))
-        else:
-            self.output_bamfile = None
 
         self.alignments_iter = self.samfile.fetch(until_eof=True)
 
         self.qname = None
         self.last_qname = None
         self.read_ln = None
+
+    # todo: verify that it gets invoked when the program finishes prematurly due to using head in the commandline
+    def __del__(self):
+        if self.samfile is not None:
+            self.samfile.close()
+        if self.output_bamfile is not None:
+            self.output_bamfile.close()
 
     def __iter__(self):
         return self
@@ -634,10 +642,11 @@ class SingleAssignmentReader:
         # 1) acquire a new alignment from SAM
         try:
             alignment = next(self.alignments_iter)
-            if self.output_bamfile is not None:
-                self.output_bamfile.write(alignment)
         except StopIteration:
             raise StopIteration
+
+        if self.output_bamfile is not None:
+            self.output_bamfile.write(alignment)
 
         # 2) re-compute basic read-related variables if necessary
         self.qname = alignment.qname
