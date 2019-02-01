@@ -71,9 +71,9 @@ def rase(db, reads):
 def main():
     parser = argparse.ArgumentParser(description=DESC)
 
-    parser.add_argument('rase_db', help="prefix of the RASE database (<pref>.tar.gz, <pref>.tsv)")
+    parser.add_argument('rase_db', metavar='db', help="prefix of the RASE database (<pref>.tar.gz, <pref>.tsv)")
 
-    parser.add_argument('reads.fq', help="nanopore reads (- for stdin)")
+    parser.add_argument('reads', metavar='reads.fq', help="nanopore reads (- for stdin)")
 
     args = parser.parse_args()
 
