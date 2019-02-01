@@ -32,21 +32,29 @@ def error(*msg, error_code=1):
     sys.exit(error_code)
 
 
-def rase(db, reads):
+def rase(db, reads_fn):
 
     # 0) check correctness
+
+    db_tsv = db + ".tsv"
+    db_tgz = db + ".tar.gz"
+    for x in (db_tsv, db_tgz):
+        if not os.path.isfile(db_tsv):
+            error("File '{}' could not be found".format(x))
+    if reads_fn != "-" and not os.path.isfile(reads_fn):
+        error("File '{}' could not be found".format(reads_fn))
 
     # 1) decompress prophyle index
 
     db_dir = os.path.dirname(db)
     db_pref = os.path.basename(db)
-    cmd_decompress = ['prophyle', 'decompress', db + ".tar.gz", db_dir]
+    cmd_decompress = ['prophyle', 'decompress', db_tgz, db_dir]
     process_decompress = subprocess.Popen(cmd_decompress, shell=False)
     process_decompress.communicate()
 
     # 2) run prophyle classify + rase_predict.py
 
-    cmd_classify = ['prophyle', 'classify', db, reads]
+    cmd_classify = ['prophyle', 'classify', db, reads_fn]
     cmd_predict = [
         'rase_predict.py',
         '-t',
@@ -78,7 +86,7 @@ def main():
     args = parser.parse_args()
 
     try:
-        rase(db=args.rase_db, reads=args.reads)
+        rase(db=args.rase_db, reads_fn=args.reads)
     except KeyboardInterrupt:
         error("Keyboard interrupt")
 

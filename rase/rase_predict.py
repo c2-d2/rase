@@ -542,7 +542,7 @@ class RaseBamReader:
         try:
             self._load_assignment()
         except StopIteration:
-            error("No provided alignments in the SAM/BAM stream.")
+            error("The provided SAM/BAM stream does not contain any alignments.")
         self._extract_t1()
 
     def __iter__(self):
