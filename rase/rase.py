@@ -21,19 +21,24 @@ DESC = ''
 script_dir = os.path.dirname(os.path.realpath(__file__))
 
 
-def run(*args):
-    print("Running: '{}'".format(' '.join(args)), file=sys.stderr)
-    subprocess.call(args)
+def debug(*vals):
+    print("Debug:", *vals, file=sys.stderr)
 
 
 def rase(db, reads):
+
+    # 1) decompress prophyle index
+
     db_dir = os.path.dirname(db)
     db_pref = os.path.basename(db)
-    run(*['cd', db_dir, '&&', 'prophyle', 'decompress', db_pref + ".tar.gz"])
+    cmd_decompress = ['prophyle', 'decompress', db + ".tar.gz", db_dir]
+    process_decompress = subprocess.Popen(cmd_decompress, shell=False)
+    process_decompress.communicate()
 
-    args_classify = ['prophyle', 'classify', db, reads]
+    # 2) run prophyle classify + rase_predict.py
 
-    args_predict = [
+    cmd_classify = ['prophyle', 'classify', db, reads]
+    cmd_predict = [
         'rase_predict.py',
         '-t',
         'clock',
@@ -44,9 +49,9 @@ def rase(db, reads):
         '-',  #'-p', prediction/{wildcards.pref}__{wildcards.index}/
     ]
 
-    process_classify = subprocess.Popen(args_classify, stdout=subprocess.PIPE, shell=False)
+    process_classify = subprocess.Popen(cmd_classify, stdout=subprocess.PIPE, shell=False)
     process_predict = subprocess.Popen(
-        args_predict,
+        cmd_predict,
         stdin=process_classify.stdout,
         #stdout=subprocess.PIPE,
         shell=False
@@ -54,8 +59,6 @@ def rase(db, reads):
 
     process_classify.stdout.close()
     process_predict.communicate()  # return ... [0]
-
-    #> {params.tsv1}
 
 
 def main():
