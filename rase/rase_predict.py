@@ -79,12 +79,12 @@ def format_floats(*values, digits=3):
 
 
 class Runner:
-    def __init__(self, metadata_fn, tree_fn, bam_fn, pref, mode, delta, first_read_delay):
+    def __init__(self, metadata_fn, tree_fn, bam_fn, out_bam_fn, pref, mode, delta, first_read_delay):
         self.mode = mode
         self.metadata = RaseMetadataTable(metadata_fn)
         self.stats = Stats(tree_fn, self.metadata)
         self.predict = Predict(self.metadata)
-        self.rase_bam_reader = RaseBamReader(bam_fn)
+        self.rase_bam_reader = RaseBamReader(bam_fn, out_bam_fn)
         self.pref = pref
         self.delta = delta
         self.first_read_delay = first_read_delay
@@ -530,13 +530,14 @@ class RaseBamReader:
 
     Params:
         bam_fn (str): BAM file name.
+        out_bam_fn (str): Output BAM file name.
 
     Attributes:
         t1 (int): Timestamp of first read
     """
 
-    def __init__(self, bam_fn):
-        self.assignment_reader = SingleAssignmentReader(bam_fn)
+    def __init__(self, bam_fn, out_bam_fn):
+        self.assignment_reader = SingleAssignmentReader(bam_fn, out_bam_fn)
         self._buffer = []
         self._finished = False
         try:
@@ -587,16 +588,25 @@ class SingleAssignmentReader:
 
     Params:
         bam_fn (str): BAM file name.
+        out_bam_fn (str): Output BAM file name.
 
     Attributes:
         samfile (pysam.AlignmentFile): PySAM file object.
     """
 
-    def __init__(self, bam_fn):
+    def __init__(self, bam_fn, out_bam_fn):
         try:
             self.samfile = pysam.AlignmentFile(bam_fn, "rb")
         except ValueError as e:
             error("SAM/BAM stream from '{}' could not be read:".format(bam_fn), str(e))
+
+        if out_bam_fn is not None:
+            try:
+                self.output_bamfile = pysam.AlignmentFile(out_bam_fn, "wb", header=self.samfile.header)
+            except ValueError as e:
+                error("Output BAM file '{}' could not be created:".format(output_bam_fn), str(e))
+        else:
+            self.output_bamfile = None
 
         self.alignments_iter = self.samfile.fetch(until_eof=True)
 
@@ -624,6 +634,8 @@ class SingleAssignmentReader:
         # 1) acquire a new alignment from SAM
         try:
             alignment = next(self.alignments_iter)
+            if self.output_bamfile is not None:
+                self.output_bamfile.write(alignment)
         except StopIteration:
             raise StopIteration
 
@@ -680,11 +692,11 @@ def main():
     parser.add_argument('bam_fn', type=str, metavar='<in.asgs.bam>', help='input RASE assignments (- for stdin)')
 
     parser.add_argument(
-        'bam_fn_out',
+        'out_bam_fn',
         type=str,
         metavar='<out.asgs.bam>',
         help='output RASE assignments (to archive)',
-        default=None,
+        default=[],
         nargs='?',
     )
 
@@ -718,9 +730,20 @@ def main():
 
     args = parser.parse_args()
 
+    if args.out_bam_fn:
+        out_bam_fn = args.out_bam_fn
+    else:
+        out_bam_fn = None
+
     r = Runner(
-        metadata_fn=args.metadata_fn, tree_fn=args.tree_fn, bam_fn=args.bam_fn, pref=args.pref, mode=args.mode,
-        delta=args.delta, first_read_delay=args.first_read_delay
+        metadata_fn=args.metadata_fn,
+        tree_fn=args.tree_fn,
+        bam_fn=args.bam_fn,
+        pref=args.pref,
+        mode=args.mode,
+        delta=args.delta,
+        first_read_delay=args.first_read_delay,
+        out_bam_fn=out_bam_fn,
     )
 
     try:

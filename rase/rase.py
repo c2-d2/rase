@@ -39,7 +39,7 @@ def error(*msg, error_code=1):
     sys.exit(error_code)
 
 
-def rase(db, reads_fn):
+def rase(db, reads_fn, bam_fn):
 
     # 0) check correctness
 
@@ -72,6 +72,8 @@ def rase(db, reads_fn):
         db + '.tsv',
         '-',  #'-p', prediction/{wildcards.pref}__{wildcards.index}/
     ]
+    if bam_fn is not None:
+        cmd_predict.append(bam_fn[0])
 
     process_classify = subprocess.Popen(cmd_classify, stdout=subprocess.PIPE, shell=False)
     process_predict = subprocess.Popen(cmd_predict, stdin=process_classify.stdout, shell=False)
@@ -90,10 +92,19 @@ def main():
 
     parser.add_argument('reads', metavar='reads.fq', help="nanopore reads (- for stdin)")
 
+    parser.add_argument(
+        'out_bam', metavar='assignments.bam', help="computed ProPhyle RASE assignments", nargs="*", default=[]
+    )
+
     args = parser.parse_args()
 
+    if args.out_bam:
+        out_bam = args.out_bam
+    else:
+        out_bam = None
+
     try:
-        rase(db=args.rase_db, reads_fn=args.reads)
+        rase(db=args.rase_db, reads_fn=args.reads, bam_fn=out_bam)
     except KeyboardInterrupt:
         error("Keyboard interrupt")
 
