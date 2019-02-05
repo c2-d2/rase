@@ -75,6 +75,7 @@ def rase(db, reads_fn, bam_fn):
     if bam_fn is not None:
         cmd_predict.append(bam_fn[0])
 
+    # todo: maybe use subprocess.check_output ?
     process_classify = subprocess.Popen(cmd_classify, stdout=subprocess.PIPE, shell=False)
     process_predict = subprocess.Popen(cmd_predict, stdin=process_classify.stdout, shell=False)
 
