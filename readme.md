@@ -204,7 +204,7 @@ Tab-separated text file with the following columns:
 
 Tab-separated text file with the following columns:
 
-* `taxid` - taxid of a database isolate, `_unassigned_` for an unassigned read
+* `taxid` - taxid of a database isolate, `_unassigned_` for reads without any k-mer matches with the database
 * `phylogroup` - phylogroup
 * `weight` - weight (cumulative "number of k-mer best matches divided by the number of matches")
 * `weight_norm` - normalized `weight`
