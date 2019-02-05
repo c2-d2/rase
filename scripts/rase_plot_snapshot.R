@@ -50,7 +50,7 @@ DfToAnts <- function(dataframe) {
 }
 
 LastLine <- function(ct, bps.total, bps.matched) {
-   paste("Reads: ", format(as.integer(ct), big.mark = ","), "       Bps: ", format(as.integer(bps.total), big.mark = ","), 
+   paste("Reads: ", format(as.integer(ct), big.mark = ","), "       Bps: ", format(as.integer(bps.total), big.mark = ","),
       "       Matched bps: ", round(100 * as.double(bps.matched)/as.double(bps.total)), "%", sep = "")
 }
 
@@ -65,23 +65,23 @@ if (kRStudio) {
 } else {
    option.list <- list(make_option(c("-d", "--desc"), default = F, help = "sample description"))
    parser <- OptionParser(usage = "%prog [options] res_cats.tsv snapshot.tsv plot.pdf", option_list = option.list)
-   
+
    arguments <- parse_args(parser, positional_arguments = 3)
    opt <- arguments$options
-   
+
    sample.desc <- ""
    if (opt$desc) {
       sample.desc <- opt$desc
    }
-   
+
    res.file <- arguments$args[1]
    src.file <- arguments$args[2]
    out.file <- arguments$args[3]
-   
+
    timestamp <- as.integer(rev(strsplit(src.file, "[\\./]")[[1]])[2])
-   
+
    pdf(out.file, width = kWidth, height = kHeight)
-   
+
 }
 
 
@@ -94,13 +94,13 @@ dfsnap_with_unassigned <- read.delim(src.file, header = TRUE)
 dfsnap <- dfsnap_with_unassigned[dfsnap_with_unassigned$taxid != "_unassigned_", ]
 
 stopifnot(length(dfsnap[, 1]) == length(dfres[, 1]))  # are the lengths the same?
-stopifnot(data.frame(lapply(dfsnap[order(dfsnap$taxid), ][["taxid"]], as.character)) == data.frame(lapply(dfres[order(dfres$taxid), 
+stopifnot(data.frame(lapply(dfsnap[order(dfsnap$taxid), ][["taxid"]], as.character)) == data.frame(lapply(dfres[order(dfres$taxid),
    ][["taxid"]], as.character)))  # are the taxids the same?
 
 
 df <- merge(dfsnap, dfres, by = "taxid")
 
-sel <- df[with(df, order(-h1_norm)), ][1:kSelected, ]
+sel <- df[with(df, order(-weight)), ][1:kSelected, ]
 
 first.phylogroup <- sel$phylogroup[[1]]
 first.serotype <- sel$Serotype.From.Reads[[1]]
@@ -109,13 +109,13 @@ first.res <- CatToCatName(first.cat)
 
 second.phylogroup <- unique(sel$phylogroup)[[2]]
 
-phylogroups.masked <- 3 * as.integer(sel$phylogroup > -1) - 2 * as.integer(sel$phylogroup == first.phylogroup) - 1 * as.integer(sel$phylogroup == 
+phylogroups.masked <- 3 * as.integer(sel$phylogroup > -1) - 2 * as.integer(sel$phylogroup == first.phylogroup) - 1 * as.integer(sel$phylogroup ==
    second.phylogroup)
 
-labs <- paste(sel$taxid, sel$h1)  ## create labels
+labs <- paste(sel$taxid, sel$weight)  ## create labels
 
 phylogroups <- max(sel$phylogroup)
-vals.to.plot <- sel$h1_norm
+vals.to.plot <- sel$weight_norm
 maxval <- max(vals.to.plot)
 maxtick <- (ceiling(100 * maxval))/100
 
@@ -125,7 +125,7 @@ antibiotics <- DfToAnts(df)
 nants <- length(antibiotics)
 AbsResGridHeight <- kResGridHeight * maxval
 
-x <- barplot(height = vals.to.plot, col = phylogroups.masked, border = NA, space = 0, axes = F, ylim = c(-(nants + kGridShift) * 
+x <- barplot(height = vals.to.plot, col = phylogroups.masked, border = NA, space = 0, axes = F, ylim = c(-(nants + kGridShift) *
    AbsResGridHeight, maxtick), xlim = c(-2, kSelected), beside = T, mgp = c(4.8, 0, 0))
 
 i <- 0
@@ -133,10 +133,10 @@ for (ant in rev(antibiotics)) {
    clm <- paste(ant, "_cat", sep = "")
    y <- AbsResGridHeight * (nants - i + kGridShift)
    xx <- barplot(height = 0 * vals.to.plot - y, col = CatToColor(sel[[clm]]), border = NA, space = 0, axes = F, add = T)
-   
-   text(x = -0.3, y = -y + 0.5 * AbsResGridHeight, col = "#000000", labels = toupper(ant), pos = 2, offset = 0.15, srt = 0, 
+
+   text(x = -0.3, y = -y + 0.5 * AbsResGridHeight, col = "#000000", labels = toupper(ant), pos = 2, offset = 0.15, srt = 0,
       cex = 0.9)
-   
+
    i <- i + 1
 }
 
@@ -164,7 +164,7 @@ text(y = -kGridShift * 0.5 * AbsResGridHeight, x = 35, labels = "Isolate", cex =
 
 
 bps.total <- sum(dfsnap_with_unassigned[c("ln")])
-bps.matched <- sum(dfsnap_with_unassigned[c("h1")])
+bps.matched <- sum(dfsnap_with_unassigned[c("weight")])
 reads <- sum(dfsnap_with_unassigned[c("count")])
 subtitle <- LastLine(reads, bps.total, bps.matched)
 
@@ -173,11 +173,11 @@ mtext(side = 1, text = subtitle, line = 0.8, cex = 0.95)
 
 
 # legend - resistance
-legend(x = "topright", title = "Susceptibility", legend = c(CatToCatName("R"), CatToCatName("S")), cex = 1.5, fill = kCatColors, 
+legend(x = "topright", title = "Susceptibility", legend = c(CatToCatName("R"), CatToCatName("S")), cex = 1.5, fill = kCatColors,
    y.intersp = 0.8, yjust = 3, border = NA, box.col = NA, inset = c(0, 0.25), title.adj = 0)
 
 # legend - seq. phylogroups
-legend(x = "topright", title = "Phylogroup", legend = c(first.phylogroup, second.phylogroup, "Others"), cex = 1.5, fill = c(1, 
+legend(x = "topright", title = "Phylogroup", legend = c(first.phylogroup, second.phylogroup, "Others"), cex = 1.5, fill = c(1,
    2, 3), y.intersp = 0.8, box.col = NA, border = NA, inset = c(0.142, 0), title.adj = 0)
 
 # timestamp
