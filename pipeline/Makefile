@@ -50,9 +50,8 @@ help: ## Print help message
 
 clean: ## Clean
 	rm -f plots/*.pdf benchmarks/*.plot.log
-	rm -f prediction/.*.quantify.complete benchmarks/*.quantify.log
 	rm -f prediction/*.predict.tsv
-	rm -f prediction/*.predict.complete
+	rm -f prediction/.*.predict.complete
 	find prediction -name '*.tsv' | xargs rm -f
 	rm -f benchmarks/*.predict.log
 	rm -f exported.*.tar
