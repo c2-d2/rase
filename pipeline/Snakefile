@@ -80,7 +80,7 @@ rule all:
                     "prediction/.{}.fq.complete".format(e),
                     "prediction/.{}__{}.bam.complete".format(e, i),
                     "prediction/.{}__{}.predict.complete".format(e, i),
-                    "plots/{}__{}.timeline.pdf".format(e, i),
+                    "plots/.{}__{}.plot.complete".format(e, i),
                 ]
                 for i in indexes
             ]
@@ -96,7 +96,7 @@ rule test:
                     "prediction/.{}.fq.complete".format(e),
                     "prediction/.{}__{}.bam.complete".format(e, i),
                     "prediction/.{}__{}.predict.complete".format(e, i),
-                    "plots/{}__{}.timeline.pdf".format(e, i),
+                    "plots/.{}__{}.plot.complete".format(e, i),
                 ]
                 for i in smallest_index
             ]
@@ -168,29 +168,58 @@ rule predict:
         """
 
 
+rule plot:
+    output:
+        t="plots/.{pref}__{index}.plot.complete",
+    input:
+        t1="plots/.{pref}__{index}.plot_timeline.complete",
+        t2="plots/.{pref}__{index}.plot_snapshots.complete",
+    shell:
+        """
+            touch "{output.t}"
+        """
+
 rule plot_timeline:
     priority: 90
+    output:
+        t="plots/.{pref}__{index}.plot_timeline.complete",
     input:
         "prediction/.{pref}__{index}.predict.complete",
         "database/.{index}.complete",
-    output:
-        pdf="plots/{pref}__{index}.timeline.pdf",
     benchmark:
-        "benchmarks/{pref}__{index}.plot.log"
+        "benchmarks/{pref}__{index}.plot_timeline.log"
     params:
         tsv="prediction/{pref}__{index}.predict.tsv",
+        pdf="plots/{pref}__{index}.timeline.pdf",
         index="database/{index}",
         pref="{pref}"
     shell:
         """
-            ../rase/rase_plot_selected_snapshots.py "database/{wildcards.index}.tsv" "prediction/{wildcards.pref}__{wildcards.index}" 1 5 -1 "plots/{wildcards.pref}__{wildcards.index}.snapshots."
-            ../scripts/rase_plot_timeline.R "{params.tsv}" "{output.pdf}"
+            ../scripts/rase_plot_timeline.R "{params.tsv}" "{params.pdf}"
+            touch "{output.t}"
         """
 
 
-"""
-Todo: add possible checking of index consistency
-"""
+rule plot_snapshots:
+    priority: 90
+    output:
+        t="plots/.{pref}__{index}.plot_snapshots.complete",
+    input:
+        "prediction/.{pref}__{index}.predict.complete",
+        "database/.{index}.complete",
+    benchmark:
+        "benchmarks/{pref}__{index}.plot_snapshots.log"
+    params:
+        tsv="prediction/{pref}__{index}.predict.tsv",
+        index="database/{index}",
+        pref="{pref}",
+    shell:
+        """
+            ../rase/rase_plot_selected_snapshots.py "database/{wildcards.index}.tsv" "prediction/{wildcards.pref}__{wildcards.index}" 1 5 -1 "plots/{wildcards.pref}__{wildcards.index}.snapshots."
+            touch "{output.t}"
+        """
+
+
 rule decompress:
     output:
         t="database/.{index}.complete"
