@@ -81,13 +81,14 @@ def format_floats(*values, digits=3):
 
 
 class Runner:
-    def __init__(self, metadata_fn, tree_fn, bam_fn, out_bam_fn, pref, mode, delta, first_read_delay):
+    def __init__(self, metadata_fn, tree_fn, bam_fn, out_bam_fn, pref, final_stats_fn, mode, delta, first_read_delay):
         self.mode = mode
         self.metadata = RaseMetadataTable(metadata_fn)
         self.stats = Stats(tree_fn, self.metadata)
         self.predict = Predict(self.metadata)
         self.rase_bam_reader = RaseBamReader(bam_fn, out_bam_fn)
         self.pref = pref
+        self.final_stats_fn = final_stats_fn
         self.delta = delta
         self.first_read_delay = first_read_delay
 
@@ -142,9 +143,9 @@ class Runner:
             self.stats.print(file=f)
             f.close()
 
-        # todo: check if the last version is printed, if not, uncomment
-        #with open(args.tsv, mode="w") as f:
-        #    stats.print(file=f)
+        if self.final_stats_fn is not None:
+            with open(final_stats_fn, mode="w") as f:
+                stats.print(file=f)
 
 
 class Predict:
@@ -718,7 +719,11 @@ def main():
         nargs='?',
     )
 
-    parser.add_argument('-p', type=str, dest='pref', metavar='STR', help="output dir for samplings", default=None)
+    parser.add_argument('-p', dest='pref', metavar='STR', help="output dir for samplings", default=None)
+
+    parser.add_argument(
+        '-f', dest='final_stats_fn', metavar='STR', help="statistics for the last snapshot", default=None
+    )
 
     parser.add_argument(
         '-t',
@@ -738,7 +743,7 @@ def main():
     )
 
     parser.add_argument(
-        '-f',
+        '-0',
         type=int,
         dest='first_read_delay',
         metavar='INT',
@@ -758,6 +763,7 @@ def main():
         tree_fn=args.tree_fn,
         bam_fn=args.bam_fn,
         pref=args.pref,
+        final_stats_fn=args.final_stats_fn,
         mode=args.mode,
         delta=args.delta,
         first_read_delay=args.first_read_delay,
