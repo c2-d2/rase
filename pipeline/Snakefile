@@ -115,7 +115,7 @@ rule preprocess_reads:
         "benchmarks/{pref}.readprep.log"
     shell:
         """
-            ../rase/rase_minion_rename_reads.py {input.fq} | paste -d '\t' - - - - | sort | uniq | perl -pe 's/\t/\n/g' > "{params.fq}"
+            ../rase/rase_minion_rename_reads.py "{input.fq}" | paste -d '\t' - - - - | sort | uniq | perl -pe 's/\t/\n/g' > "{params.fq}"
             touch "{output.t}"
         """
 
@@ -161,9 +161,9 @@ rule predict:
     shell:
         """
             mkdir -p "prediction/{wildcards.pref}__{wildcards.index}"
-            ../rase/rase_predict.py {params.tree} {params.metadata} {params.bam} -p prediction/{wildcards.pref}__{wildcards.index}/ > {params.tsv1}
-            ../rase/rase_prediction_add_flags.py  {params.tsv1} > {params.tsv2}
-            rm {params.tsv1}
+            ../rase/rase_predict.py "{params.tree}" "{params.metadata}" "{params.bam}" -p "prediction/{wildcards.pref}__{wildcards.index}/" > "{params.tsv1}"
+            ../rase/rase_prediction_add_flags.py  "{params.tsv1}" > "{params.tsv2}"
+            rm "{params.tsv1}"
             touch "{output.t}"
         """
 
@@ -205,7 +205,8 @@ rule decompress:
         "benchmarks/decompress.{index}.log"
     shell:
         """
-            mkdir -p database/{wildcards.index}
-            prophyle decompress {input.gz} database
+            mkdir -p "database/{wildcards.index}"
+            prophyle decompress "{input.gz}" database
             touch "{output.t}"
         """
+
