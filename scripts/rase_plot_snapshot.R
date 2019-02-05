@@ -130,7 +130,6 @@ phylogroups.masked <-
 
 labs <- paste(sel$taxid, sel$weight)  ## create labels
 
-phylogroups <- max(sel$phylogroup)
 vals.to.plot <- sel$weight_norm
 maxval <- max(vals.to.plot)
 maxtick <- (ceiling(100 * maxval)) / 100
