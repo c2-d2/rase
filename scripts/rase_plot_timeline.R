@@ -86,8 +86,10 @@ LoadTimelineData <- function(src.file) {
     stopifnot(sort(df$datetime) == df$datetime)
 
     # remove too distant end points
-    while (diff(tail(df, 2)$time) >= kEndpointFilter) {
-        df <- head(df, -1)
+    if (length(df$time) > 5) {
+        while (diff(tail(df, 2)$time) >= kEndpointFilter) {
+            df <- head(df, -1)
+        }
     }
 
     df$inv.time.mins <- max(df$time.mins) - df$time.mins
@@ -127,7 +129,6 @@ DfToFlags <- function(dataframe) {
     df.3$pch <- rep(0, nrow(df.3))
 
     df <- rbind(df.1, df.2, df.3)
-    print(df)
     df
 }
 
