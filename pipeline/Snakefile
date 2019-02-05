@@ -115,7 +115,7 @@ rule preprocess_reads:
         "benchmarks/{pref}.readprep.log"
     shell:
         """
-            ../scripts/rase_minion_rename_reads.py {input.fq} | paste -d '\t' - - - - | sort | uniq | perl -pe 's/\t/\n/g' > "{params.fq}"
+            ../rase/rase_minion_rename_reads.py {input.fq} | paste -d '\t' - - - - | sort | uniq | perl -pe 's/\t/\n/g' > "{params.fq}"
             touch "{output.t}"
         """
 
@@ -161,8 +161,8 @@ rule predict:
     shell:
         """
             mkdir -p "prediction/{wildcards.pref}__{wildcards.index}"
-            ../scripts/rase_predict.py {params.tree} {params.metadata} {params.bam} -p prediction/{wildcards.pref}__{wildcards.index}/ > {params.tsv1}
-            ../scripts/rase_prediction_add_flags.py  {params.tsv1} > {params.tsv2}
+            ../rase/rase_predict.py {params.tree} {params.metadata} {params.bam} -p prediction/{wildcards.pref}__{wildcards.index}/ > {params.tsv1}
+            ../rase/rase_prediction_add_flags.py  {params.tsv1} > {params.tsv2}
             rm {params.tsv1}
             touch "{output.t}"
         """
@@ -183,7 +183,7 @@ rule plot_timeline:
         pref="{pref}"
     shell:
         """
-            ../scripts/rase_plot_selected_snapshots.py "database/{wildcards.index}.tsv" "prediction/{wildcards.pref}__{wildcards.index}" 1 5 -1 "plots/{wildcards.pref}__{wildcards.index}.snapshots."
+            ../rase/rase_plot_selected_snapshots.py "database/{wildcards.index}.tsv" "prediction/{wildcards.pref}__{wildcards.index}" 1 5 -1 "plots/{wildcards.pref}__{wildcards.index}.snapshots."
             for x in plots/{wildcards.pref}__{wildcards.index}.snapshots.*; do
                 ../scripts/rase_reproducible_pdf.sh "$x";
             done
