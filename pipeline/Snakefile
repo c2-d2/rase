@@ -184,11 +184,7 @@ rule plot_timeline:
     shell:
         """
             ../rase/rase_plot_selected_snapshots.py "database/{wildcards.index}.tsv" "prediction/{wildcards.pref}__{wildcards.index}" 1 5 -1 "plots/{wildcards.pref}__{wildcards.index}.snapshots."
-            for x in plots/{wildcards.pref}__{wildcards.index}.snapshots.*; do
-                ../scripts/rase_reproducible_pdf.sh "$x";
-            done
             ../scripts/rase_plot_timeline.R "{params.tsv}" "{output.pdf}"
-            ../scripts/rase_reproducible_pdf.sh "{output.pdf}"
         """
 
 
