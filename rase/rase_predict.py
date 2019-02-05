@@ -458,25 +458,30 @@ class Stats:
         Args:
             file (file): Output file.
         """
-        print("taxid", "count", "count_norm", "ln", "ln_norm", "h1", "h1_norm", sep="\t", file=file)
+        print("taxid", "phylogroup", "weight", "weight_norm", "ln", "ln_norm", "count", "count_norm", sep="\t", file=file)
         table = []
         for isolate in self._isolates + [FAKE_ISOLATE_UNASSIGNED]:
+            if isolate==FAKE_ISOLATE_UNASSIGNED:
+                pg="NA"
+            else:
+                pg=self._rtbl.pg[isolate]
             table.append(
                 [
                     isolate,
+                    pg,
+                    *format_floats(self.stats_h1[isolate], digits=0),
+                    *format_floats(self.stats_h1[isolate] / self.cumul_h1 if self.cumul_h1 != 0 else 0.0, digits=3),
+                    *format_floats(self.stats_ln[isolate], digits=0),
+                    *format_floats(self.stats_ln[isolate] / self.cumul_ln if self.cumul_ln != 0 else 0.0, digits=3),
                     *format_floats(self.stats_ct[isolate], digits=0),
                     *format_floats(
                         1.0 * self.stats_ct[isolate] / self.nb_assigned_reads if self.nb_assigned_reads != 0 else 0.0,
                         digits=3
                     ),
-                    *format_floats(self.stats_ln[isolate], digits=0),
-                    *format_floats(self.stats_ln[isolate] / self.cumul_ln if self.cumul_ln != 0 else 0.0, digits=3),
-                    *format_floats(self.stats_h1[isolate], digits=0),
-                    *format_floats(self.stats_h1[isolate] / self.cumul_h1 if self.cumul_h1 != 0 else 0.0, digits=3),
                 ]
             )
 
-        table.sort(key=lambda x: float(x[5]), reverse=True)
+        table.sort(key=lambda x: int(x[2]), reverse=True)
 
         for x in table:
             print(*format_floats(*x, digits=5), sep="\t", file=file)
