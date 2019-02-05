@@ -70,8 +70,8 @@ LastLine <- function(ct, bps.total, bps.matched) {
 # CLI-parsing -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 if (kRStudio) {
-    src.file <- "../pipeline/tests/test.timestamp.tsv"
-    res.file <- "../pipeline/tests/res_cat.tsv"
+    src.file <- "pipeline/tests/test.timestamp.tsv"
+    res.file <- "pipeline/tests/res_cat.tsv"
     timestamp <- 1505967676
     sample.desc <- "Sample desc."
 } else {
