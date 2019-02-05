@@ -1,13 +1,16 @@
 # RASE prediction pipeline
 
+<!-- vim-markdown-toc GFM -->
 
 * [Introduction](#introduction)
 * [Quick example](#quick-example)
 * [Installing of RASE](#installing-of-rase)
 * [Running RASE](#running-rase)
 * [Files and directories](#files-and-directories)
+  * [Prediction pipeline](#prediction-pipeline)
 * [Formats](#formats)
-  * [Prediction output](#prediction-output)
+  * [Prediction output (timeline)](#prediction-output-timeline)
+  * [Prediction output (snapshot)](#prediction-output-snapshot)
 * [FAQs](#faqs)
 * [Related repositories](#related-repositories)
 * [Citing RASE](#citing-rase)
@@ -15,6 +18,7 @@
 * [Contact](#contact)
 
 <!-- vim-markdown-toc -->
+
 ## Introduction
 
 This repository contains the RASE prediction pipeline. The method uses lineage
@@ -148,6 +152,8 @@ help`.
 
 ## Files and directories
 
+### Prediction pipeline
+
 * `benchmarks/` - Snakemake benchmarks. As soon as any step of the pipeline
   gets finished, a log file with information about timing and memory
   consumption will appear here.
@@ -175,7 +181,9 @@ help`.
 
 ## Formats
 
-### Prediction output
+### Prediction output (timeline)
+
+Tab-separated text file with the following columns:
 
 * `datetime` - datetime of sequencing or data processing
 * `reads` - number of processed reads
@@ -192,6 +200,18 @@ help`.
 * `{ant}_r_bm`, `{ant}_s_bm` - best-matching resistant and susceptible isolate within the phylogroup, respectively
 * `{ant}_r_w`, `{ant}_s_w` - their weights
 
+### Prediction output (snapshot)
+
+Tab-separated text file with the following columns:
+
+* `taxid` - taxid of a database isolate, `_unassigned_` for an unassigned read
+* `phylogroup` - phylogroup
+* `weight` - weight (cumulative "number of k-mer best matches divided by the number of matches")
+* `weight_norm` - normalized `weight`
+* `ln` - cumulative "read length divided by number of matches"
+* `ln_norm` - normalized `ln`
+* `count` - cumulative "read count divided by number of matches"
+* `count_norm` - normalized `count`
 
 ## FAQs
 
