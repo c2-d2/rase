@@ -458,13 +458,15 @@ class Stats:
         Args:
             file (file): Output file.
         """
-        print("taxid", "phylogroup", "weight", "weight_norm", "ln", "ln_norm", "count", "count_norm", sep="\t", file=file)
+        print(
+            "taxid", "phylogroup", "weight", "weight_norm", "ln", "ln_norm", "count", "count_norm", sep="\t", file=file
+        )
         table = []
         for isolate in self._isolates + [FAKE_ISOLATE_UNASSIGNED]:
-            if isolate==FAKE_ISOLATE_UNASSIGNED:
-                pg="NA"
+            if isolate == FAKE_ISOLATE_UNASSIGNED:
+                pg = "NA"
             else:
-                pg=self._rtbl.pg[isolate]
+                pg = self._rtbl.pg[isolate]
             table.append(
                 [
                     isolate,
