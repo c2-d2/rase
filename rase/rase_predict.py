@@ -7,7 +7,9 @@ License: MIT
 
 # ./scripts/rase_predict.py ~/github/my/rase-predict/database/spneumoniae_sparc.k18/tree.nw ~/github/my/rase-predict/database/spneumoniae_sparc.k18.tsv  ~/github/my/rase-predict/prediction/sp10_norwich_P33.filtered__spneumoniae_sparc.k18.bam | tL
 
-# todo: add non-susc threshold as a param
+# todo:
+# - add non-susc threshold as a param
+# - implement option auto for autodetection of the time mode
 
 import argparse
 import collections
@@ -716,7 +718,7 @@ def main():
         dest='mode',
         choices=['clock', 'read'],
         help='time extraction mode',
-        default='auto',
+        default='clock',
     )
 
     parser.add_argument(
