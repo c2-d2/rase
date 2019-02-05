@@ -48,8 +48,11 @@ def plot_snapshots(res_table, directory, snapshot_indexes, outprefix):
     plots = get_plot_info(directory, snapshot_indexes)
     for fn, s, t in plots:
         cmd = [plotting_script, res_table, fn, "{}{}.pdf".format(outprefix, t)]
-        print(" ".join(cmd))
-        subprocess.run(cmd, check=True)
+        print("Running command:"," ".join(cmd), file=sys.stderr)
+        try:
+            subprocess.run(cmd, check=True)
+        except subprocess.CalledProcessError:
+            print("The following command failed:"," ".join(cmd), file=sys.stderr)
 
 
 def get_plot_info(directory, snapshot_indexes):
