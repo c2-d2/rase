@@ -113,7 +113,7 @@ stopifnot(length(dfsnap[, 1]) == length(dfres[, 1]))  # are the lengths the same
 stopifnot(data.frame(lapply(dfsnap[order(dfsnap$taxid),][["taxid"]], as.character)) == data.frame(lapply(dfres[order(dfres$taxid),][["taxid"]], as.character)))  # are the taxids the same?
 
 
-df <- merge(dfsnap, dfres, by = "taxid")
+df <- merge(dfsnap, dfres, by = c("taxid","phylogroup"))
 
 sel <- df[with(df, order(-weight)),][1:kSelected,]
 
