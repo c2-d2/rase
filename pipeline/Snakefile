@@ -161,7 +161,7 @@ rule predict:
     shell:
         """
             mkdir -p "prediction/{wildcards.pref}__{wildcards.index}"
-            ../rase/rase_predict.py -p "prediction/{wildcards.pref}__{wildcards.index}/" "{params.tree}" "{params.metadata}" "{params.bam}" > "{params.tsv1}"
+            ../rase/rase_predict.py -t read -p "prediction/{wildcards.pref}__{wildcards.index}/" "{params.tree}" "{params.metadata}" "{params.bam}" > "{params.tsv1}"
             ../rase/rase_prediction_add_flags.py  "{params.tsv1}" > "{params.tsv2}"
             rm "{params.tsv1}"
             touch "{output.t}"
