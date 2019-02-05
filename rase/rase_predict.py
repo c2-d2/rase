@@ -97,10 +97,10 @@ class Runner:
         #     [t0, t0+delta), where t0=time_of_first_read-first_read_delay
         if self.mode == "clock":
             t0 = current_timestamp() - self.first_read_delay
-        elif self.mode == "name":
+        elif self.mode == "read":
             t0 = self.rase_bam_reader.t1 - self.first_read_delay
         else:
-            assert (1 == 2)
+            assert 1 == 2, "Unknown mode provided ({})".format(self.mode)
         current_window = [t0, t0 + self.delta]  # [x, y)
 
         if self.pref is not None:
@@ -111,10 +111,10 @@ class Runner:
             assert len(read_stats) > 0
             if self.mode == "clock":
                 read_timestamp = current_timestamp()
-            elif self.mode == "name":
+            elif self.mode == "read":
                 read_timestamp = timestamp_from_qname(read_stats[0]["qname"])
             else:
-                assert (1 == 2)
+                assert 1 == 2, "Unknown mode provided ({})".format(self.mode)
 
             # do we have to shift the window?
             if read_timestamp >= current_window[1]:
