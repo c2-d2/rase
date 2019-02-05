@@ -43,16 +43,16 @@ def secs_to_text(cs):
     return "_".join(parts[::-1])
 
 
-def plot_snapshots(res_table, directory, indexes, outprefix):
-    plotting_script = os.path.join(os.path.dirname(os.path.realpath(__file__)), "rase_plot_snapshot.R")
-    plots = get_plot_info(directory, indexes)
+def plot_snapshots(res_table, directory, snapshot_indexes, outprefix):
+    plotting_script = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../scripts/rase_plot_snapshot.R")
+    plots = get_plot_info(directory, snapshot_indexes)
     for fn, s, t in plots:
         cmd = [plotting_script, res_table, fn, "{}{}.pdf".format(outprefix, t)]
         print(" ".join(cmd))
         subprocess.run(cmd, check=True)
 
 
-def get_plot_info(directory, indexes):
+def get_plot_info(directory, snapshot_indexes):
     fns = glob.glob(os.path.join(directory, "*.tsv"))
     tsvs_abs = {fn: int(extract_ts(fn)) for fn in fns}
     min_ts = min(tsvs_abs.values())
@@ -60,9 +60,13 @@ def get_plot_info(directory, indexes):
     tsvs_rel.sort(key=lambda x: x[1])
 
     tr = []
-    for i in indexes:
-        fn, sec = tsvs_rel[i]
-        tr.append((fn, sec, secs_to_text(sec)))
+    for i in snapshot_indexes:
+        try:
+            fn, sec = tsvs_rel[i]
+            tr.append((fn, sec, secs_to_text(sec)))
+        except IndexError:
+            print("Warning: snapshot '{}' does not exist".format(i), file=sys.stderr)
+
 
     return tr
 
