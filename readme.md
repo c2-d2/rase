@@ -6,14 +6,14 @@
   * [Quick example](#quick-example)
   * [Related repositories](#related-repositories)
 * [Installation](#installation)
+  * [Computational environment](#computational-environment)
+    * [Dependencies](#dependencies)
+    * [Setting up an environment](#setting-up-an-environment)
+    * [Environment troubleshooting](#environment-troubleshooting)
 * [Usage](#usage)
 * [Files and directories](#files-and-directories)
   * [Prediction pipeline](#prediction-pipeline)
   * [File formats](#file-formats)
-* [Computational environment](#computational-environment)
-  * [Dependencies](#dependencies)
-  * [Setting up an environment](#setting-up-an-environment)
-  * [Environment troubleshooting](#environment-troubleshooting)
 * [FAQs](#faqs)
 * [License](#license)
 * [Contact](#contact)
@@ -90,36 +90,127 @@ make -C rase-predict
 
 ## Installation
 
-**Installing dependencies.** See [RASE computational
-enviroment](https://github.com/c2-d2/rase/blob/master/environment.md).
+1) **Installing dependencies.** See [RASE computational
+   enviroment](https://github.com/c2-d2/rase/blob/master/environment.md).
 
-**Cloning the RASE prediction pipeline.**
-You can clone this repository using git
+2) **Cloning the RASE prediction pipeline.**
+    You can clone this repository using git
 
-```bash
-git clone https://github.com/c2-d2/rase-predict
-```
+    ```bash
+    git clone https://github.com/c2-d2/rase-predict
+    ```
 
-or download it as a [single .tar.gz
-file](https://github.com/c2-d2/rase-predict/archive/master.tar.gz).
+  or download it as a [single .tar.gz
+  file](https://github.com/c2-d2/rase-predict/archive/master.tar.gz).
 
-**Installing a RASE database.** A RASE database should be placed into the
-directory `database`.  Every database consists of two files: a compressed
-ProPhyle index (`.tar`) and a table with metadata for individual database
-isolates (`.tsv`). To be properly detected, both of the files should have the
-same base name.
+3) **Installing a RASE database.** A RASE database should be placed into the
+  directory `database`.  Every database consists of two files: a compressed
+  ProPhyle index (`.tar`) and a table with metadata for individual database
+  isolates (`.tsv`). To be properly detected, both of the files should have the
+  same base name.
 
-The default RASE database (Streptococcus pneumoniae, k=18) can be downloaded
-from [RASE DB releases](https://github.com/c2-d2/rase-db/releases). A custom
-database can be constructed using scripts and workflows from the [RASE DB
-repository](https://github.com/c2-d2/rase-db).
+  The default RASE database (Streptococcus pneumoniae, k=18) can be downloaded
+  from [RASE DB releases](https://github.com/c2-d2/rase-db/releases). A custom
+  database can be constructed using scripts and workflows from the [RASE DB
+  repository](https://github.com/c2-d2/rase-db).
 
-**Placing nanopore reads.** Nanopore reads should be placed into the `reads`
-directory as a single `.fq` file per sequencing experiment. Please, check the
-suffix: `.fastq` files are not currently detected. Also, the pipeline assumes
-that the provided reads keep the original naming convention from ONT. Reads
-that were used in the paper can be downloaded from
-https://zenodo.org/record/1405173.
+4) **Placing nanopore reads.** Nanopore reads should be placed into the `reads`
+  directory as a single `.fq` file per sequencing experiment. Please, check the
+  suffix: `.fastq` files are not currently detected. Also, the pipeline assumes
+  that the provided reads keep the original naming convention from ONT. Reads
+  that were used in the paper can be downloaded from
+  https://zenodo.org/record/1405173.
+
+
+### Computational environment
+
+The easiest way how to setup a computational environment for RASE is using
+[Bioconda](https://bioconda.github.io/). This approach has been tested on
+multiple Unix and OS X machines, including clusters and virtual machines.
+
+#### Dependencies
+
+* [Python 3](https://www.python.org/downloads/)
+* [ProPhyle](http://prophyle.github.io)
+* [ETE 3](http://etetoolkit.org/)
+* [PySAM](https://github.com/pysam-developers/pysam)
+* [GNU Make](https://www.gnu.org/software/make/) or equivalent
+* [GNU parallel](https://www.gnu.org/software/parallel/)
+* [Ghost Script](https://www.ghostscript.com/)
+* [SnakeMake](https://snakemake.readthedocs.io)
+* [SAMtools](http://www.htslib.org/)
+* [R](https://www.r-project.org/)
+* [R OptParse](https://cran.r-project.org/web/packages/optparse/)
+* [GCC 4.8+](https://gcc.gnu.org/) or equivalent
+* [zlib](https://zlib.net/)
+
+
+#### Setting up an environment
+
+* **BioConda environment.** We recommend to create a separate software
+  environment (here called `raseenv`):
+
+    ```bash
+    conda create -n raseenv prophyle ete3 pysam snakemake-minimal samtools parallel r-optparse
+    source activate raseenv
+    ```
+
+* **BioConda default environment.** Alternatively, the packages can also be
+  installed directly into the default BioConda environment. Nevertheless, this
+  is not always reliable since some of the RASE dependencies might collide with
+  packages that were installed previously.
+
+    ```bash
+    conda install prophyle ete3 pysam snakemake samtools parallel r-optparse
+    ```
+
+* **Manually.** All the dependencies can also be installed without BioConda. Many
+  of these packages are distributed using standard package systems such as
+  [APT](https://wiki.debian.org/Apt).
+
+    ```bash
+    apt-get install build-essential python3 zlib1g-dev r-base r-cran-optparse ghostscript
+    ```
+
+  All the Python packages (ProPhyle, PySAM, ETE 3, and Snakemake) can be
+  installed using [PIP](https://pypi.org/project/pip/):
+
+    ```bash
+    pip3 install prophyle pysam ete3 snakemake
+    ```
+
+#### Environment troubleshooting
+
+* **libR.dylib Reason: image not found**
+
+   On some systems, the R package distributed by Bioconda might not be properly built and would display messages such as
+
+   ```
+   dyld: Library not loaded: @rpath/libintl.9.dylib
+     Referenced from: /Users/user/miniconda/envs/rase/lib/R/lib/libR.dylib
+     Reason: image not found
+   Abort trap: 6
+   ```
+
+   The solution is then to create the `raseenv` environment without `r-optparse`, and
+   to install R and the OptParse package manually.
+
+* **ETE: cannot connect to X server**
+
+   ETE 3 library, which is used for tree plotting, internally depends on QT and
+   requires using an X-Server. This becomes problematic especially on virtual
+   machines.  For instance, on Ubuntu-based machines this can be solved by
+   installing several additional packages:
+
+   ```
+   apt-get install xvfb libqt4-dev libgl1-mesa-dev libglu1-mesa-dev xauth xfonts-base
+   ```
+
+   and then prepending the following string to commands for building the database.
+   ```
+   xvfb-run --server-args="-screen 0 1024x768x24 -noreset" \
+   ```
+
 
 
 ## Usage
@@ -230,94 +321,6 @@ help`.
   | `count_norm` | normalized `count` |
 
 
-## Computational environment
-
-The easiest way how to setup a computational environment for RASE is using
-[Bioconda](https://bioconda.github.io/). This approach has been tested on
-multiple Unix and OS X machines, including clusters and virtual machines.
-
-### Dependencies
-
-* [Python 3](https://www.python.org/downloads/)
-* [ProPhyle](http://prophyle.github.io)
-* [ETE 3](http://etetoolkit.org/)
-* [PySAM](https://github.com/pysam-developers/pysam)
-* [GNU Make](https://www.gnu.org/software/make/) or equivalent
-* [GNU parallel](https://www.gnu.org/software/parallel/)
-* [Ghost Script](https://www.ghostscript.com/)
-* [SnakeMake](https://snakemake.readthedocs.io)
-* [SAMtools](http://www.htslib.org/)
-* [R](https://www.r-project.org/)
-* [R OptParse](https://cran.r-project.org/web/packages/optparse/)
-* [GCC 4.8+](https://gcc.gnu.org/) or equivalent
-* [zlib](https://zlib.net/)
-
-
-### Setting up an environment
-
-* **BioConda environment.** We recommend to create a separate software
-  environment (here called `raseenv`):
-
-    ```bash
-    conda create -n raseenv prophyle ete3 pysam snakemake-minimal samtools parallel r-optparse
-    source activate raseenv
-    ```
-
-* **BioConda default environment.** Alternatively, the packages can also be
-  installed directly into the default BioConda environment. Nevertheless, this
-  is not always reliable since some of the RASE dependencies might collide with
-  packages that were installed previously.
-
-    ```bash
-    conda install prophyle ete3 pysam snakemake samtools parallel r-optparse
-    ```
-
-* **Manually.** All the dependencies can also be installed without BioConda. Many
-  of these packages are distributed using standard package systems such as
-  [APT](https://wiki.debian.org/Apt).
-
-    ```bash
-    apt-get install build-essential python3 zlib1g-dev r-base r-cran-optparse ghostscript
-    ```
-
-  All the Python packages (ProPhyle, PySAM, ETE 3, and Snakemake) can be
-  installed using [PIP](https://pypi.org/project/pip/):
-
-    ```bash
-    pip3 install prophyle pysam ete3 snakemake
-    ```
-
-### Environment troubleshooting
-
-* **libR.dylib Reason: image not found**
-
-   On some systems, the R package distributed by Bioconda might not be properly built and would display messages such as
-
-   ```
-   dyld: Library not loaded: @rpath/libintl.9.dylib
-     Referenced from: /Users/user/miniconda/envs/rase/lib/R/lib/libR.dylib
-     Reason: image not found
-   Abort trap: 6
-   ```
-
-   The solution is then to create the `raseenv` environment without `r-optparse`, and
-   to install R and the OptParse package manually.
-
-* **ETE: cannot connect to X server**
-
-   ETE 3 library, which is used for tree plotting, internally depends on QT and
-   requires using an X-Server. This becomes problematic especially on virtual
-   machines.  For instance, on Ubuntu-based machines this can be solved by
-   installing several additional packages:
-
-   ```
-   apt-get install xvfb libqt4-dev libgl1-mesa-dev libglu1-mesa-dev xauth xfonts-base
-   ```
-
-   and then prepending the following string to commands for building the database.
-   ```
-   xvfb-run --server-args="-screen 0 1024x768x24 -noreset" \
-   ```
 
 ## FAQs
 
