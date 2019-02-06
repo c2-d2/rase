@@ -245,7 +245,7 @@ multiple Unix and OS X machines, including clusters and virtual machines.
 
 ### Setting up an environment
 
-* *BioConda environment.* We recommend to create a separate software
+* **BioConda environment.** We recommend to create a separate software
   environment (here called `raseenv`):
 
     ```bash
@@ -253,7 +253,7 @@ multiple Unix and OS X machines, including clusters and virtual machines.
     source activate raseenv
     ```
 
-* *BioConda default environment.* Alternatively, the packages can also be
+* **BioConda default environment.** Alternatively, the packages can also be
   installed directly into the default BioConda environment. Nevertheless, this
   is not always reliable since some of the RASE dependencies might collide with
   packages that were installed previously.
@@ -262,7 +262,7 @@ multiple Unix and OS X machines, including clusters and virtual machines.
     conda install prophyle ete3 pysam snakemake samtools parallel r-optparse
     ```
 
-* *Manually.* All the dependencies can also be installed without BioConda. Many
+* **Manually.** All the dependencies can also be installed without BioConda. Many
   of these packages are distributed using standard package systems such as
   [APT](https://wiki.debian.org/Apt).
 
@@ -290,7 +290,7 @@ multiple Unix and OS X machines, including clusters and virtual machines.
    Abort trap: 6
    ```
 
-   The solution is then to create the `rase` environment without `r-optparse`, and
+   The solution is then to create the `raseenv` environment without `r-optparse`, and
    to install R and the OptParse package manually.
 
 * **ETE: cannot connect to X server**
