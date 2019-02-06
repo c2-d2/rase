@@ -3,19 +3,18 @@
 <!-- vim-markdown-toc GFM -->
 
 * [Introduction](#introduction)
-* [Quick example](#quick-example)
-* [Installing of RASE](#installing-of-rase)
-* [Running RASE](#running-rase)
+  * [Quick example](#quick-example)
+  * [Related repositories](#related-repositories)
+* [Installation](#installation)
+* [Usage](#usage)
 * [Files and directories](#files-and-directories)
   * [Prediction pipeline](#prediction-pipeline)
   * [File formats](#file-formats)
-* [RASE computational environment](#rase-computational-environment)
+* [Computational environment](#computational-environment)
   * [Dependencies](#dependencies)
   * [Setting up an environment](#setting-up-an-environment)
   * [Environment troubleshooting](#environment-troubleshooting)
 * [FAQs](#faqs)
-* [Related repositories](#related-repositories)
-* [Citing RASE](#citing-rase)
 * [License](#license)
 * [Contact](#contact)
 
@@ -29,6 +28,13 @@ calling to identify antibiotic resistant clones from nanopore reads. In our
 demonstrate on the example of pneumococcus that, using this approach,
 antibiotic resistance can be predicted within minutes from the start of
 sequencing. Please, look at the paper for more information.
+
+
+> Karel Brinda, Alanna Callendrello, Lauren Cowley, Themoula Charalampous,
+  Robyn S Lee, Derek R MacFadden, Gregory Kucherov, Justin O'Grady, Michael
+  Baym, William P Hanage. **Lineage calling can identify antibiotic resistant
+  clones within minutes.** bioRxiv, 2018.
+  doi:[10.1101/403204](https://doi.org/10.1101/403204)
 
 The RASE [Snakemake](https://snakemake.readthedocs.io/) workflow is specified
 within a single [Snakefile](Snakefile). When executed, the pipeline first
@@ -45,7 +51,7 @@ as a function of time.  Finally, the obtained time characteristics, as well as
 rank plots for selected moments, are visualized using R.
 
 
-## Quick example
+### Quick example
 
 The following example demonstrates the power of the streptococcal RASE with metagenomic reads.
 The entire computation takes only 6m on a standard laptop (MacBook Pro). Note
@@ -73,8 +79,16 @@ git clone https://github.com/c2-d2/rase-predict
 make -C rase-predict
 ```
 
+### Related repositories
 
-## Installing of RASE
+* [RASE DB](http://github.com/c2-d2/rase-db). Code for constructing RASE databases and the released databases.
+* [RASE supplementary](http://github.com/c2-d2/rase-supplement). Supplementary Materials for the RASE paper, including figures and tables.
+* [ProPhyle](http://prophyle.github.io). A highly accurate and resource-frugal DNA sequence classifier used by RASE.
+* [Prophex](http://github.com/prophyle/prophex). A k-mer index based on the Burrows-Wheeler Transform, used by ProPhyle.
+
+
+
+## Installation
 
 **Installing dependencies.** See [RASE computational
 enviroment](https://github.com/c2-d2/rase/blob/master/environment.md).
@@ -108,7 +122,7 @@ that were used in the paper can be downloaded from
 https://zenodo.org/record/1405173.
 
 
-## Running RASE
+## Usage
 
 **Running prediction locally.** The RASE pipeline can be executed by the Make
 command (all steps, i.e., preprocessing, predicting, and plotting):
@@ -216,7 +230,7 @@ help`.
   | `count_norm` | normalized `count` |
 
 
-## RASE computational environment
+## Computational environment
 
 The easiest way how to setup a computational environment for RASE is using
 [Bioconda](https://bioconda.github.io/). This approach has been tested on
@@ -318,23 +332,6 @@ several minutes up to 2 hours, in dependence on the amount of sequencing data.
 A cluster might be useful when many sequencing
 experiments are to be processed at the same time, or a battery of databases needs to be
 evaluated. In most of situations, we a laptop is sufficient.
-
-
-## Related repositories
-
-* [RASE DB](http://github.com/c2-d2/rase-db). Code for constructing RASE databases and the released databases.
-* [RASE supplementary](http://github.com/c2-d2/rase-supplement). Supplementary Materials for the RASE paper, including figures and tables.
-* [ProPhyle](http://prophyle.github.io). A highly accurate and resource-frugal DNA sequence classifier used by RASE.
-* [Prophex](http://github.com/prophyle/prophex). A k-mer index based on the Burrows-Wheeler Transform, used by ProPhyle.
-
-## Citing RASE
-
-Karel Brinda, Alanna Callendrello, Lauren Cowley, Themoula Charalampous, Robyn
-S Lee, Derek R MacFadden, Gregory Kucherov, Justin O'Grady, Michael Baym,
-William P Hanage. **Lineage calling can identify antibiotic resistant clones
-within minutes.**
-bioRxiv, 2018.
-doi:[10.1101/403204](https://doi.org/10.1101/403204)
 
 
 ## License
