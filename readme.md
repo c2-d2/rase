@@ -185,39 +185,39 @@ help`.
 * `tests` - Testing data for scripts.
 
 
-## Formats
+### File formats
 
-### Prediction output (timeline)
+* **Prediction output (timeline).**  Tab-separated text file with the following columns:
 
-Tab-separated text file with the following columns:
+  | column | description |
+  | --- | --- |
+  | `datetime` | datetime of sequencing or data processing |
+  | `reads` | number of processed reads |
+  | `bps` | number of processed basepairs |
+  | `matched bps` | number of matched basepairs (via k-mers) |
+  | `pgs` | phylogroup score |
+  | `pgs_ok` | phylogroup score interpretation, `pass` and `fail` for _passing_ and _failing_, respectively |
+  | `pg1`, `pg2` | predicted and alternative phylogroup, respectively |
+  | `pg1_bm`, `pg2_bm` | best-matching isolate within the predicted and alternative phylogroup, respectively |
+  | `pg1_w`, `pg2_w` | their weights |
+  | `{ant}_sus` | susceptibility score of the antibiotic `{ant}` |
+  | `{ant}_pr_cat` | susceptibility score interpretation: `S` , `S!`, and `R` for _susceptible best match_, _susceptible best match but high risk of resistance_, _resistant best match_, respectively |
+  | `{ant}_bm_cat` | category of the best matching isolate: `R`, `S`, `r`, `s` for _resistant_, _susceptible_, _unknown and inferred as resistant_, and _unknown and inferred as susceptible_, respectively |
+  | `{ant}_r_bm`, `{ant}_s_bm` | best-matching resistant and susceptible isolate within the phylogroup, respectively |
+  | `{ant}_r_w`, `{ant}_s_w` | their weights |
 
-* `datetime` - datetime of sequencing or data processing
-* `reads` - number of processed reads
-* `bps` - number of processed basepairs
-* `matched bps` - number of matched basepairs (via k-mers)
-* `pgs` - phylogroup score
-* `pgs_ok` - phylogroup score interpretation, `pass` and `fail` for _passing_ and _failing_, respectively
-* `pg1`, `pg2` - predicted and alternative phylogroup, respectively
-* `pg1_bm`, `pg2_bm` - best-matching isolate within the predicted and alternative phylogroup, respectively
-* `pg1_w`, `pg2_w` - their weights
-* `{ant}_sus` - susceptibility score of the antibiotic `{ant}`
-* `{ant}_pr_cat` - susceptibility score interpretation: `S` , `S!`, and `R` for _susceptible best match_, _susceptible best match but high risk of resistance_, _resistant best match_, respectively
-* `{ant}_bm_cat` - category of the best matching isolate: `R`, `S`, `r`, `s` for _resistant_, _susceptible_, _unknown and inferred as resistant_, and _unknown and inferred as susceptible_, respectively
-* `{ant}_r_bm`, `{ant}_s_bm` - best-matching resistant and susceptible isolate within the phylogroup, respectively
-* `{ant}_r_w`, `{ant}_s_w` - their weights
+* **Prediction output (snapshot).** Tab-separated text file with the following columns:
 
-### Prediction output (snapshot)
-
-Tab-separated text file with the following columns:
-
-* `taxid` - taxid of a database isolate, `_unassigned_` for reads without any k-mer matches with the database
-* `phylogroup` - phylogroup
-* `weight` - weight (cumulative "number of k-mer best matches divided by the number of matches")
-* `weight_norm` - normalized `weight`
-* `ln` - cumulative "read length divided by number of matches"
-* `ln_norm` - normalized `ln`
-* `count` - cumulative "read count divided by number of matches"
-* `count_norm` - normalized `count`
+  | column | description |
+  | --- | --- |
+  | `taxid` | taxid of a database isolate, `_unassigned_` for reads without any k-mer matches with the database |
+  | `phylogroup` | phylogroup |
+  | `weight` | weight (cumulative "number of k-mer best matches divided by the number of matches") |
+  | `weight_norm` | normalized `weight` |
+  | `ln` | cumulative "read length divided by number of matches" |
+  | `ln_norm` | normalized `ln` |
+  | `count` | cumulative "read count divided by number of matches" |
+  | `count_norm` | normalized `count` |
 
 
 ## RASE computational environment
