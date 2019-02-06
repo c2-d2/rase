@@ -222,7 +222,7 @@ def main():
 
     args = parser.parse_args()
 
-    main(
+    ancestral_state_reconstruction(
         tsv_fn=args.tsv_fn,
         nhx_fn=args.nhx_fn,
         pdf_fn=args.pdf_fn,
