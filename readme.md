@@ -246,63 +246,68 @@ multiple Unix and OS X machines, including clusters and virtual machines.
 ### Setting up an environment
 
 * *BioConda environment.* We recommend to create a separate software
-  environment (here called `rase`):
+  environment (here called `raseenv`):
 
-    conda create -n rase prophyle ete3 pysam snakemake-minimal samtools parallel r-optparse
-    source activate rase
-
+    ```bash
+    conda create -n raseenv prophyle ete3 pysam snakemake-minimal samtools parallel r-optparse
+    source activate raseenv
+    ```
 
 * *BioConda default environment.* Alternatively, the packages can also be
   installed directly into the default BioConda environment. Nevertheless, this
   is not always reliable since some of the RASE dependencies might collide with
   packages that were installed previously.
 
+    ```bash
     conda install prophyle ete3 pysam snakemake samtools parallel r-optparse
+    ```
 
 * *Manually.* All the dependencies can also be installed without BioConda. Many
   of these packages are distributed using standard package systems such as
   [APT](https://wiki.debian.org/Apt).
 
+    ```bash
     apt-get install build-essential python3 zlib1g-dev r-base r-cran-optparse ghostscript
+    ```
 
   All the Python packages (ProPhyle, PySAM, ETE 3, and Snakemake) can be
   installed using [PIP](https://pypi.org/project/pip/):
 
+    ```bash
     pip3 install prophyle pysam ete3 snakemake
+    ```
 
+### Environment troubleshooting
 
-### Known issues
+* **libR.dylib Reason: image not found**
 
-#### libR.dylib Reason: image not found
+   On some systems, the R package distributed by Bioconda might not be properly built and would display messages such as
 
-At some systems, the R package distributed by Bioconda might not be properly
-built and would display messages such as
+   ```
+   dyld: Library not loaded: @rpath/libintl.9.dylib
+     Referenced from: /Users/user/miniconda/envs/rase/lib/R/lib/libR.dylib
+     Reason: image not found
+   Abort trap: 6
+   ```
 
-```
-dyld: Library not loaded: @rpath/libintl.9.dylib
-  Referenced from: /Users/user/miniconda/envs/rase/lib/R/lib/libR.dylib
-  Reason: image not found
-Abort trap: 6
-```
+   The solution is then to create the `rase` environment without `r-optparse`, and
+   to install R and the OptParse package manually.
 
-The solution is then to create the `rase` environment without `r-optparse`, and
-to install R and the OptParse package manually.
+* **ETE: cannot connect to X server**
 
-#### ETE: cannot connect to X server
+   ETE 3 library, which is used for tree plotting, internally depends on QT and
+   requires using an X-Server. This becomes problematic especially on virtual
+   machines.  For instance, on Ubuntu-based machines this can be solved by
+   installing several additional packages:
 
-ETE 3 library, which is used for tree plotting, internally depends on QT and
-requires using an X-Server. This becomes problematic especially on virtual
-machines.  For instance, on Ubuntu-based machines this can be solved by
-installing several additional packages:
+   ```
+   apt-get install xvfb libqt4-dev libgl1-mesa-dev libglu1-mesa-dev xauth xfonts-base
+   ```
 
-```
-apt-get install xvfb libqt4-dev libgl1-mesa-dev libglu1-mesa-dev xauth xfonts-base
-```
-
-and then prepending the following string to commands for building the database.
-```
-xvfb-run --server-args="-screen 0 1024x768x24 -noreset" \
-```
+   and then prepending the following string to commands for building the database.
+   ```
+   xvfb-run --server-args="-screen 0 1024x768x24 -noreset" \
+   ```
 
 ## FAQs
 
