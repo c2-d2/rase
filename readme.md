@@ -14,9 +14,6 @@
 * [RASE computational environment](#rase-computational-environment)
   * [Dependencies](#dependencies)
   * [Setting up an environment](#setting-up-an-environment)
-    * [Using a separate BioConda environment](#using-a-separate-bioconda-environment)
-    * [Using the default BioConda environment](#using-the-default-bioconda-environment)
-    * [Alternative ways of installation](#alternative-ways-of-installation)
   * [Known issues](#known-issues)
     * [libR.dylib Reason: image not found](#librdylib-reason-image-not-found)
     * [ETE: cannot connect to X server](#ete-cannot-connect-to-x-server)
@@ -248,49 +245,30 @@ multiple Unix and OS X machines, including clusters and virtual machines.
 
 ### Setting up an environment
 
-#### Using a separate BioConda environment
+* *BioConda environment.* We recommend to create a separate software
+  environment (here called `rase`):
 
-We recommend to create a separate software environment (here called `rase`):
+    conda create -n rase prophyle ete3 pysam snakemake-minimal samtools parallel r-optparse
+    source activate rase
 
-```bash
-conda create -n rase \
-	prophyle ete3 pysam snakemake-minimal samtools parallel r-optparse
-```
 
-The environment can then be activated by
+* *BioConda default environment.* Alternatively, the packages can also be
+  installed directly into the default BioConda environment. Nevertheless, this
+  is not always reliable since some of the RASE dependencies might collide with
+  packages that were installed previously.
 
-```bash
-source activate rase
-```
+    conda install prophyle ete3 pysam snakemake samtools parallel r-optparse
 
-#### Using the default BioConda environment
+* *Manually.* All the dependencies can also be installed without BioConda. Many
+  of these packages are distributed using standard package systems such as
+  [APT](https://wiki.debian.org/Apt).
 
-Alternatively, the packages can also be installed directly into the default
-BioConda environment. Nevertheless, this is not always reliable since some of
-the RASE dependencies might collide with packages that were installed
-previously.
+    apt-get install build-essential python3 zlib1g-dev r-base r-cran-optparse ghostscript
 
-```bash
-conda install prophyle ete3 pysam snakemake samtools parallel r-optparse
-```
+  All the Python packages (ProPhyle, PySAM, ETE 3, and Snakemake) can be
+  installed using [PIP](https://pypi.org/project/pip/):
 
-#### Alternative ways of installation
-
-All the dependencies can also be installed without BioConda.
-
-Many of these packages are distributed using standard package systems such as
-[APT](https://wiki.debian.org/Apt).
-
-```bash
-apt-get install build-essential python3 zlib1g-dev r-base r-cran-optparse ghostscript
-```
-
-All the Python packages (ProPhyle, PySAM, ETE 3, and Snakemake) can be
-installed using [PIP](https://pypi.org/project/pip/):
-
-```bash
-pip3 install prophyle pysam ete3 snakemake
-```
+    pip3 install prophyle pysam ete3 snakemake
 
 
 ### Known issues
