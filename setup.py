@@ -15,14 +15,12 @@ here = os.path.abspath(os.path.dirname(__file__))
 #    long_description = f.read()
 
 # Get the current version
-exec(open("rase/version.py").read())
+exec(open("src/rase/version.py").read())
 
-rase_pys = list(map(lambda x: x.split('/')[-1].replace(".py", ""), glob.glob('rase/rase_*.py')))
+rase_pys = list(map(lambda x: x.split('/')[-1].replace(".py", ""), glob.glob('src/rase/rase_*.py')))
 rase_pys_strs = list(map(lambda x: '{z}.py = rase.{z}:main'.format(z=x), rase_pys))
 
-#print([
-#            'rase = rase.rase:main'
-#        ] + rase_pys_strs, file=sys.stderr)
+#print(['rase = rase.rase:main'] + rase_pys_strs, file=sys.stderr)
 
 setuptools.setup(
     name='rase',
@@ -43,15 +41,18 @@ setuptools.setup(
         'Topic :: Scientific/Engineering :: Bio-Informatics',
     ],
     keywords='',
-    packages=["rase"],
+    packages=setuptools.find_packages('src'),
+    package_dir={'': 'src'},
     install_requires=[
         'wheel',
     ],
     package_data={
-        'rase': [
+        'src': [
             '*.py',
         ],
     },
+    include_package_data=True,
+    zip_safe=False,
     scripts=glob.glob("scripts/*"),
     entry_points={
         'console_scripts': ['rase = rase.rase:main'] + rase_pys_strs,

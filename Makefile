@@ -46,7 +46,7 @@ cleanall: clean
 
 
 install: ## Install using PIP
-install: hooks
+install:
 	$(PIP) uninstall -y rase || true
 	$(PIP) install .
 
@@ -66,18 +66,16 @@ flake8: ## Run Flake8
 	flake8
 
 yapf: ## Run YAPF (inline replacement)
-	yapf -i --recursive rase setup.py tests scripts
+	yapf -i --recursive src setup.py tests
 
 #############
 # RELEASING #
 #############
 
 inc: ## Increment version
-inc: hooks
-	./rase/increment_version.py
+	./src/rase/increment_version.py
 
 pypi: ## Upload to PyPI
-pypi: hooks
 	$(MAKE) clean
 	$(PYTHON) setup.py sdist bdist_wheel upload
 
