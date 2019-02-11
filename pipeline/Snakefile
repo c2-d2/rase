@@ -4,13 +4,15 @@ Author:  Karel Brinda <kbrinda@hsph.harvard.edu>
 License: MIT
 """
 
+import datetime
 import glob
 import os
 import sys
 
-
 snakemake.shell.prefix("set -eo pipefail;")
 snakemake.shell("(../scripts/rase_test_environments.sh 2>&1) >/dev/null || ../scripts/rase_test_environments.sh")
+
+report: "benchmarks/report.{}.rst".format(str(datetime.datetime.now()))
 
 
 # 1) Detect indexes
