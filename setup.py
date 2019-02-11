@@ -1,4 +1,4 @@
-# see https://github.com/pypa/sampleproject
+#! /usr/bin/env python3
 
 import glob
 import os
