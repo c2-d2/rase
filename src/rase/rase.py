@@ -94,7 +94,7 @@ def main():
     parser.add_argument('reads', metavar='reads.fq', help="nanopore reads (- for stdin)")
 
     parser.add_argument(
-        'out_bam', metavar='assignments.bam', help="computed ProPhyle RASE assignments", nargs="*", default=[]
+        'out_bam', metavar='assignments.bam', help="computed ProPhyle RASE assignments", nargs="?", default=[]
     )
 
     args = parser.parse_args()
