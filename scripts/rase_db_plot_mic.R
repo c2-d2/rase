@@ -1,4 +1,4 @@
-#!/usr/bin/env Rscript
+#!/usr/bin/env Rscript --vanilla
 
 #
 # Author:  Karel Brinda <kbrinda@hsph.harvard.edu>
@@ -6,7 +6,7 @@
 # License: MIT
 #
 
-library(optparse)
+suppressMessages(suppressWarnings(library(optparse)))
 
 
 # CONFIGURATION -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

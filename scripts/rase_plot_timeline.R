@@ -1,4 +1,4 @@
-#!/usr/bin/env Rscript
+#!/usr/bin/env Rscript --vanilla
 
 #' Plot RASE prediction timeline.
 #'
@@ -7,7 +7,7 @@
 #' License: MIT
 #'
 
-library(optparse)
+suppressMessages(suppressWarnings(library(optparse)))
 
 
 # CLI-parsing -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
