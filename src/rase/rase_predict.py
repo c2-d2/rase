@@ -132,7 +132,7 @@ class Runner:
 
                 last_time = format_time(current_window[0] - t0)
                 print(
-                    "Time t={}: {} reads and {} kbps.".format(
+                    "Time t={}: {:,} reads and {:,} kbps.".format(
                         last_time, self.stats.nb_assigned_reads, round(self.stats.cumul_ln / 1000)
                     ), file=sys.stderr
                 )
