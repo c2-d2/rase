@@ -1,0 +1,4 @@
+reads_suffix: # suffix of read files
+  "fq"
+time_mode: # time mode of prediction (read / clock)
+  "read"

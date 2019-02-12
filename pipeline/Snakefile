@@ -12,6 +12,10 @@ import sys
 snakemake.shell.prefix("set -eo pipefail;")
 snakemake.shell("(../scripts/rase_test_environments.sh 2>&1) >/dev/null || ../scripts/rase_test_environments.sh")
 
+configfile: "config.yaml"
+
+#print(config)
+
 
 # 1) Detect indexes
 
@@ -57,8 +61,8 @@ if len(indexes)==0:
 
 # 2) Detect experiments
 
-fastqs=glob.glob("reads/*.fq")
-print("Detected FASTQ files:", fastqs)
+fastqs=glob.glob("reads/*."+config["reads_suffix"])
+print("Detected read files:", fastqs)
 experiments=sorted([os.path.basename(remove_suffix(x)) for x in fastqs])
 smallest_experiment=[os.path.basename(remove_suffix(smallest_file(fastqs)))]
 print("Experiments:", experiments)
@@ -106,11 +110,11 @@ rule test:
 
 rule preprocess_reads:
     input:
-        fq="reads/{pref}.fq",
+        fq="reads/{pref}."+config["reads_suffix"],
     output:
-        t="prediction/.{pref}.fq.complete"
+        t="prediction/.{pref}."+config["reads_suffix"]+".complete"
     params:
-        fq="prediction/{pref}.fq"
+        fq="prediction/{pref}.fq"+config["reads_suffix"]
     benchmark:
         "benchmarks/{pref}.readprep.log"
     shell:
@@ -122,6 +126,9 @@ rule preprocess_reads:
                 | perl -pe 's/\t/\n/g' \
                 > "{params.fq}"
             touch "{output.t}"
+        """ if config["time_mode"] =="read" else """
+            cp "{input.fq}" "{params.fq}"
+            touch "{output.t}"
         """
 
 
@@ -129,11 +136,11 @@ rule classify:
     priority: 60
     input:
         "database/.{index}.complete",
-        "prediction/.{pref}.fq.complete",
+        "prediction/.{pref}."+config["reads_suffix"]+".complete",
     output:
         t="prediction/.{pref}__{index}.bam.complete",
     params:
-        fq="prediction/{pref}.fq",
+        fq="prediction/{pref}."+config["reads_suffix"],
         bam="prediction/{pref}__{index}.bam",
         index="database/{index}"
     benchmark:
@@ -166,7 +173,7 @@ rule predict:
     shell:
         """
             mkdir -p "prediction/{wildcards.pref}__{wildcards.index}"
-            ../src/rase/rase_predict.py -t read -p "prediction/{wildcards.pref}__{wildcards.index}/" "{params.tree}" "{params.metadata}" "{params.bam}" > "{params.tsv1}"
+            ../src/rase/rase_predict.py -t {config.time_mode} -p "prediction/{wildcards.pref}__{wildcards.index}/" "{params.tree}" "{params.metadata}" "{params.bam}" > "{params.tsv1}"
             ../src/rase/rase_prediction_add_flags.py  "{params.tsv1}" > "{params.tsv2}"
             rm "{params.tsv1}"
             touch "{output.t}"
