@@ -1,4 +1,12 @@
 reads_suffix: # suffix of read files
   "fq"
-time_mode: # time mode of prediction (read / clock)
+#  "fq.gz"
+#  "fastq"
+#  "fastq.gz"
+#  "fa"
+#  "fa.gz"
+#  "fasta"
+#  "fastq.gz"
+time_mode: # time mode of prediction
   "read"
+#   "clock"
