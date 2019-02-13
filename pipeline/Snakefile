@@ -10,7 +10,6 @@ import os
 import sys
 
 snakemake.shell.prefix("set -eo pipefail;")
-snakemake.shell("(../scripts/rase_test_environments.sh 2>&1) >/dev/null || ../scripts/rase_test_environments.sh")
 
 configfile: "config.yaml"
 
@@ -54,9 +53,9 @@ detection_failure=False
 print("Indexes:", indexes)
 if len(indexes)==0:
     print("!!!! ", file=sys.stderr)
-    print("!!!! ERROR ", file=sys.stderr)
+    print("!!!! RASE PIPELINE ERROR ", file=sys.stderr)
     print("!!!! ", file=sys.stderr)
-    print("!!!! No index provided", file=sys.stderr)
+    print("!!!! No index provided ({db}.tsv and {db.tar.gz}).", file=sys.stderr)
     print("!!!! ", file=sys.stderr)
     detection_failure=True
 
@@ -67,9 +66,10 @@ readfiles=glob.glob("reads/*."+config["reads_suffix"])
 print("Detected read files:", readfiles)
 if len(readfiles)==0:
     print("!!!! ", file=sys.stderr)
-    print("!!!! ERROR ", file=sys.stderr)
+    print("!!!! RASE PIPELINE ERROR ", file=sys.stderr)
     print("!!!! ", file=sys.stderr)
-    print("!!!! No files with sequencing reads provided", file=sys.stderr)
+    print("!!!! No files with sequencing reads provided (*.{}).".format(config["reads_suffix"]), file=sys.stderr)
+    print("!!!! Adjust your config file if a different format is used.".format(config["reads_suffix"]), file=sys.stderr)
     print("!!!! ", file=sys.stderr)
     detection_failure=True
 
@@ -82,6 +82,11 @@ if detection_failure:
 experiments=sorted([os.path.basename(remove_suffix(x)) for x in readfiles])
 smallest_experiment=[os.path.basename(remove_suffix(smallest_file(readfiles)))]
 print("Experiments:", experiments)
+
+
+# 4) Check whether all dependencies are installed
+
+snakemake.shell("(../scripts/rase_test_environments.sh 2>&1) >/dev/null || ../scripts/rase_test_environments.sh")
 
 
 localrules: test_environments
