@@ -173,7 +173,7 @@ rule predict:
     shell:
         """
             mkdir -p "prediction/{wildcards.pref}__{wildcards.index}"
-            ../src/rase/rase_predict.py -t {config.time_mode} -p "prediction/{wildcards.pref}__{wildcards.index}/" "{params.tree}" "{params.metadata}" "{params.bam}" > "{params.tsv1}"
+            ../src/rase/rase_predict.py -t {config[time_mode]} -p "prediction/{wildcards.pref}__{wildcards.index}/" "{params.tree}" "{params.metadata}" "{params.bam}" > "{params.tsv1}"
             ../src/rase/rase_prediction_add_flags.py  "{params.tsv1}" > "{params.tsv2}"
             rm "{params.tsv1}"
             touch "{output.t}"
