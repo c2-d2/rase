@@ -188,6 +188,7 @@ rule predict:
         t="prediction/.{pref}__{index}.predict.complete",
     params:
         bam="prediction/{pref}__{index}.bam",
+        snapshot_dir="prediction/{pref}__{index}/",
         tree="database/{index}/tree.nw",
         metadata="database/{index}.tsv",
         tsv1="prediction/{pref}__{index}.predict_without_flags.tsv",
@@ -197,8 +198,10 @@ rule predict:
     shell:
         """
             mkdir -p "prediction/{wildcards.pref}__{wildcards.index}"
-            ../src/rase/rase_predict.py -t {config[time_mode]} -p "prediction/{wildcards.pref}__{wildcards.index}/" "{params.tree}" "{params.metadata}" "{params.bam}" > "{params.tsv1}"
-            ../src/rase/rase_prediction_add_flags.py  "{params.tsv1}" > "{params.tsv2}"
+            ../src/rase/rase_predict.py -t {config[time_mode]} -p "{params.snapshot_dir}" "{params.tree}" "{params.metadata}" "{params.bam}" \
+                > "{params.tsv1}"
+            ../src/rase/rase_prediction_add_flags.py  "{params.tsv1}" \
+                > "{params.tsv2}"
             rm "{params.tsv1}"
             touch "{output.t}"
         """
@@ -247,11 +250,12 @@ rule plot_snapshots:
         "benchmarks/{pref}__{index}.plot_snapshots.log"
     params:
         tsv="prediction/{pref}__{index}.predict.tsv",
-        index="database/{index}",
-        pref="{pref}",
+        index_tsv="database/{index}.tsv",
+        pred_dir="prediction/{pref}__{index}",
+        plots_pref="plots/{pref}__{index}.snapshots.",
     shell:
         """
-            ../src/rase/rase_plot_selected_snapshots.py "database/{wildcards.index}.tsv" "prediction/{wildcards.pref}__{wildcards.index}" 1 5 -1 "plots/{wildcards.pref}__{wildcards.index}.snapshots."
+            ../src/rase/rase_plot_selected_snapshots.py "{params.index_tsv}" "{params.pred_dir}" 1 5 -1 "{params.plots_pref}"
             touch "{output.t}"
         """
 
