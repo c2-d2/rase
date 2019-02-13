@@ -55,7 +55,7 @@ if len(indexes)==0:
     print("!!!! ", file=sys.stderr)
     print("!!!! WARNING ", file=sys.stderr)
     print("!!!! ", file=sys.stderr)
-    print("!!!! No indexes files provided", file=sys.stderr)
+    print("!!!! No index provided", file=sys.stderr)
     print("!!!! ", file=sys.stderr)
 
 
@@ -70,7 +70,7 @@ if len(experiments)==0:
     print("!!!! ", file=sys.stderr)
     print("!!!! WARNING ", file=sys.stderr)
     print("!!!! ", file=sys.stderr)
-    print("!!!! No FASTQ files provided", file=sys.stderr)
+    print("!!!! No files with sequencing reads provided", file=sys.stderr)
     print("!!!! ", file=sys.stderr)
 
 
@@ -81,8 +81,8 @@ rule all:
         [
             [
                 [
-                    "prediction/.{}.fq.complete".format(e),
-                    "prediction/.{}__{}.bam.complete".format(e, i),
+                    "prediction/.{}.read.complete".format(e),
+                    "prediction/.{}__{}.assign.complete".format(e, i),
                     "prediction/.{}__{}.predict.complete".format(e, i),
                     "plots/.{}__{}.plot.complete".format(e, i),
                 ]
@@ -97,7 +97,7 @@ rule test:
         [
             [
                 [
-                    "prediction/.{}.fq.complete".format(e),
+                    "prediction/.{}.read.complete".format(e),
                     "prediction/.{}__{}.bam.complete".format(e, i),
                     "prediction/.{}__{}.predict.complete".format(e, i),
                     "plots/.{}__{}.plot.complete".format(e, i),
@@ -110,44 +110,44 @@ rule test:
 
 rule preprocess_reads:
     input:
-        fq="reads/{pref}."+config["reads_suffix"],
+        reads="reads/{pref}."+config["reads_suffix"],
     output:
-        t="prediction/.{pref}."+config["reads_suffix"]+".complete"
+        t="prediction/.{pref}.read.complete"
     params:
-        fq="prediction/{pref}.fq"+config["reads_suffix"]
+        reads="prediction/{pref}."+config["reads_suffix"]
     benchmark:
         "benchmarks/{pref}.readprep.log"
     shell:
         """
-            ../src/rase/rase_minion_rename_reads.py "{input.fq}" \
+            ../src/rase/rase_minion_rename_reads.py "{input.reads}" \
                 | paste -d '\t' - - - - \
                 | sort \
                 | uniq \
                 | perl -pe 's/\t/\n/g' \
-                > "{params.fq}"
+                > "{params.reads}"
             touch "{output.t}"
         """ if config["time_mode"] =="read" else """
-            cp "{input.fq}" "{params.fq}"
+            cp "{input.reads}" "{params.reads}"
             touch "{output.t}"
         """
 
 
-rule classify:
+rule assign:
     priority: 60
     input:
         "database/.{index}.complete",
-        "prediction/.{pref}."+config["reads_suffix"]+".complete",
+        "prediction/.{pref}.read.complete",
     output:
-        t="prediction/.{pref}__{index}.bam.complete",
+        t="prediction/.{pref}__{index}.assign.complete",
     params:
-        fq="prediction/{pref}."+config["reads_suffix"],
+        reads="prediction/{pref}."+config["reads_suffix"],
         bam="prediction/{pref}__{index}.bam",
         index="database/{index}"
     benchmark:
         "benchmarks/{pref}__{index}.classify.log"
     shell:
         """
-            prophyle classify -P "{params.index}" -m h1 "{params.fq}" \
+            prophyle classify -P "{params.index}" -m h1 "{params.reads}" \
                 | samtools view -b \
                 > "{params.bam}"
             touch "{output.t}"
@@ -158,7 +158,7 @@ rule classify:
 rule predict:
     priority: 80
     input:
-        "prediction/.{pref}__{index}.bam.complete",
+        "prediction/.{pref}__{index}.assign.complete",
         "database/.{index}.complete",
     output:
         t="prediction/.{pref}__{index}.predict.complete",
