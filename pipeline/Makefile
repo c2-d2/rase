@@ -4,7 +4,7 @@
 # License: MIT
 #
 
-.PHONY: all help clean cleanall cluster export
+.PHONY: all help clean cleanall cluster export clock
 
 SHELL=/usr/bin/env bash -eo pipefail
 
@@ -17,7 +17,10 @@ SM=snakemake -j -p
 all: ## Run everything
 	$(SM)
 
-test: ## Run the smallest experiment
+clock: ## Run everything in the clock mode
+	$(SM) --configfile config.clock-mode.yaml
+
+test: ## Run the smallest experiment only
 	ls database/*.tsv || \
 		(cd database \
 		&& wget https://github.com/c2-d2/rase-db/releases/download/v01/spneumoniae_sparc.k18.tar.gz \

@@ -10,3 +10,5 @@ reads_suffix: # suffix of read files
 time_mode: # time mode of prediction
   "read"
 #   "clock"
+prediction_sampling: # sampling period during prediction (in seconds)
+  60
