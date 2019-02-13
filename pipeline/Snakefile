@@ -50,28 +50,38 @@ indexes=sorted(list(set(indexes_base_tsv) & set(indexes_base_tar)))
 indexes_base_tar_smallest=find_db_files("tar.gz", smallest_only=True)
 smallest_index=list(set(indexes_base_tsv) & set(indexes_base_tar_smallest))
 
+detection_failure=False
 print("Indexes:", indexes)
 if len(indexes)==0:
     print("!!!! ", file=sys.stderr)
-    print("!!!! WARNING ", file=sys.stderr)
+    print("!!!! ERROR ", file=sys.stderr)
     print("!!!! ", file=sys.stderr)
     print("!!!! No index provided", file=sys.stderr)
     print("!!!! ", file=sys.stderr)
+    detection_failure=True
 
 
-# 2) Detect experiments
+# 2) Detect reads
 
-fastqs=glob.glob("reads/*."+config["reads_suffix"])
-print("Detected read files:", fastqs)
-experiments=sorted([os.path.basename(remove_suffix(x)) for x in fastqs])
-smallest_experiment=[os.path.basename(remove_suffix(smallest_file(fastqs)))]
-print("Experiments:", experiments)
-if len(experiments)==0:
+readfiles=glob.glob("reads/*."+config["reads_suffix"])
+print("Detected read files:", readfiles)
+if len(readfiles)==0:
     print("!!!! ", file=sys.stderr)
-    print("!!!! WARNING ", file=sys.stderr)
+    print("!!!! ERROR ", file=sys.stderr)
     print("!!!! ", file=sys.stderr)
     print("!!!! No files with sequencing reads provided", file=sys.stderr)
     print("!!!! ", file=sys.stderr)
+    detection_failure=True
+
+if detection_failure:
+    sys.exit(42)
+
+
+# 3) Setup experiments
+
+experiments=sorted([os.path.basename(remove_suffix(x)) for x in readfiles])
+smallest_experiment=[os.path.basename(remove_suffix(smallest_file(readfiles)))]
+print("Experiments:", experiments)
 
 
 localrules: test_environments
