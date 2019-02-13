@@ -1,2 +1,2 @@
-*.fq
-*.fastq
+*
+!.gitignore
