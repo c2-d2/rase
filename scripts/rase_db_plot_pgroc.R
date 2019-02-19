@@ -1,4 +1,4 @@
-#!/usr/bin/env Rscript --vanilla
+#!/usr/bin/env Rscript
 
 #
 # Author:  Karel Brinda <kbrinda@hsph.harvard.edu>
