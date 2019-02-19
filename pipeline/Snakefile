@@ -115,6 +115,10 @@ rule all:
             for e in experiments
         ],
 
+rule database:
+	input:
+		[f"database/.{index}.complete" for index in indexes]
+
 
 rule test:
     input:
