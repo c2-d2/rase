@@ -111,10 +111,10 @@ rule all:
         [
             [
                 [
-                    "prediction/.{}.read.complete".format(e),
-                    "prediction/.{}__{}.assign.complete".format(e, i),
-                    "prediction/.{}__{}.predict.complete".format(e, i),
-                    "plots/.{}__{}.plot.complete".format(e, i),
+                    f"prediction/.{e}.read.complete",
+                    f"prediction/.{e}__{i}.assign.complete",
+                    f"prediction/.{e}__{i}.predict.complete",
+                    f"plots/.{e}__{i}.plot.complete",
                 ]
                 for i in indexes
             ]
@@ -131,10 +131,10 @@ rule test:
         [
             [
                 [
-                    "prediction/.{}.read.complete".format(e),
-                    "prediction/.{}__{}.bam.complete".format(e, i),
-                    "prediction/.{}__{}.predict.complete".format(e, i),
-                    "plots/.{}__{}.plot.complete".format(e, i),
+                    f"prediction/.{e}.read.complete",
+                    f"prediction/.{e}__{i}.bam.complete",
+                    f"prediction/.{e}__{i}.predict.complete",
+                    f"plots/.{e}__{i}.plot.complete",
                 ]
                 for i in smallest_index
             ]
