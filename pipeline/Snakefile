@@ -93,7 +93,7 @@ if len(readfiles)==0:
 experiments=sorted([os.path.basename(remove_suffix(x, config["reads_suffix"])) for x in readfiles])
 smallest_reads=smallest_file(readfiles)
 if smallest_reads is not None:
-    smallest_experiment=[os.path.basename(remove_suffix(smallest_reads), config["reads_suffix"])]
+    smallest_experiment=[os.path.basename(remove_suffix(smallest_reads, config["reads_suffix"]))]
 else:
     smallest_experiment=[]
 print("Experiments:", experiments)
