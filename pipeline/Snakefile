@@ -19,6 +19,8 @@ configfile: "config.yaml"
 # 1) Detect indexes
 
 def remove_suffix(fn, suffix=None):
+    if fn is None:
+        return None
     if suffix is None:
         parts=fn.split(".")
         return ".".join(parts[:-1])
@@ -89,7 +91,11 @@ if len(readfiles)==0:
 # 3) Setup experiments
 
 experiments=sorted([os.path.basename(remove_suffix(x, config["reads_suffix"])) for x in readfiles])
-smallest_experiment=[os.path.basename(remove_suffix(smallest_file(readfiles), config["reads_suffix"]))]
+smallest_reads=smallest_file(readfiles)
+if smallest_reads is not None:
+    smallest_experiment=[os.path.basename(remove_suffix(smallest_reads), config["reads_suffix"])]
+else:
+    smallest_experiment=[]
 print("Experiments:", experiments)
 
 
