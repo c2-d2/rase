@@ -58,7 +58,7 @@ indexes=sorted(list(set(indexes_base_tsv) & set(indexes_base_tar)))
 indexes_base_tar_smallest=find_db_files("tar.gz", smallest_only=True)
 smallest_index=list(set(indexes_base_tsv) & set(indexes_base_tar_smallest))
 
-detection_failure=False
+#detection_failure=False
 print("Indexes:", indexes)
 if len(indexes)==0:
     print("!!!! ", file=sys.stderr)
@@ -66,7 +66,7 @@ if len(indexes)==0:
     print("!!!! ", file=sys.stderr)
     print("!!!! No index provided ({db}.tsv and {db.tar.gz}).", file=sys.stderr)
     print("!!!! ", file=sys.stderr)
-    detection_failure=True
+    #detection_failure=True
 
 
 # 2) Detect reads
@@ -80,10 +80,10 @@ if len(readfiles)==0:
     print("!!!! No files with sequencing reads provided (*.{}).".format(config["reads_suffix"]), file=sys.stderr)
     print("!!!! Adjust your config file if a different format is used.".format(config["reads_suffix"]), file=sys.stderr)
     print("!!!! ", file=sys.stderr)
-    detection_failure=True
+    #detection_failure=True
 
-if detection_failure:
-    sys.exit(42)
+#if detection_failure:
+#    sys.exit(42)
 
 
 # 3) Setup experiments
