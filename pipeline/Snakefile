@@ -13,7 +13,7 @@ snakemake.shell.prefix("set -eo pipefail;")
 
 configfile: "config.yaml"
 
-localrules: plot, plot_timeline, plot_snapshots, predict, preprocess_reads, all
+localrules: plot, plot_timeline, plot_snapshots, preprocess_reads, all
 
 #print(config)
 
