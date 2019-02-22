@@ -13,6 +13,8 @@ snakemake.shell.prefix("set -eo pipefail;")
 
 configfile: "config.yaml"
 
+localrules: plot, plot_timeline, plot_snapshots, predict, preprocess_reads, all
+
 #print(config)
 
 
@@ -111,10 +113,10 @@ rule all:
         [
             [
                 [
-                    f"prediction/.{e}.read.complete",
-                    f"prediction/.{e}__{i}.assign.complete",
-                    f"prediction/.{e}__{i}.predict.complete",
-                    f"plots/.{e}__{i}.plot.complete",
+                    ancient(f"prediction/.{e}.read.complete"),
+                    ancient(f"prediction/.{e}__{i}.assign.complete"),
+                    ancient(f"prediction/.{e}__{i}.predict.complete"),
+                    ancient(f"plots/.{e}__{i}.plot.complete"),
                 ]
                 for i in indexes
             ]
@@ -123,7 +125,7 @@ rule all:
 
 rule database:
 	input:
-		[f"database/.{index}.complete" for index in indexes]
+		[ancient(f"database/.{index}.complete") for index in indexes]
 
 
 rule test:
@@ -131,10 +133,10 @@ rule test:
         [
             [
                 [
-                    f"prediction/.{e}.read.complete",
-                    f"prediction/.{e}__{i}.bam.complete",
-                    f"prediction/.{e}__{i}.predict.complete",
-                    f"plots/.{e}__{i}.plot.complete",
+                    ancient(f"prediction/.{e}.read.complete"),
+                    ancient(f"prediction/.{e}__{i}.bam.complete"),
+                    ancient(f"prediction/.{e}__{i}.predict.complete"),
+                    ancient(f"plots/.{e}__{i}.plot.complete"),
                 ]
                 for i in smallest_index
             ]
@@ -144,7 +146,7 @@ rule test:
 
 rule preprocess_reads:
     input:
-        reads="reads/{pref}."+config["reads_suffix"],
+        reads=ancient("reads/{pref}."+config["reads_suffix"]),
     output:
         t="prediction/.{pref}.read.complete"
     params:
@@ -169,8 +171,8 @@ rule preprocess_reads:
 rule assign:
     priority: 60
     input:
-        "database/.{index}.complete",
-        "prediction/.{pref}.read.complete",
+        ancient("database/.{index}.complete"),
+        ancient("prediction/.{pref}.read.complete"),
     output:
         t="prediction/.{pref}__{index}.assign.complete",
     params:
@@ -192,8 +194,8 @@ rule assign:
 rule predict:
     priority: 80
     input:
-        "prediction/.{pref}__{index}.assign.complete",
-        "database/.{index}.complete",
+        ancient("prediction/.{pref}__{index}.assign.complete"),
+        ancient("database/.{index}.complete"),
     output:
         t="prediction/.{pref}__{index}.predict.complete",
     params:
@@ -221,8 +223,8 @@ rule plot:
     output:
         t="plots/.{pref}__{index}.plot.complete",
     input:
-        t1="plots/.{pref}__{index}.plot_timeline.complete",
-        t2="plots/.{pref}__{index}.plot_snapshots.complete",
+        t1=ancient("plots/.{pref}__{index}.plot_timeline.complete"),
+        t2=ancient("plots/.{pref}__{index}.plot_snapshots.complete"),
     shell:
         """
             touch "{output.t}"
@@ -233,8 +235,8 @@ rule plot_timeline:
     output:
         t="plots/.{pref}__{index}.plot_timeline.complete",
     input:
-        "prediction/.{pref}__{index}.predict.complete",
-        "database/.{index}.complete",
+        ancient("prediction/.{pref}__{index}.predict.complete"),
+        ancient("database/.{index}.complete"),
     benchmark:
         "benchmarks/{pref}__{index}.plot_timeline.log"
     params:
@@ -254,8 +256,8 @@ rule plot_snapshots:
     output:
         t="plots/.{pref}__{index}.plot_snapshots.complete",
     input:
-        "prediction/.{pref}__{index}.predict.complete",
-        "database/.{index}.complete",
+        ancient("prediction/.{pref}__{index}.predict.complete"),
+        ancient("database/.{index}.complete"),
     benchmark:
         "benchmarks/{pref}__{index}.plot_snapshots.log"
     params:
@@ -274,8 +276,8 @@ rule decompress:
     output:
         t="database/.{index}.complete"
     input:
-        gz="database/{index}.tar.gz",
-        tsv="database/{index}.tsv",
+        gz=ancient("database/{index}.tar.gz"),
+        tsv=ancient("database/{index}.tsv"),
     benchmark:
         "benchmarks/decompress.{index}.log"
     shell:
