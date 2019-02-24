@@ -44,7 +44,7 @@ export: ## Export all outputs
 	done
 
 cluster: ## Submit jobs to a cluster
-	snakemake --cores 9999 -p \
+	snakemake --cores 9999 -p --keep-going \
 		--cluster-config cluster.json \
 		--cluster 'sbatch -p {cluster.queue} -c {cluster.n} -t {cluster.time} --mem={cluster.memory} --job-name {cluster.name} -o {cluster.output} -e {cluster.error}'
 
