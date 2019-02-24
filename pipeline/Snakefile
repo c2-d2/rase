@@ -105,9 +105,6 @@ print("Experiments:", experiments)
 
 snakemake.shell("(../scripts/rase_test_environments.sh 2>&1) >/dev/null || ../scripts/rase_test_environments.sh")
 
-
-localrules: test_environments
-
 rule all:
     input:
         [
