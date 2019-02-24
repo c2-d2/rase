@@ -151,6 +151,8 @@ rule preprocess_reads:
         t="prediction/.{pref}.read.complete"
     params:
         reads="prediction/{pref}."+config["reads_suffix"]
+    group:
+        "group"
     benchmark:
         "benchmarks/{pref}.readprep.log"
     shell:
@@ -179,6 +181,8 @@ rule assign:
         reads="prediction/{pref}."+config["reads_suffix"],
         bam="prediction/{pref}__{index}.bam",
         index="database/{index}"
+    group:
+        "group"
     benchmark:
         "benchmarks/{pref}__{index}.classify.log"
     shell:
@@ -205,6 +209,8 @@ rule predict:
         metadata="database/{index}.tsv",
         tsv1="prediction/{pref}__{index}.predict_without_flags.tsv",
         tsv2="prediction/{pref}__{index}.predict.tsv",
+    group:
+        "group"
     benchmark:
         "benchmarks/{pref}__{index}.predict.log"
     shell:
@@ -225,6 +231,8 @@ rule plot:
     input:
         t1=ancient("plots/.{pref}__{index}.plot_timeline.complete"),
         t2=ancient("plots/.{pref}__{index}.plot_snapshots.complete"),
+    group:
+        "group"
     shell:
         """
             touch "{output.t}"
@@ -237,6 +245,8 @@ rule plot_timeline:
     input:
         ancient("prediction/.{pref}__{index}.predict.complete"),
         ancient("database/.{index}.complete"),
+    group:
+        "group"
     benchmark:
         "benchmarks/{pref}__{index}.plot_timeline.log"
     params:
@@ -258,6 +268,8 @@ rule plot_snapshots:
     input:
         ancient("prediction/.{pref}__{index}.predict.complete"),
         ancient("database/.{index}.complete"),
+    group:
+        "group"
     benchmark:
         "benchmarks/{pref}__{index}.plot_snapshots.log"
     params:
