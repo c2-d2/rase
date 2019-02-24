@@ -1,12 +1,12 @@
 {
     "__default__":
     {
-        "time"   : "0-08:00",
-        "n"      : 4,
+        "time"   : "0-04:00",
+        "n"      : 3,
         "queue"  : "short",
         "memory" : 8000,
         "name"   : "{rule}.{wildcards}",
-        "output" : "logs/{rule}.out",
-        "error"  : "logs/{rule}.err"
+        "output" : "logs/{rule}.{wildcards}.out",
+        "error"  : "logs/{rule}.{wildcards}.err"
     }
 }
