@@ -273,6 +273,7 @@ rule plot_snapshots:
 
 
 rule decompress:
+    priority: 100
     output:
         t="database/.{index}.complete"
     input:
