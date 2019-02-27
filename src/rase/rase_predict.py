@@ -248,18 +248,22 @@ class Predict:
                     # everything R
                     sus = 0.0
                     s_w, s_bm = "NA", "NA"
+                    s_w_round= "NA"
                 elif bm_cat == 'S':
                     # everything S
                     sus = 1.0
                     r_w, r_bm = "NA", "NA"
+                    r_w_round= "NA"
                 elif bm_cat == 'NA' and pg1_w == 0:
                     # not enough info yet (no match)
                     sus = 0.0
                     r_w, r_bm, s_w, s_bm = "NA", "NA", "NA", "NA"
+                    r_w_round, s_w_round = "NA", "NA"
                 elif bm_cat == 'NA':
                     # ????
                     sus = 'NA'
                     r_w, r_bm, s_w, s_bm = "NA", "NA", "NA", "NA"
+                    r_w_round, s_w_round = "NA", "NA"
 
             ##  3c) Predict based on the collected info
 
