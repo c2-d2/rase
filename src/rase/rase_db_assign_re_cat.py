@@ -44,7 +44,7 @@ def pseudo_mic_to_interval(pseudo_mic):
         return (0, number)
 
     print(
-        "MIC string '{}' could not be parsed. A new regular expression should be added.".format(pseudo_mic),
+        f"Warning: MIC string '{pseudo_mic}' could not be parsed. If this represents a value, a new regular expression should be added.",
         file=sys.stderr
     )
     return (0, float("+inf"))
