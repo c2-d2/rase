@@ -9,6 +9,7 @@ Licence: MIT
 import argparse
 import collections
 import os
+import pprint as ppprint
 import sys
 from ete3 import *
 
@@ -23,6 +24,14 @@ def test_file(fn):
     except FileNotFoundError:
         print(f"File '{fn}' doesn't exists")
         sys.exit(1)
+
+
+def pprint(x, max_len=100):
+    s=ppprint.pformat(x)
+    if len(s)>100:
+        print(s[:100]+"...\n")
+    else:
+        print(s)
 
 
 def load_tsv_dict(tsv, col1, col2):
@@ -79,13 +88,20 @@ def rename_leaves(tree, rename_dict):
 
 
 def create_rase_tree(newick_in_fn, newick_out_fn, table_fn, node_col, taxid_col, pg_col):
+    print("\n1) Testing files.\n")
     test_file(newick_in_fn)
     test_file(table_fn)
     tree = Tree(newick_in_fn, format=NW_IN_FORMAT)
 
+    print("\n2) Building phylogroup dictionary:\n")
     pg_dict = load_tsv_dict(table_fn, node_col, pg_col)
-    rename_dict = load_tsv_dict(table_fn, node_col, taxid_col)
+    pprint(pg_dict)
 
+    print("\n3) Building renaming dictionary:\n")
+    rename_dict = load_tsv_dict(table_fn, node_col, taxid_col)
+    pprint(rename_dict)
+
+    print("\n4) Renaming nodes.\n")
     tree = rename_internal_nodes(tree, pg_dict)
     tree = rename_leaves(tree, rename_dict)
 
