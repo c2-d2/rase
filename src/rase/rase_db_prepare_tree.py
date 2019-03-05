@@ -16,6 +16,15 @@ NW_IN_FORMAT = 1
 NW_OUT_FORMAT = 1
 
 
+def test_file(fn):
+    try:
+        with open(fn) as _:
+            pass
+    except FileNotFoundError:
+        print(f"File '{fn}' doesn't exists")
+        sys.exit(1)
+
+
 def load_tsv_dict(tsv, col1, col2):
     """Load a dictionary from a TSV file (col1 -> col2).
     """
@@ -70,6 +79,8 @@ def rename_leaves(tree, rename_dict):
 
 
 def create_rase_tree(newick_in_fn, newick_out_fn, table_fn, node_col, taxid_col, pg_col):
+    test_file(newick_in_fn)
+    test_file(table_fn)
     tree = Tree(newick_in_fn, format=NW_IN_FORMAT)
 
     pg_dict = load_tsv_dict(table_fn, node_col, pg_col)
