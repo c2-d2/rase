@@ -219,9 +219,16 @@ class Predict:
         ## 3) ANTIBIOTIC RESISTANCE PREDICTION
 
         for ant in self.rtbl.ants:
+
+            ## 3a) Find best-match category
+            if pg1_w > 0:
+                bm_cat = self.rtbl.rcat[pg1_bm][ant]
+            else:
+                bm_cat = "NA"
+
             pres = stats.res_by_weight(pg1, ant)
 
-            ##  3a) Calculate susceptibility score (sus) & correct for missing data
+            ##  3b) Calculate susceptibility score (sus) & correct for missing data
             try:
                 # Identify S/R pivots
                 s_bm = pres['S'][0]
@@ -241,26 +248,24 @@ class Predict:
                     # everything R
                     sus = 0.0
                     s_w, s_bm = "NA", "NA"
+                    s_w_round= "NA"
                 elif bm_cat == 'S':
                     # everything S
                     sus = 1.0
                     r_w, r_bm = "NA", "NA"
+                    r_w_round= "NA"
                 elif bm_cat == 'NA' and pg1_w == 0:
                     # not enough info yet (no match)
                     sus = 0.0
                     r_w, r_bm, s_w, s_bm = "NA", "NA", "NA", "NA"
+                    r_w_round, s_w_round = "NA", "NA"
                 elif bm_cat == 'NA':
                     # ????
                     sus = 'NA'
                     r_w, r_bm, s_w, s_bm = "NA", "NA", "NA", "NA"
+                    r_w_round, s_w_round = "NA", "NA"
 
-            ##  3b) Predict based on the collected info
-
-            # best-match category
-            if pg1_w > 0:
-                bm_cat = self.rtbl.rcat[pg1_bm][ant]
-            else:
-                bm_cat = "NA"
+            ##  3c) Predict based on the collected info
 
             # prediction
             if sus > 0.6:
