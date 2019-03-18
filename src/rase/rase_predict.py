@@ -62,6 +62,22 @@ def current_timestamp():
     return round(dto.timestamp())
 
 
+def timestamp_from_datetime(date, time):
+    """Get a timestamp from a date and time.
+
+    Args:
+        date (str): Date ('YY-MM-DD').
+        time (str): Time ('hh:mm:ss').
+
+    Returns:
+        timestamp (int): Unix timestamp.
+    """
+    date_time = date + " " + time
+    b = datetime.datetime.strptime(date_time, "%Y-%m-%d %H:%M:%S")
+    ts = int(b.timestamp())
+    return ts
+
+
 def format_time(seconds):
     minutes = seconds // 60
     hours = minutes // 60
@@ -95,6 +111,7 @@ class Runner:
         self.delta = delta
         self.first_read_delay = first_read_delay
         self.mbp_per_min = mbp_per_min
+
         self.mimic_datetime = mimic_datetime
 
     def run(self):
@@ -107,7 +124,7 @@ class Runner:
         elif self.mode == "read":
             t1 = self.rase_bam_reader.t1
         elif self.mode == "mimic-ont":
-            t1 = self.mimic_datetime
+            t1 = timestamp_from_datetime(*self.mimic_datetime.split())
         else:
             assert 1 == 2, "Unknown mode provided ({})".format(self.mode)
         t0 = t1 - self.first_read_delay
@@ -124,7 +141,7 @@ class Runner:
             elif self.mode == "read":
                 read_timestamp = timestamp_from_qname(read_stats[0]["qname"])
             elif self.mode == "mimic-ont":
-                read_timestamp = t1 + (self.stats.cumul_ln / (10**6)) / (mbp_per_min / 60.0)
+                read_timestamp = t1 + (self.stats.cumul_ln / (10**6)) / (self.mbp_per_min / 60.0)
             else:
                 assert 1 == 2, "Unknown mode provided ({})".format(self.mode)
 
@@ -746,7 +763,7 @@ def main():
     parser.add_argument(
         '-t',
         dest='mode',
-        choices=['clock', 'read'],
+        choices=['clock', 'read', 'mimic-ont'],
         help='time extraction mode',
         default='clock',
     )
@@ -798,7 +815,6 @@ def main():
 
     parser.add_argument(
         '--datetime',
-        type=float,
         dest='mimic_datetime',
         metavar='STR',
         help='datetime (for mimicking ONT) [2018-01-01 00:00:00]',
@@ -824,7 +840,7 @@ def main():
         out_bam_fn=out_bam_fn,
         pgs_thres=args.pgs_thres,
         sus_thres=args.sus_thres,
-        mbp_per_min=args.mimic_datetime,
+        mbp_per_min=args.mbp_per_min,
         mimic_datetime=args.mimic_datetime,
     )
 
