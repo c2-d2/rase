@@ -131,7 +131,6 @@ rule test:
             [
                 [
                     ancient(f"prediction/.{e}.read.complete"),
-                    ancient(f"prediction/.{e}__{i}.bam.complete"),
                     ancient(f"prediction/.{e}__{i}.predict.complete"),
                     ancient(f"plots/.{e}__{i}.plot.complete"),
                 ]
