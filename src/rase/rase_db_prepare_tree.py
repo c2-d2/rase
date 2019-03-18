@@ -27,9 +27,9 @@ def test_file(fn):
 
 
 def pprint(x, max_len=100):
-    s=ppprint.pformat(x)
-    if len(s)>100:
-        print(s[:100]+"...\n")
+    s = ppprint.pformat(x)
+    if len(s) > 100:
+        print(s[:100] + "...\n")
     else:
         print(s)
 
