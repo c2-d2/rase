@@ -81,11 +81,14 @@ def format_floats(*values, digits=3):
 
 
 class Runner:
-    def __init__(self, metadata_fn, tree_fn, bam_fn, out_bam_fn, pref, final_stats_fn, mode, delta, first_read_delay):
+    def __init__(
+        self, metadata_fn, tree_fn, bam_fn, out_bam_fn, pref, final_stats_fn, mode, delta, first_read_delay, pgs_thres,
+        sus_thres
+    ):
         self.mode = mode
         self.metadata = RaseMetadataTable(metadata_fn)
         self.stats = Stats(tree_fn, self.metadata)
-        self.predict = Predict(self.metadata)
+        self.predict = Predict(self.metadata, pgs_thres=pgs_thres, sus_thres=sus_thres)
         self.rase_bam_reader = RaseBamReader(bam_fn, out_bam_fn)
         self.pref = pref
         self.final_stats_fn = final_stats_fn
@@ -155,18 +158,19 @@ class Predict:
     similarity to individual samples).
 
     Attributes:
-        rtbl: Resistance table
-        phylogroups: Sorted list of phylogroups
-        filename: TSV filename
-        timestamp: Unix timestamp of that sequencing time
-        datetime: The corresponding datetime
+        rtbl: Resistance table.
+        phylogroups: Sorted list of phylogroups.
+        summary: Summary table for the output.
+        pgs_thres: Threshold for phylogroup passing.
+        sus_thres: Threshold for susceptibility.
     """
 
-    def __init__(self, rtbl):
+    def __init__(self, rtbl, pgs_thres, sus_thres):
         self.rtbl = rtbl
         self.phylogroups = sorted(self.rtbl.pgset.keys())
         self.summary = collections.OrderedDict()
-        self.taxids = sorted(self.rtbl.pg.keys())
+        self.pgs_thres = pgs_thres
+        self.sus_thres = sus_thres
 
     def predict(self, stats):
         """Predict.
@@ -200,7 +204,7 @@ class Predict:
         ## 2c) Save values
 
         tbl['pgs'] = pgs
-        tbl['pgs_ok'] = "pass" if pgs > 0.5 else "fail"
+        tbl['pgs_ok'] = "pass" if pgs >= self.pgs_thres else "fail"
         tbl['pg1'] = pg1
         tbl['pg2'] = pg2
         tbl['pg1_bm'] = pg1_bm
@@ -268,7 +272,7 @@ class Predict:
             ##  3c) Predict based on the collected info
 
             # prediction
-            if sus > 0.6:
+            if sus > self.sus_thres:
                 pr_cat = "S"
             elif sus >= 0.5:
                 pr_cat = "S!"
@@ -756,6 +760,24 @@ def main():
         default=60,
     )
 
+    parser.add_argument(
+        '--pgs-thres',
+        type=float,
+        dest='pgs_thres',
+        metavar='FLOAT',
+        help='phylogroup score threshold [0.6]',
+        default=0.6,
+    )
+
+    parser.add_argument(
+        '--sus-thres',
+        type=float,
+        dest='sus_thres',
+        metavar='FLOAT',
+        help='susceptibility score threshold [0.5]',
+        default=0.5,
+    )
+
     args = parser.parse_args()
 
     if args.out_bam_fn:
@@ -773,6 +795,8 @@ def main():
         delta=args.delta,
         first_read_delay=args.first_read_delay,
         out_bam_fn=out_bam_fn,
+        pgs_thres=args.pgs_thres,
+        sus_thres=args.sus_thres,
     )
 
     try:
