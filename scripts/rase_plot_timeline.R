@@ -44,8 +44,6 @@ if (kIsRStudio) {
 
     opt <- arguments$options
 
-    warning(opt)
-
     pgs.thres <- opt$pgs.thres
     sus.thres <- opt$sus.thres
 
