@@ -14,14 +14,40 @@ suppressMessages(suppressWarnings(library(optparse)))
 
 kIsRStudio <- Sys.getenv("RSTUDIO") == "1"
 
+pgs.thres <- 0.5
+sus.thres <- 0.6
+
 if (kIsRStudio) {
     src.file <- "../pipeline/tests/spneumoniae_sparc.k18.predict.tsv"
 } else {
+    option_list <- list(
+        make_option(
+            c("--pgs-thres"),
+            dest = "pgs.thres",
+            default = pgs.thres,
+            help = "phylogroup score threshold [default %default]",
+            metavar = "FLOAT"
+        ),
+        make_option(
+            c("--sus-thres"),
+            dest = "sus.thres",
+            default = sus.thres,
+            help = "susceptibility score threshold [default %default]",
+            metavar = "FLOAT"
+        )
+    )
+
     parser <-
-        OptionParser(usage = "%prog [options] timeline.tsv plot.pdf")
+        OptionParser(usage = "%prog [options] prediction.tsv timeline.pdf", option_list =
+                         option_list)
     arguments <- parse_args(parser, positional_arguments = 2)
 
     opt <- arguments$options
+
+    warning(opt)
+
+    pgs.thres <- opt$pgs.thres
+    sus.thres <- opt$sus.thres
 
     src.file <- arguments$args[1]
     out.file <- arguments$args[2]
@@ -153,8 +179,8 @@ TimeAblines <- function(x) {
 #'
 ThresholdAbline <- function(y) {
     abline(h = c(y),
-        lty = 1,
-        col = "grey")
+           lty = 1,
+           col = "grey")
 }
 
 
@@ -179,20 +205,20 @@ margin <- function(i) {
 RedBox <- function(df2, threshold) {
     mx <- max(df2$time.mins) + 15
     rect(-mx,-0.1,
-        mx,
-        threshold,
-        col = rgb(1, 0, 0, alpha = 0.1),
-        border = "NA")
+         mx,
+         threshold,
+         col = rgb(1, 0, 0, alpha = 0.1),
+         border = "NA")
 }
 
 GreenBox <- function(df2, threshold) {
     mx <- max(df2$time.mins) + 15
     rect(-mx,
-        threshold,
-        mx,
-        1.1,
-        col = rgb(0, 1, 0, alpha = 0.1),
-        border = "NA")
+         threshold,
+         mx,
+         1.1,
+         col = rgb(0, 1, 0, alpha = 0.1),
+         border = "NA")
 }
 
 
@@ -284,7 +310,7 @@ PlotReads <- function(df1, i) {
 #'
 #' @examples
 PlotPGS <- function(i) {
-    last_pg_predicted <- tail(df, n = 1)["pgs"] >= 0.6
+    last_pg_predicted <- tail(df, n = 1)["pgs"] >= pgs.thres
     margin(i)
     if (i == 1) {
         par(bty = "[")
@@ -343,11 +369,11 @@ PlotPGS <- function(i) {
             xaxs = "i"
         )
     }
-    ThresholdAbline(0.6)
+    ThresholdAbline(pgs.thres)
     if (last_pg_predicted) {
-        GreenBox(df2, 0.6)
+        GreenBox(df2, pgs.thres)
     } else {
-        RedBox(df2, 0.6)
+        RedBox(df2, pgs.thres)
     }
     TimeAblines(kVerticalAblines[i])
 }
@@ -365,7 +391,7 @@ PlotPGS <- function(i) {
 #' @examples
 PlotAntibiotic <- function(ant, i, is.last) {
     antcol <- paste(ant, "_sus", sep = "")
-    last_is_resistant <- tail(df, n = 1)[antcol] <= 0.6
+    last_is_resistant <- tail(df, n = 1)[antcol] <= sus.thres
     par(bty = "l")
     margin(i)
     if (i == 1) {
@@ -427,12 +453,12 @@ PlotAntibiotic <- function(ant, i, is.last) {
     }
 
     if (last_is_resistant) {
-        RedBox(df2, 0.6)
+        RedBox(df2, sus.thres)
     } else {
-        GreenBox(df2, 0.6)
+        GreenBox(df2, sus.thres)
     }
 
-    ThresholdAbline(0.6)
+    ThresholdAbline(sus.thres)
     TimeAblines(kVerticalAblines[i])
 
 
