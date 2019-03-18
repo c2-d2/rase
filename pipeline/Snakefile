@@ -212,7 +212,13 @@ rule predict:
     shell:
         """
             mkdir -p "prediction/{wildcards.pref}__{wildcards.index}"
-            ../src/rase/rase_predict.py -t {config[time_mode]} -s {config[prediction_sampling]} -p "{params.snapshot_dir}" "{params.tree}" "{params.metadata}" "{params.bam}" \
+            ../src/rase/rase_predict.py \
+                -t {config[time_mode]} \
+                -s {config[prediction_sampling]} \
+                -p "{params.snapshot_dir}" \
+                --sus-thres "{config[susceptibility_score_threshold]}" \
+                --pgs-thres "{config[phylogroup_score_threshold]}" \
+                "{params.tree}" "{params.metadata}" "{params.bam}" \
                 > "{params.tsv1}"
             ../src/rase/rase_prediction_add_flags.py  "{params.tsv1}" \
                 > "{params.tsv2}"

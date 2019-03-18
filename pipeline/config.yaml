@@ -10,5 +10,9 @@ reads_suffix: # suffix of read files
 time_mode: # time mode of prediction
   "read"
 #   "clock"
-prediction_sampling: # sampling period during prediction (in seconds)
+prediction_sampling: # prediction sampling interval (in seconds)
   60
+phylogroup_score_threshold: # threshold on phylogroup score for passing
+  0.5
+susceptibility_score_threshold: # threshold on susceptibility score for susceptibility
+  0.6
