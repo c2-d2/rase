@@ -18,6 +18,6 @@ phylogroup_score_threshold: # threshold on phylogroup score for passing
 susceptibility_score_threshold: # threshold on susceptibility score for susceptibility
   0.6
 mimic_ont_mbp_per_minute: # mimic-ont; milions of basepairs per minute
- "0.2"
+ "1.43"
 mimic_ont_datetime: # mimic-ont; date time of the sequencing start
  "2018-01-01 00:00:00"
