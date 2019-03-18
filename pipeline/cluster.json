@@ -5,8 +5,5 @@
         "n"      : 3,
         "queue"  : "short",
         "memory" : 8000,
-        "name"   : "{rule}.{wildcards}",
-        "output" : "logs/{rule}.{wildcards}.out",
-        "error"  : "logs/{rule}.{wildcards}.err"
     }
 }
