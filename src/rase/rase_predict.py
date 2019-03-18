@@ -83,7 +83,7 @@ def format_floats(*values, digits=3):
 class Runner:
     def __init__(
         self, metadata_fn, tree_fn, bam_fn, out_bam_fn, pref, final_stats_fn, mode, delta, first_read_delay, pgs_thres,
-        sus_thres
+        sus_thres, mbp_per_min, mimic_datetime
     ):
         self.mode = mode
         self.metadata = RaseMetadataTable(metadata_fn)
@@ -94,16 +94,23 @@ class Runner:
         self.final_stats_fn = final_stats_fn
         self.delta = delta
         self.first_read_delay = first_read_delay
+        self.mbp_per_min = mbp_per_min
+        self.mimic_datetime = mimic_datetime
 
     def run(self):
         # 1) set the initial window:
-        #     [t0, t0+delta), where t0=time_of_first_read-first_read_delay
+        #     [t0, t0+delta), where
+        #        t0=t1-first_read_delay
+        #        t1=time_of_first_read
         if self.mode == "clock":
-            t0 = current_timestamp() - self.first_read_delay
+            t1 = current_timestamp()
         elif self.mode == "read":
-            t0 = self.rase_bam_reader.t1 - self.first_read_delay
+            t1 = self.rase_bam_reader.t1
+        elif self.mode == "mimic-ont":
+            t1 = self.mimic_datetime
         else:
             assert 1 == 2, "Unknown mode provided ({})".format(self.mode)
+        t0 = t1 - self.first_read_delay
         current_window = [t0, t0 + self.delta]  # [x, y)
 
         if self.pref is not None:
@@ -116,6 +123,8 @@ class Runner:
                 read_timestamp = current_timestamp()
             elif self.mode == "read":
                 read_timestamp = timestamp_from_qname(read_stats[0]["qname"])
+            elif self.mode == "mimic-ont":
+                read_timestamp = t1 + (self.stats.cumul_ln / (10**6)) / (mbp_per_min / 60.0)
             else:
                 assert 1 == 2, "Unknown mode provided ({})".format(self.mode)
 
@@ -778,6 +787,24 @@ def main():
         default=0.5,
     )
 
+    parser.add_argument(
+        '--mbp-per-min',
+        type=float,
+        dest='mbp_per_min',
+        metavar='FLOAT',
+        help='mbps per minute (for mimicking ONT) [0.5]',
+        default=0.5,
+    )
+
+    parser.add_argument(
+        '--datetime',
+        type=float,
+        dest='mimic_datetime',
+        metavar='STR',
+        help='datetime (for mimicking ONT) [2018-01-01 00:00:00]',
+        default="2018-01-01 00:00:00",
+    )
+
     args = parser.parse_args()
 
     if args.out_bam_fn:
@@ -797,6 +824,8 @@ def main():
         out_bam_fn=out_bam_fn,
         pgs_thres=args.pgs_thres,
         sus_thres=args.sus_thres,
+        mbp_per_min=args.mimic_datetime,
+        mimic_datetime=args.mimic_datetime,
     )
 
     try:

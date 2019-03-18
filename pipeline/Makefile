@@ -4,7 +4,7 @@
 # License: MIT
 #
 
-.PHONY: all help clean cleanall cluster export clock
+.PHONY: all help clean cleanall cluster export clock pacbio
 
 SHELL=/usr/bin/env bash -eo pipefail
 
@@ -19,6 +19,9 @@ all: ## Run everything
 
 clock: ## Run everything in the clock mode
 	$(SM) --configfile config.clock-mode.yaml
+
+pacbio: ## Run everything in the pacbio mode
+	$(SM) --configfile config.pacbio.yaml
 
 test: ## Run the smallest experiment only
 	ls database/*.tsv || \
