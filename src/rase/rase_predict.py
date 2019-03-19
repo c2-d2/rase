@@ -791,8 +791,8 @@ def main():
         type=float,
         dest='pgs_thres',
         metavar='FLOAT',
-        help='phylogroup score threshold [0.6]',
-        default=0.6,
+        help='phylogroup score threshold [0.5]',
+        default=0.5,
     )
 
     parser.add_argument(
@@ -800,8 +800,8 @@ def main():
         type=float,
         dest='sus_thres',
         metavar='FLOAT',
-        help='susceptibility score threshold [0.5]',
-        default=0.5,
+        help='susceptibility score threshold [0.6]',
+        default=0.6,
     )
 
     parser.add_argument(
