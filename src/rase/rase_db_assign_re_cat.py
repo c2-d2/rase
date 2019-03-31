@@ -1,4 +1,5 @@
 #! /usr/bin/env python3
+
 """Read MICs from a TSV file, parse the intervals and assign resistance categories (R / S / NA).
 
 Author: Karel Brinda <kbrinda@hsph.harvard.edu>
@@ -13,8 +14,8 @@ import re
 import csv
 
 re_number = re.compile(r'^([0-9]*\.{0,1}[0-9]*)$')
-re_greater = re.compile(r'^>={0,1}([0-9]*\.{0,1}[0-9]*)$')
-re_lesser = re.compile(r'^<={0,1}([0-9]*\.{0,1}[0-9]*)$')
+re_greater = re.compile(r'^(?:≥|>|>=)([0-9]*\.{0,1}[0-9]*)$')
+re_lesser = re.compile(r'^(?:≤|<|<=)([0-9]*\.{0,1}[0-9]*)$')
 
 
 def pseudo_mic_to_interval(pseudo_mic):
