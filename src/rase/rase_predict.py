@@ -173,7 +173,7 @@ class Runner:
             f.close()
 
         if self.final_stats_fn is not None:
-            with open(final_stats_fn, mode="w") as f:
+            with open(self.final_stats_fn, mode="w") as f:
                 stats.print(file=f)
 
 
@@ -554,7 +554,11 @@ class RaseMetadataTable:
             for x in tsv_reader:
                 taxid = x['taxid']
 
-                pg = x['phylogroup']
+                # support old db format ()
+                try:
+                    pg = x['pg']
+                except KeyError:
+                    pg = x['phylogroup']
                 self.pg[taxid] = pg
                 self.pgset[pg].add(taxid)
 
