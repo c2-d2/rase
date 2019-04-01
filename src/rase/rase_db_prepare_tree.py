@@ -52,7 +52,11 @@ def load_tsv_dict(tsv, col1, col2):
 
 def node_to_pg(node, pg_dict):
     if node.is_leaf():
-        return set([pg_dict[node.name]])
+        try:
+            return set([pg_dict[node.name]])
+        except KeyError:
+            print(f"Renaming error: Unknown isolate '{node.name}'", file=sys.stderr)
+            sys.exit(42)
     else:
         s = set()
         for n in node:
