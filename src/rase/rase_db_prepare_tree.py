@@ -91,7 +91,7 @@ def rename_leaves(tree, rename_dict):
     return tree
 
 
-def create_rase_tree(newick_in_fn, newick_out_fn, table_fn, node_col, taxid_col, pg_col):
+def prepare_rase_tree(newick_in_fn, newick_out_fn, table_fn, node_col, taxid_col, pg_col):
     print("\n1) Testing files.\n")
     test_file(newick_in_fn)
     test_file(table_fn)
@@ -182,7 +182,7 @@ def main():
 
     args = parser.parse_args()
 
-    create_rase_tree(
+    prepare_rase_tree(
         newick_in_fn=args.newick_in_fn,
         newick_out_fn=args.newick_out_fn,
         table_fn=args.table_fn,
