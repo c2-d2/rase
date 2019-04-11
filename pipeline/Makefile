@@ -44,6 +44,11 @@ export: ## Export all outputs
 	tar cvf $$f --files-from /dev/null; \
 	for x in benchmarks/*.log prediction/*.tsv plots/*.pdf; do \
 		tar --append --file=$$f $$x; \
+	done; \
+	for x in prediction/*/; do \
+		y=$$(ls $${x}*.tsv | sort | tail -n 1); \
+		echo $$y; \
+		tar --append --file=$$f $$y; \
 	done
 
 cluster: ## Submit jobs to a cluster
