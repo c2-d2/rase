@@ -25,8 +25,9 @@ dbs=$(ls "$1"/*.predict.tsv | perl -pe 's/.*__(.*)\.predict.tsv.*/\1/g' | sort |
 
 for db in $dbs; do
 	{
-		head -n1 $(ls "$1"/*__$db.predict.tsv | head -n1)
-		tail -n1 "$1"/*__$db.predict.tsv
+		cd "$1"
+		head -n1 $(ls *__$db.predict.tsv | head -n1)
+		tail -n1 *__$db.predict.tsv
 	} \
 		| perl -pe 's/( <==\n|__)/\t/g' \
 		| perl -pe 's/(\.predict\.tsv|==> )//g' \
