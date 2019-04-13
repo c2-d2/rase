@@ -162,7 +162,7 @@ rule preprocess_reads:
                 > "{params.reads}"
             touch "{output.t}"
         """ if config["time_mode"] =="read" else """
-            seqtk -A "{input.reads}" > "{params.reads}"
+            seqtk seq -A "{input.reads}" > "{params.reads}"
             touch "{output.t}"
         """
 
