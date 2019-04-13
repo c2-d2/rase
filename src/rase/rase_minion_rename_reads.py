@@ -7,6 +7,8 @@ License: MIT
 
 import argparse
 import datetime
+import functools
+import gzip
 import json
 import os
 import re
@@ -64,7 +66,12 @@ def timestamp_from_datetime(date, time):
 def transf(fq):
     d = {}
 
-    with open(fq) as f:
+    if fq[-3:] == ".gz":
+        open_fn = functools.partial(gzip.open, mode="rt")
+    else:
+        open_fn = open
+
+    with open_fn(fq) as f:
         for i, x in enumerate(f):
             if i % 4 == 0:
                 uuid, runid, read, ch, date, time = parse_header_line(x)
