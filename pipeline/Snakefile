@@ -147,7 +147,7 @@ rule preprocess_reads:
     output:
         t="prediction/.{pref}.read.complete"
     params:
-        reads="prediction/{pref}."+config["reads_suffix"]
+        reads="prediction/{pref}.fa"
     group:
         "group"
     benchmark:
@@ -155,14 +155,14 @@ rule preprocess_reads:
     shell:
         """
             ../src/rase/rase_minion_rename_reads.py "{input.reads}" \
-                | paste -d '\t' - - - - \
+                | paste -d '\t' - - \
                 | sort \
                 | uniq \
                 | perl -pe 's/\t/\n/g' \
                 > "{params.reads}"
             touch "{output.t}"
         """ if config["time_mode"] =="read" else """
-            cp "{input.reads}" "{params.reads}"
+            seqtk -A "{input.reads}" > "{params.reads}"
             touch "{output.t}"
         """
 
@@ -175,7 +175,7 @@ rule assign:
     output:
         t="prediction/.{pref}__{index}.assign.complete",
     params:
-        reads="prediction/{pref}."+config["reads_suffix"],
+        reads="prediction/{pref}.fa",
         bam="prediction/{pref}__{index}.bam",
         index="database/{index}"
     group:
