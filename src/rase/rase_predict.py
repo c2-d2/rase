@@ -20,6 +20,7 @@ import itertools
 import glob
 import json
 import os
+import pandas
 import pysam
 import re
 import sys
@@ -245,6 +246,9 @@ class Predict:
         if pg2_w == 0:
             tbl['pg2'] = "NA"
             tbl['pg2_bm'] = "NA"
+
+        for x in self.rtbl.additional_cols:
+            tbl[x] = self.rtbl.additional_info[pg1_bm][x]
 
         ## 3) ANTIBIOTIC RESISTANCE PREDICTION
 
@@ -533,6 +537,7 @@ class RaseMetadataTable:
         pgset: phylogroup -> set of taxids
         rcat: taxid -> antibiotic -> category
         weight: taxid -> weight
+        additional_info: taxid -> key -> value
         ants: List of antibiotics.
     """
 
@@ -543,29 +548,44 @@ class RaseMetadataTable:
 
         self.rcat = collections.defaultdict(dict)
 
+        self.additional_info = collections.defaultdict(dict)
+
         self.weight = {}
 
-        with open(tsv, 'r') as f:
-            tsv_reader = csv.DictReader(f, delimiter='\t')
+        df = pandas.read_csv(tsv, delimiter='\t')
+        df = df.rename(columns={'phylogroup': 'pg'})  # backward compatibility
 
-            ants = filter(lambda x: x.find("_mic") != -1, tsv_reader.fieldnames)
-            self.ants = list(map(lambda x: x.replace("_mic", ""), ants))
+        # extract antibiotic abbrev from col names
+        re_mic = re.compile(r'(\w+)_mic')
+        self.ants = re_mic.findall(" ".join(df.columns))
 
-            for x in tsv_reader:
-                taxid = x['taxid']
+        print("Antibiotics in the RASE DB:", ", ".join(self.ants), file=sys.stderr)
 
-                # support old db format ()
-                try:
-                    pg = x['pg']
-                except KeyError:
-                    pg = x['phylogroup']
-                self.pg[taxid] = pg
-                self.pgset[pg].add(taxid)
+        # check that all required columns are present
+        basic_cols = ["taxid", "pg", "order"] + list(map(lambda x: x + "_cat", self.ants)) + list(
+            map(lambda x: x + "_int", self.ants)
+        ) + list(map(lambda x: x + "_mic", self.ants))
+        self.additional_cols = set(df.columns) - set(basic_cols)
+        for x in basic_cols:
+            assert x in df.columns, f"Column '{x}' is missing in '{tsv}'."
 
-                for a in self.ants:
-                    cat = x[a + "_cat"]
-                    assert cat in set(["NA", "S", "R", "s", "r"])
-                    self.rcat[taxid][a] = cat
+        # check that values are ok
+        cats = set(itertools.chain(*[df[ant + "_cat"] for ant in self.ants]))
+        cats_wrong = cats - set(["S", "R", "s", "r"])
+        assert not cats_wrong, "Unknown resistance categories: {}".format(", ".join(cats_wrong))
+
+        df_dict = df.to_dict('index')
+        for _, row in df_dict.items():
+            taxid = row['taxid']
+            pg = row['pg']
+            self.pg[taxid] = pg
+            self.pgset[pg].add(taxid)
+
+            for x in self.additional_cols:
+                self.additional_info[taxid][x] = row[x]
+
+            for ant in self.ants:
+                self.rcat[taxid][ant] = row[ant + "_cat"]
 
 
 class RaseBamReader:
