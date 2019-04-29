@@ -11,6 +11,27 @@ License: MIT
 # - add non-susc threshold as a param
 # - implement option auto for autodetection of the time mode
 
+"""
+    Architecture:
+
+        class Worker:
+            Wrapping everything together.
+
+        class Predict:
+            Predicting from assignment statistics.
+
+        class Stats:
+            Statistics for RASE predictions.
+
+        class RaseDbMetadata:
+            RASE DB metadata table.
+
+        class RaseBamReader:
+            Iterator over all assignments of individual reads (1 read = 1 record) in a BAM/RASE file.
+
+"""
+
+
 import argparse
 import collections
 import csv
@@ -97,13 +118,16 @@ def format_floats(*values, digits=3):
     return form_values
 
 
-class Runner:
+class Worker:
+    """
+        Wrapping everything together.
+    """
     def __init__(
         self, metadata_fn, tree_fn, bam_fn, out_bam_fn, pref, final_stats_fn, mode, delta, first_read_delay, pgs_thres,
         sus_thres, mbp_per_min, mimic_datetime
     ):
         self.mode = mode
-        self.metadata = RaseMetadataTable(metadata_fn)
+        self.metadata = RaseDbMetadata(metadata_fn)
         self.stats = Stats(tree_fn, self.metadata)
         self.predict = Predict(self.metadata, pgs_thres=pgs_thres, sus_thres=sus_thres)
         self.rase_bam_reader = RaseBamReader(bam_fn, out_bam_fn)
@@ -179,22 +203,22 @@ class Runner:
 
 
 class Predict:
-    """Predicting from assignment statistics at a time.
+    """Predicting from assignment statistics.
 
-    This class loads prediction statistics for a given time point (relative
+    Loads prediction statistics for a given time point (relative
     similarity to individual samples).
 
     Attributes:
-        rtbl: Resistance table.
+        metadata: Metadata table.
         phylogroups: Sorted list of phylogroups.
         summary: Summary table for the output.
         pgs_thres: Threshold for phylogroup passing.
         sus_thres: Threshold for susceptibility.
     """
 
-    def __init__(self, rtbl, pgs_thres, sus_thres):
-        self.rtbl = rtbl
-        self.phylogroups = sorted(self.rtbl.pgset.keys())
+    def __init__(self, metadata, pgs_thres, sus_thres):
+        self.metadata = metadata
+        self.phylogroups = sorted(self.metadata.pgset.keys())
         self.summary = collections.OrderedDict()
         self.pgs_thres = pgs_thres
         self.sus_thres = sus_thres
@@ -247,16 +271,16 @@ class Predict:
             tbl['pg2'] = "NA"
             tbl['pg2_bm'] = "NA"
 
-        for x in self.rtbl.additional_cols:
-            tbl[x] = self.rtbl.additional_info[pg1_bm][x]
+        for x in self.metadata.additional_cols:
+            tbl[x] = self.metadata.additional_info[pg1_bm][x]
 
         ## 3) ANTIBIOTIC RESISTANCE PREDICTION
 
-        for ant in self.rtbl.ants:
+        for ant in self.metadata.ants:
 
             ## 3a) Find best-match category
             if pg1_w > 0:
-                bm_cat = self.rtbl.rcat[pg1_bm][ant]
+                bm_cat = self.metadata.rcat[pg1_bm][ant]
             else:
                 bm_cat = "NA"
 
@@ -343,11 +367,12 @@ class Predict:
 class Stats:
     """Statistics for RASE predictions.
 
-    The attributes contain all necessary information that are necessary for
+    The attributes contain all information necessary for
     predicting in RASE.
 
     Params:
         tree_fn (str): Filename of the Newick tree.
+        metadata (str): RASE DB metadata.
 
     Attributes:
         nb_assigned_reads (int): Number of processed reads.
@@ -362,8 +387,8 @@ class Stats:
         stats_ln (dict): isolate -> weighted qlen
     """
 
-    def __init__(self, tree_fn, rtbl):
-        self._rtbl = rtbl
+    def __init__(self, tree_fn, metadata):
+        self._metadata = metadata
         self._tree = ete3.Tree(tree_fn, format=1)
         self._isolates = sorted([isolate.name for isolate in self._tree])
         self._descending_isolates_d = self._precompute_descendants(self._tree)
@@ -416,7 +441,7 @@ class Stats:
         for isolate in self._isolates:
             if isolate == FAKE_ISOLATE_UNASSIGNED:
                 continue
-            pg = self._rtbl.pg[isolate]
+            pg = self._metadata.pg[isolate]
             val = self.weight(isolate)
 
             if val > d[pg][1]:
@@ -435,9 +460,9 @@ class Stats:
 
         d = collections.defaultdict(lambda: (None, -1))
 
-        for isolate in self._rtbl.pgset[pg]:
+        for isolate in self._metadata.pgset[pg]:
             val = self.weight(isolate)
-            cat = self._rtbl.rcat[isolate][ant].upper()
+            cat = self._metadata.rcat[isolate][ant].upper()
 
             if val > d[cat][1]:
                 d[cat] = isolate, val
@@ -502,7 +527,7 @@ class Stats:
             if isolate == FAKE_ISOLATE_UNASSIGNED:
                 pg = "NA"
             else:
-                pg = self._rtbl.pg[isolate]
+                pg = self._metadata.pg[isolate]
             table.append(
                 [
                     isolate,
@@ -525,10 +550,10 @@ class Stats:
             print(*format_floats(*x, digits=5), sep="\t", file=file)
 
 
-class RaseMetadataTable:
-    """RASE metadata table.
+class RaseDbMetadata:
+    """RASE DB metadata table.
 
-    This class loads data from a file with a description of individual isolates
+    Loads RASE DB metadata file (describing individual DB isolates)
     and preprocesses them so that they can be accessed via its internal
     structures.
 
@@ -589,7 +614,7 @@ class RaseMetadataTable:
 
 
 class RaseBamReader:
-    """Iterator over all assignments of individual reads in a BAM/RASE file.
+    """Iterator over all assignments of individual reads (1 read = 1 record) in a BAM/RASE file.
 
     Assumes a non-empty BAM file.
 
@@ -602,7 +627,7 @@ class RaseBamReader:
     """
 
     def __init__(self, bam_fn, out_bam_fn):
-        self.assignment_reader = SingleAssignmentReader(bam_fn, out_bam_fn)
+        self.assignment_reader = _SingleAssignmentReader(bam_fn, out_bam_fn)
         self._buffer = []
         self._finished = False
         try:
@@ -645,8 +670,8 @@ class RaseBamReader:
         self.t1 = timestamp_from_qname(self._buffer[0]["qname"])
 
 
-class SingleAssignmentReader:
-    """Iterator over individual assignments in BAM/RASE.
+class _SingleAssignmentReader:
+    """Iterator over individual assignments (1 assignment = 1 record) in BAM/RASE.
 
     Assumes that it is possible to infer read lengths (either
     from the ln tag, base sequence or cigars).
@@ -848,7 +873,7 @@ def main():
     else:
         out_bam_fn = None
 
-    r = Runner(
+    r = Worker(
         metadata_fn=args.metadata_fn,
         tree_fn=args.tree_fn,
         bam_fn=args.bam_fn,
