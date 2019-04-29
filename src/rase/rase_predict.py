@@ -10,7 +10,6 @@ License: MIT
 # todo:
 # - add non-susc threshold as a param
 # - implement option auto for autodetection of the time mode
-
 """
     Architecture:
 
@@ -30,7 +29,6 @@ License: MIT
             Iterator over all assignments of individual reads (1 read = 1 record) in a BAM/RASE file.
 
 """
-
 
 import argparse
 import collections
@@ -122,6 +120,7 @@ class Worker:
     """
         Wrapping everything together.
     """
+
     def __init__(
         self, metadata_fn, tree_fn, bam_fn, out_bam_fn, pref, final_stats_fn, mode, delta, first_read_delay, pgs_thres,
         sus_thres, mbp_per_min, mimic_datetime
@@ -233,56 +232,70 @@ class Predict:
 
         tbl['datetime'] = "NA"
         tbl['reads'] = stats.nb_assigned_reads + stats.nb_unassigned_reads
-        tbl['bps'] = stats.cumul_ln
-        tbl['matched bps'] = stats.cumul_h1
+        tbl['kbps'] = round(stats.cumul_ln / 1000)
+        tbl['matched_kbps'] = round(stats.cumul_h1 / 1000)
+        if stats.cumul_ln != 0:
+            tbl['matched_prop'] = round(stats.cumul_h1 / stats.cumul_ln, 5)
+        else:
+            tbl['matched_prop'] = 0.0
 
         ## 2) PG PREDICTION
 
         ## 2a) Find best and 2nd best PG
         ppgs = stats.pgs_by_weight()
         sorted_pgs = list(ppgs)
-        pg1 = sorted_pgs[0]
-        pg1_bm, pg1_w = ppgs[pg1]
-        pg2 = sorted_pgs[1]
-        pg2_bm, pg2_w = ppgs[pg2]
+        if stats.cumul_ln > 0:
+            pg1 = sorted_pgs[0]
+            pg1_bm, pg1_w = ppgs[pg1]
+            pg2 = sorted_pgs[1]
+            pg2_bm, pg2_w = ppgs[pg2]
 
-        ## 2b) Calculate PGS
-        if pg1_w > 0:
-            pgs = 2.0 * round(pg1_w / (pg1_w + pg2_w), 3) - 1
+            ## 2b) Calculate PGS
+            if pg1_w > 0:
+                pgs = 2.0 * round(pg1_w / (pg1_w + pg2_w), 3) - 1
+            else:
+                pgs = 0.0
+
         else:
-            pgs = 0.0
+            pg1, pg1_bm, pg1_w, pg2, pg2_bm, pg2_w = 6 * [
+                "NA",
+            ]
+            pgs = 0
 
         ## 2c) Save values
 
         tbl['pgs'] = pgs
         tbl['pgs_ok'] = "pass" if pgs >= self.pgs_thres else "fail"
-        tbl['pg1'] = pg1
-        tbl['pg2'] = pg2
-        tbl['pg1_bm'] = pg1_bm
-        tbl['pg2_bm'] = pg2_bm
-        tbl['pg1_w'] = round(pg1_w)
-        tbl['pg2_w'] = round(pg2_w)
+        tbl['pg'] = pg1
+        tbl['alt_pg'] = pg2
 
-        ## 2c) Correct for missing data
-        if pg1_w == 0:
-            tbl['pg1'] = "NA"
-            tbl['pg1_bm'] = "NA"
-        if pg2_w == 0:
-            tbl['pg2'] = "NA"
-            tbl['pg2_bm'] = "NA"
+        if pg1_w != "NA" and pg1_w > 0:
+            tbl['bm'] = pg1_bm
+        else:
+            tbl['bm'] = "NA"
+
+        if pg2_w != "NA" and pg2_w > 0:
+            tbl['alt_bm'] = pg2_bm
+        else:
+            tbl['alt_bm'] = "NA"
 
         for x in self.metadata.additional_cols:
-            tbl[x] = self.metadata.additional_info[pg1_bm][x]
+            if stats.cumul_ln > 0:
+                tbl["bm_" + x] = self.metadata.additional_info[pg1_bm][x]
+            else:
+                tbl["bm_" + x] = "NA"
 
         ## 3) ANTIBIOTIC RESISTANCE PREDICTION
 
         for ant in self.metadata.ants:
 
             ## 3a) Find best-match category
-            if pg1_w > 0:
+            if pg1_w != "NA" and pg1_w > 0:
                 bm_cat = self.metadata.rcat[pg1_bm][ant]
+                bm_mic = self.metadata.rmic[pg1_bm][ant]
             else:
                 bm_cat = "NA"
+                bm_mic = "NA"
 
             pres = stats.res_by_weight(pg1, ant)
 
@@ -332,10 +345,11 @@ class Predict:
             tbl[ant + "_sus"] = sus
             tbl[ant + "_pr_cat"] = pr_cat
             tbl[ant + "_bm_cat"] = bm_cat
-            tbl[ant + "_r_bm"] = r_bm
-            tbl[ant + "_s_bm"] = s_bm
-            tbl[ant + "_r_w"] = r_w_round
-            tbl[ant + "_s_w"] = s_w_round
+            tbl[ant + "_bm_mic"] = bm_mic
+            #tbl[ant + "_r_bm"] = r_bm
+            #tbl[ant + "_s_bm"] = s_bm
+            #tbl[ant + "_r_w"] = r_w_round
+            #tbl[ant + "_s_w"] = s_w_round
 
             self.summary = tbl
 
@@ -561,6 +575,7 @@ class RaseDbMetadata:
         pg: taxid -> phylogroup
         pgset: phylogroup -> set of taxids
         rcat: taxid -> antibiotic -> category
+        rmic: taxid -> antibiotic -> original_mic
         weight: taxid -> weight
         additional_info: taxid -> key -> value
         ants: List of antibiotics.
@@ -572,12 +587,13 @@ class RaseDbMetadata:
         self.pgset = collections.defaultdict(set)
 
         self.rcat = collections.defaultdict(dict)
+        self.rmic = collections.defaultdict(dict)
 
         self.additional_info = collections.defaultdict(dict)
 
         self.weight = {}
 
-        df = pandas.read_csv(tsv, delimiter='\t')
+        df = pandas.read_csv(tsv, delimiter='\t', na_values=[], keep_default_na=False, dtype=str)
         df = df.rename(columns={'phylogroup': 'pg'})  # backward compatibility
 
         # extract antibiotic abbrev from col names
@@ -611,6 +627,7 @@ class RaseDbMetadata:
 
             for ant in self.ants:
                 self.rcat[taxid][ant] = row[ant + "_cat"]
+                self.rmic[taxid][ant] = row[ant + "_mic"]
 
 
 class RaseBamReader:
