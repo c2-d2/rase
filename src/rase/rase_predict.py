@@ -285,11 +285,11 @@ class Predict:
             elif s_w == "NA" and r_w != "NA":
                 # everything R
                 assert bm_cat.upper() == "R" or r_w == 0, (bm_cat, pres)
-                sus = 1.0
+                sus = 0.0
             elif s_w != "NA" and r_w == "NA":
                 # everything S
                 assert bm_cat.upper() == "S" or s_w == 0, (bm_cat, pres)
-                sus = 0.0
+                sus = 1.0
 
             ##  3c) Predict based on the collected info
 
