@@ -1,5 +1,11 @@
 #! /usr/bin/env python3
 """
+Add flags to RASE predictions.
+
+S: Final state stabilized.
+D: Final state detected.
+L: Final state lost.
+
 Author:  Karel Brinda <kbrinda@hsph.harvard.edu>
 
 License: MIT
@@ -21,10 +27,11 @@ def get_cols(tsv_dl):
 def extract_flag_cols(cols):
     # regular expressions for categories to be flagged
     res_flagging = [
-        re.compile(r"^taxid$"),
+        re.compile(r"^bm$"),
         re.compile(r"^serotype$"),
         re.compile(r"^ST$"),
-        re.compile(r"^PG\d+$"),
+        re.compile(r"^pg$"),
+        re.compile(r"^alt_pg$"),
         re.compile(r"^.*_cat$"),
     ]
     flag_cols = []
@@ -77,6 +84,7 @@ def add_flags(tsv_fn):
                 elif prev_rec[k] == last_rec[k]:
                     # lost successfuly detected
                     flags.append('L:{}'.format(k))
+        flags.sort()
         flags_str = str(flags).replace("'", "")
         print(*rec.values(), flags_str, sep="\t")
         prev_rec = rec

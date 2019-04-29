@@ -1,5 +1,4 @@
 #! /usr/bin/env python3
-
 """Read MICs from a TSV file, parse the intervals and assign resistance categories (R / S / NA).
 
 Author: Karel Brinda <kbrinda@hsph.harvard.edu>

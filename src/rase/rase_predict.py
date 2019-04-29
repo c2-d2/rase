@@ -10,6 +10,25 @@ License: MIT
 # todo:
 # - add non-susc threshold as a param
 # - implement option auto for autodetection of the time mode
+"""
+    Architecture:
+
+        class Worker:
+            Wrapping everything together.
+
+        class Predict:
+            Predicting from assignment statistics.
+
+        class Stats:
+            Statistics for RASE predictions.
+
+        class RaseDbMetadata:
+            RASE DB metadata table.
+
+        class RaseBamReader:
+            Iterator over all assignments of individual reads (1 read = 1 record) in a BAM/RASE file.
+
+"""
 
 import argparse
 import collections
@@ -20,6 +39,7 @@ import itertools
 import glob
 import json
 import os
+import pandas
 import pysam
 import re
 import sys
@@ -96,13 +116,17 @@ def format_floats(*values, digits=3):
     return form_values
 
 
-class Runner:
+class Worker:
+    """
+        Wrapping everything together.
+    """
+
     def __init__(
         self, metadata_fn, tree_fn, bam_fn, out_bam_fn, pref, final_stats_fn, mode, delta, first_read_delay, pgs_thres,
         sus_thres, mbp_per_min, mimic_datetime
     ):
         self.mode = mode
-        self.metadata = RaseMetadataTable(metadata_fn)
+        self.metadata = RaseDbMetadata(metadata_fn)
         self.stats = Stats(tree_fn, self.metadata)
         self.predict = Predict(self.metadata, pgs_thres=pgs_thres, sus_thres=sus_thres)
         self.rase_bam_reader = RaseBamReader(bam_fn, out_bam_fn)
@@ -178,22 +202,22 @@ class Runner:
 
 
 class Predict:
-    """Predicting from assignment statistics at a time.
+    """Predicting from assignment statistics.
 
-    This class loads prediction statistics for a given time point (relative
+    Loads prediction statistics for a given time point (relative
     similarity to individual samples).
 
     Attributes:
-        rtbl: Resistance table.
+        metadata: Metadata table.
         phylogroups: Sorted list of phylogroups.
         summary: Summary table for the output.
         pgs_thres: Threshold for phylogroup passing.
         sus_thres: Threshold for susceptibility.
     """
 
-    def __init__(self, rtbl, pgs_thres, sus_thres):
-        self.rtbl = rtbl
-        self.phylogroups = sorted(self.rtbl.pgset.keys())
+    def __init__(self, metadata, pgs_thres, sus_thres):
+        self.metadata = metadata
+        self.phylogroups = sorted(self.metadata.pgset.keys())
         self.summary = collections.OrderedDict()
         self.pgs_thres = pgs_thres
         self.sus_thres = sus_thres
@@ -208,53 +232,70 @@ class Predict:
 
         tbl['datetime'] = "NA"
         tbl['reads'] = stats.nb_assigned_reads + stats.nb_unassigned_reads
-        tbl['bps'] = stats.cumul_ln
-        tbl['matched bps'] = stats.cumul_h1
+        tbl['kbps'] = round(stats.cumul_ln / 1000)
+        tbl['matched_kbps'] = round(stats.cumul_h1 / 1000)
+        if stats.cumul_ln != 0:
+            tbl['matched_prop'] = round(stats.cumul_h1 / stats.cumul_ln, 5)
+        else:
+            tbl['matched_prop'] = 0.0
 
         ## 2) PG PREDICTION
 
         ## 2a) Find best and 2nd best PG
         ppgs = stats.pgs_by_weight()
         sorted_pgs = list(ppgs)
-        pg1 = sorted_pgs[0]
-        pg1_bm, pg1_w = ppgs[pg1]
-        pg2 = sorted_pgs[1]
-        pg2_bm, pg2_w = ppgs[pg2]
+        if stats.cumul_ln > 0:
+            pg1 = sorted_pgs[0]
+            pg1_bm, pg1_w = ppgs[pg1]
+            pg2 = sorted_pgs[1]
+            pg2_bm, pg2_w = ppgs[pg2]
 
-        ## 2b) Calculate PGS
-        if pg1_w > 0:
-            pgs = 2.0 * round(pg1_w / (pg1_w + pg2_w), 3) - 1
+            ## 2b) Calculate PGS
+            if pg1_w > 0:
+                pgs = 2.0 * round(pg1_w / (pg1_w + pg2_w), 3) - 1
+            else:
+                pgs = 0.0
+
         else:
-            pgs = 0.0
+            pg1, pg1_bm, pg1_w, pg2, pg2_bm, pg2_w = 6 * [
+                "NA",
+            ]
+            pgs = 0
 
         ## 2c) Save values
 
         tbl['pgs'] = pgs
         tbl['pgs_ok'] = "pass" if pgs >= self.pgs_thres else "fail"
-        tbl['pg1'] = pg1
-        tbl['pg2'] = pg2
-        tbl['pg1_bm'] = pg1_bm
-        tbl['pg2_bm'] = pg2_bm
-        tbl['pg1_w'] = round(pg1_w)
-        tbl['pg2_w'] = round(pg2_w)
+        tbl['pg'] = pg1
+        tbl['alt_pg'] = pg2
 
-        ## 2c) Correct for missing data
-        if pg1_w == 0:
-            tbl['pg1'] = "NA"
-            tbl['pg1_bm'] = "NA"
-        if pg2_w == 0:
-            tbl['pg2'] = "NA"
-            tbl['pg2_bm'] = "NA"
+        if pg1_w != "NA" and pg1_w > 0:
+            tbl['bm'] = pg1_bm
+        else:
+            tbl['bm'] = "NA"
+
+        if pg2_w != "NA" and pg2_w > 0:
+            tbl['alt_bm'] = pg2_bm
+        else:
+            tbl['alt_bm'] = "NA"
+
+        for x in self.metadata.additional_cols:
+            if stats.cumul_ln > 0:
+                tbl["bm_" + x] = self.metadata.additional_info[pg1_bm][x]
+            else:
+                tbl["bm_" + x] = "NA"
 
         ## 3) ANTIBIOTIC RESISTANCE PREDICTION
 
-        for ant in self.rtbl.ants:
+        for ant in self.metadata.ants:
 
             ## 3a) Find best-match category
-            if pg1_w > 0:
-                bm_cat = self.rtbl.rcat[pg1_bm][ant]
+            if pg1_w != "NA" and pg1_w > 0:
+                bm_cat = self.metadata.rcat[pg1_bm][ant]
+                bm_mic = self.metadata.rmic[pg1_bm][ant]
             else:
                 bm_cat = "NA"
+                bm_mic = "NA"
 
             pres = stats.res_by_weight(pg1, ant)
 
@@ -304,10 +345,11 @@ class Predict:
             tbl[ant + "_sus"] = sus
             tbl[ant + "_pr_cat"] = pr_cat
             tbl[ant + "_bm_cat"] = bm_cat
-            tbl[ant + "_r_bm"] = r_bm
-            tbl[ant + "_s_bm"] = s_bm
-            tbl[ant + "_r_w"] = r_w_round
-            tbl[ant + "_s_w"] = s_w_round
+            tbl[ant + "_bm_mic"] = bm_mic
+            #tbl[ant + "_r_bm"] = r_bm
+            #tbl[ant + "_s_bm"] = s_bm
+            #tbl[ant + "_r_w"] = r_w_round
+            #tbl[ant + "_s_w"] = s_w_round
 
             self.summary = tbl
 
@@ -339,11 +381,12 @@ class Predict:
 class Stats:
     """Statistics for RASE predictions.
 
-    The attributes contain all necessary information that are necessary for
+    The attributes contain all information necessary for
     predicting in RASE.
 
     Params:
         tree_fn (str): Filename of the Newick tree.
+        metadata (str): RASE DB metadata.
 
     Attributes:
         nb_assigned_reads (int): Number of processed reads.
@@ -358,8 +401,8 @@ class Stats:
         stats_ln (dict): isolate -> weighted qlen
     """
 
-    def __init__(self, tree_fn, rtbl):
-        self._rtbl = rtbl
+    def __init__(self, tree_fn, metadata):
+        self._metadata = metadata
         self._tree = ete3.Tree(tree_fn, format=1)
         self._isolates = sorted([isolate.name for isolate in self._tree])
         self._descending_isolates_d = self._precompute_descendants(self._tree)
@@ -412,7 +455,7 @@ class Stats:
         for isolate in self._isolates:
             if isolate == FAKE_ISOLATE_UNASSIGNED:
                 continue
-            pg = self._rtbl.pg[isolate]
+            pg = self._metadata.pg[isolate]
             val = self.weight(isolate)
 
             if val > d[pg][1]:
@@ -431,9 +474,9 @@ class Stats:
 
         d = collections.defaultdict(lambda: (None, -1))
 
-        for isolate in self._rtbl.pgset[pg]:
+        for isolate in self._metadata.pgset[pg]:
             val = self.weight(isolate)
-            cat = self._rtbl.rcat[isolate][ant].upper()
+            cat = self._metadata.rcat[isolate][ant].upper()
 
             if val > d[cat][1]:
                 d[cat] = isolate, val
@@ -498,7 +541,7 @@ class Stats:
             if isolate == FAKE_ISOLATE_UNASSIGNED:
                 pg = "NA"
             else:
-                pg = self._rtbl.pg[isolate]
+                pg = self._metadata.pg[isolate]
             table.append(
                 [
                     isolate,
@@ -521,10 +564,10 @@ class Stats:
             print(*format_floats(*x, digits=5), sep="\t", file=file)
 
 
-class RaseMetadataTable:
-    """RASE metadata table.
+class RaseDbMetadata:
+    """RASE DB metadata table.
 
-    This class loads data from a file with a description of individual isolates
+    Loads RASE DB metadata file (describing individual DB isolates)
     and preprocesses them so that they can be accessed via its internal
     structures.
 
@@ -532,7 +575,9 @@ class RaseMetadataTable:
         pg: taxid -> phylogroup
         pgset: phylogroup -> set of taxids
         rcat: taxid -> antibiotic -> category
+        rmic: taxid -> antibiotic -> original_mic
         weight: taxid -> weight
+        additional_info: taxid -> key -> value
         ants: List of antibiotics.
     """
 
@@ -542,34 +587,51 @@ class RaseMetadataTable:
         self.pgset = collections.defaultdict(set)
 
         self.rcat = collections.defaultdict(dict)
+        self.rmic = collections.defaultdict(dict)
+
+        self.additional_info = collections.defaultdict(dict)
 
         self.weight = {}
 
-        with open(tsv, 'r') as f:
-            tsv_reader = csv.DictReader(f, delimiter='\t')
+        df = pandas.read_csv(tsv, delimiter='\t', na_values=[], keep_default_na=False, dtype=str)
+        df = df.rename(columns={'phylogroup': 'pg'})  # backward compatibility
 
-            ants = filter(lambda x: x.find("_mic") != -1, tsv_reader.fieldnames)
-            self.ants = list(map(lambda x: x.replace("_mic", ""), ants))
+        # extract antibiotic abbrev from col names
+        re_mic = re.compile(r'(\w+)_mic')
+        self.ants = re_mic.findall(" ".join(df.columns))
 
-            for x in tsv_reader:
-                taxid = x['taxid']
+        print("Antibiotics in the RASE DB:", ", ".join(self.ants), file=sys.stderr)
 
-                # support old db format ()
-                try:
-                    pg = x['pg']
-                except KeyError:
-                    pg = x['phylogroup']
-                self.pg[taxid] = pg
-                self.pgset[pg].add(taxid)
+        # check that all required columns are present
+        basic_cols = ["taxid", "pg", "order"] + list(map(lambda x: x + "_cat", self.ants)) + list(
+            map(lambda x: x + "_int", self.ants)
+        ) + list(map(lambda x: x + "_mic", self.ants))
+        self.additional_cols = set(df.columns) - set(basic_cols)
+        for x in basic_cols:
+            assert x in df.columns, f"Column '{x}' is missing in '{tsv}'."
 
-                for a in self.ants:
-                    cat = x[a + "_cat"]
-                    assert cat in set(["NA", "S", "R", "s", "r"])
-                    self.rcat[taxid][a] = cat
+        # check that values are ok
+        cats = set(itertools.chain(*[df[ant + "_cat"] for ant in self.ants]))
+        cats_wrong = cats - set(["S", "R", "s", "r"])
+        assert not cats_wrong, "Unknown resistance categories: {}".format(", ".join(cats_wrong))
+
+        df_dict = df.to_dict('index')
+        for _, row in df_dict.items():
+            taxid = row['taxid']
+            pg = row['pg']
+            self.pg[taxid] = pg
+            self.pgset[pg].add(taxid)
+
+            for x in self.additional_cols:
+                self.additional_info[taxid][x] = row[x]
+
+            for ant in self.ants:
+                self.rcat[taxid][ant] = row[ant + "_cat"]
+                self.rmic[taxid][ant] = row[ant + "_mic"]
 
 
 class RaseBamReader:
-    """Iterator over all assignments of individual reads in a BAM/RASE file.
+    """Iterator over all assignments of individual reads (1 read = 1 record) in a BAM/RASE file.
 
     Assumes a non-empty BAM file.
 
@@ -582,7 +644,7 @@ class RaseBamReader:
     """
 
     def __init__(self, bam_fn, out_bam_fn):
-        self.assignment_reader = SingleAssignmentReader(bam_fn, out_bam_fn)
+        self.assignment_reader = _SingleAssignmentReader(bam_fn, out_bam_fn)
         self._buffer = []
         self._finished = False
         try:
@@ -625,8 +687,8 @@ class RaseBamReader:
         self.t1 = timestamp_from_qname(self._buffer[0]["qname"])
 
 
-class SingleAssignmentReader:
-    """Iterator over individual assignments in BAM/RASE.
+class _SingleAssignmentReader:
+    """Iterator over individual assignments (1 assignment = 1 record) in BAM/RASE.
 
     Assumes that it is possible to infer read lengths (either
     from the ln tag, base sequence or cigars).
@@ -828,7 +890,7 @@ def main():
     else:
         out_bam_fn = None
 
-    r = Runner(
+    r = Worker(
         metadata_fn=args.metadata_fn,
         tree_fn=args.tree_fn,
         bam_fn=args.bam_fn,

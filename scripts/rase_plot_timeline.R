@@ -18,7 +18,7 @@ pgs.thres <- 0.5
 sus.thres <- 0.6
 
 if (kIsRStudio) {
-    src.file <- "../pipeline/tests/spneumoniae_sparc.k18.predict.tsv"
+    src.file <- "pipeline/tests/predict.tsv"
 } else {
     option_list <- list(
         make_option(
@@ -112,7 +112,7 @@ LoadTimelineData <- function(src.file) {
     # remove too distant end points
     if (length(df$time) > 5) {
         while (diff(tail(df, 2)$time) >= kEndpointFilter) {
-            df <- head(df, -1)
+            df <- head(df,-1)
         }
     }
 
@@ -143,16 +143,16 @@ DfToAnts <- function(df) {
 #' @return Dataframe with flag points to plot
 #'
 DfToFlags <- function(dataframe) {
-    df.1 <- dataframe[grep("S:PG1", dataframe$flags), ]
+    df.1 <- dataframe[grep("S:pg", dataframe$flags),]
     df.1$pch <- rep(4, nrow(df.1))
 
-    df.2 <- dataframe[grep("S:PG2", dataframe$flags), ]
-    df.2$pch <- rep(1, nrow(df.2))
+    #df.2 <- dataframe[grep("S:alt_pg", dataframe$flags), ]
+    #df.2$pch <- rep(1, nrow(df.2))
 
-    df.3 <- dataframe[grep("S:taxid", dataframe$flags), ]
+    df.3 <- dataframe[grep("S:bm", dataframe$flags),]
     df.3$pch <- rep(0, nrow(df.3))
 
-    df <- rbind(df.1, df.2, df.3)
+    df <- rbind(df.1, df.3)
     df
 }
 
@@ -202,7 +202,8 @@ margin <- function(i) {
 #'
 RedBox <- function(df2, threshold) {
     mx <- max(df2$time.mins) + 15
-    rect(-mx,-0.1,
+    rect(-mx,
+         -0.1,
          mx,
          threshold,
          col = rgb(1, 0, 0, alpha = 0.1),
@@ -289,13 +290,67 @@ PlotReads <- function(df1, i) {
             "topleft",
             c(
                 "Predicted PG stabilized",
-                "Alternative PG  stabilized",
+                #"Alternative PG  stabilized",
                 "Predicted isolate stabilized"
             ),
             bg = "white",
-            pch = c(4, 1, 0)
+            pch = c(4,
+                    #1,
+                    0)
         )
     }
+}
+
+
+#' Plot nb of reads
+#'
+#' @param i Position: 1=left, 2=right
+#'
+PlotProportion <- function(df1, i) {
+    margin(i)
+    prop.ylim <- c(0, 0.10)
+    if (i == 1) {
+        par(bty = "[")
+        plot(
+            df1$time.mins,
+            df1$matched_prop,
+            xlim = l.xlim,
+            ylim = prop.ylim,
+            type = "l",
+            las = 1,
+            xaxt = "n",
+            ylab = NA,
+            xlab = NA,
+            lwd = kLWD,
+            xaxs = "i"
+        )
+        mtext(
+            "proportion of k-mers",
+            side = 2,
+            line = kYLabDist,
+            cex.lab = 1,
+            cex = 0.7,
+            las = 3
+        )
+    } else {
+        par(bty = "]")
+        plot(
+            df2$time.mins / kRLUnitRatio,
+            df2$matched_prop,
+            xlim = r.xlim,
+            ylim = prop.ylim,
+            type = "l",
+            las = 1,
+            xaxt = "n",
+            yaxt = "n",
+            ylab = NA,
+            xlab = NA,
+            lwd = kLWD,
+            xaxs = "i"
+        )
+    }
+
+    TimeAblines(kVerticalAblines[i])
 }
 
 
@@ -481,8 +536,8 @@ PlotAntibiotic <- function(ant, i, is.last) {
 
 df <- LoadTimelineData(src.file)
 
-df1 <- df[df$time.min <= kFirstMinutes, ]
-df2 <- df[df$inv.time.min <= kRLUnitRatio * kLastHours, ]
+df1 <- df[df$time.min <= kFirstMinutes,]
+df2 <- df[df$inv.time.min <= kRLUnitRatio * kLastHours,]
 
 df1.flag <- DfToFlags(df1)
 df2.flag <- DfToFlags(df2)
@@ -504,14 +559,15 @@ kVerticalAblines <-
 
 ants <- DfToAnts(df)
 
-par(mfrow = c(length(ants) + 2, 2), tcl = -0.5)
+par(mfrow = c(length(ants) + 3, 2), tcl = -0.5)
 
 # 1) reads
-for (i in c(1, 2)) {
-
-}
 PlotReads(df1, 1)
-PlotReads(df1, 2)
+PlotReads(df2, 2)
+
+# 1) reads
+PlotProportion(df1, 1)
+PlotProportion(df2, 2)
 
 # 2) pgs
 PlotPGS(1)
