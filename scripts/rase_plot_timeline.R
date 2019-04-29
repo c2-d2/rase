@@ -18,7 +18,7 @@ pgs.thres <- 0.5
 sus.thres <- 0.6
 
 if (kIsRStudio) {
-    src.file <- "../pipeline/tests/spneumoniae_sparc.k18.predict.tsv"
+    src.file <- "pipeline/tests/predict.tsv"
 } else {
     option_list <- list(
         make_option(
@@ -507,9 +507,6 @@ ants <- DfToAnts(df)
 par(mfrow = c(length(ants) + 2, 2), tcl = -0.5)
 
 # 1) reads
-for (i in c(1, 2)) {
-
-}
 PlotReads(df1, 1)
 PlotReads(df1, 2)
 
