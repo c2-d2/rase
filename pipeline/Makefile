@@ -61,10 +61,10 @@ help: ## Print help message
 	@echo "$$(grep -hE '^\S+:.*##' $(MAKEFILE_LIST) | sed -e 's/:.*##\s*/:/' -e 's/^\(.\+\):\(.*\)/\\x1b[36m\1\\x1b[m:\2/' | column -c2 -t -s : | sort)"
 
 clean: ## Clean
-	rm -f plots/*.pdf benchmarks/*.plot.log plots/.*.plot{,_timeline,_snapshots}.complete
-	rm -f benchmarks/*.predict.log prediction/*.predict.tsv prediction/.*.predict.complete
-	find prediction -name '*.tsv' | xargs rm -f
-	rm -f exported.*.tar
+	rm -vf plots/*.pdf benchmarks/*.plot.log plots/.*.plot{,_timeline,_snapshots}.complete
+	rm -vf benchmarks/*.predict.log prediction/*.predict.tsv prediction/.*.predict.complete
+	find prediction -name '*.tsv' | xargs rm -vf
+	rm -vf exported.*.tar
 
 cleanall: ## Clean all files (including bam files and logs)
 cleanall: clean
