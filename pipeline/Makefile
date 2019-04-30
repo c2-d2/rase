@@ -42,7 +42,7 @@ export: ## Export all outputs
 	f="rase_exported.$$d.tar"; \
 	rm -f $$f; \
 	tar cvf $$f --files-from /dev/null; \
-	for x in benchmarks/*.log prediction/*.tsv plots/*.pdf; do \
+	for x in prediction/*.tsv plots/*.pdf; do \
 		echo $$x; \
 		tar --append --file=$$f $$x; \
 	done; \
