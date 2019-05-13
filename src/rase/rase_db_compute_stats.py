@@ -32,7 +32,10 @@ def compute_stats(fn, s):
     with open(fn) as f:
         tsv_reader = csv.DictReader(f, delimiter='\t')
         for r in tsv_reader:
-            pg = r["phylogroup"]
+            try:
+                pg = r["phylogroup"]
+            except KeyError:
+                pg = r["pg"]
             pg_count[pg] += 1
             pgs.add(pg)
 
