@@ -9,10 +9,7 @@ Licence: MIT
 import argparse
 import collections
 import csv
-import itertools
-import os
 import re
-import sys
 
 re_cat = re.compile("(.*)_cat")
 cats = ['S', 'R', 's', 'r', 'Rr', 'Ss']
@@ -48,8 +45,6 @@ def compute_stats(fn, s):
 
                     stats[pg][(ant, cat)] += 1
 
-            #print(pg,r)
-
     ants_sorted = sorted(ants.keys(), key=lambda s: s.lower())
     cats_sorted = sorted(cats, key=lambda s: s.lower())
 
@@ -63,6 +58,16 @@ def compute_stats(fn, s):
                 parts.append(sum([stats[pg][(ant, cat)] for cat in catgr]))
 
         print(*parts, sep="\t")
+
+    parts = [
+        "sum",
+        sum([pg_count[pg] for pg in pgs]),
+    ]
+    for ant in ants_sorted:
+        for catgr in cats_sorted:
+            parts.append(sum([sum([stats[pg][(ant, cat)] for cat in catgr]) for pg in pgs]))
+
+    print(*parts, sep="\t")
 
 
 def main():
