@@ -107,15 +107,32 @@ palette(kPalette)
 dfres <- read.delim(res.file, header = T)
 dfsnap_with_unassigned <- read.delim(src.file, header = TRUE)
 dfsnap <-
-    dfsnap_with_unassigned[dfsnap_with_unassigned$taxid != "_unassigned_",]
+    dfsnap_with_unassigned[dfsnap_with_unassigned$taxid != "_unassigned_", ]
 
 stopifnot(length(dfsnap[, 1]) == length(dfres[, 1]))  # are the lengths the same?
-stopifnot(data.frame(lapply(dfsnap[order(dfsnap$taxid),][["taxid"]], as.character)) == data.frame(lapply(dfres[order(dfres$taxid),][["taxid"]], as.character)))  # are the taxids the same?
+stopifnot(data.frame(lapply(dfsnap[order(dfsnap$taxid), ][["taxid"]], as.character)) == data.frame(lapply(dfres[order(dfres$taxid), ][["taxid"]], as.character)))  # are the taxids the same?
 
+# support for the old DB format
+if ("pg" %in% colnames(dfsnap)) {
+    dfsnap.pgcolname = "pg"
+} else {
+    dfsnap.pgcolname = "phylogroup"
+}
+if ("pg" %in% colnames(dfres)) {
+    dfres.pgcolname = "pg"
+} else {
+    dfres.pgcolname = "phylogroup"
+}
 
-df <- merge(dfsnap, dfres, by = c("taxid","phylogroup"))
+df <-
+    merge(
+        dfsnap,
+        dfres,
+        by.x = c("taxid", dfsnap.pgcolname),
+        by.y = c("taxid", dfres.pgcolname)
+    )
 
-sel <- df[with(df, order(-weight)),][1:kSelected,]
+sel <- df[with(df, order(-weight)), ][1:kSelected, ]
 
 first.phylogroup <- sel$phylogroup[[1]]
 first.serotype <- sel$Serotype.From.Reads[[1]]
@@ -126,7 +143,7 @@ second.phylogroup <- unique(sel$phylogroup)[[2]]
 
 phylogroups.masked <-
     3 * as.integer(sel$phylogroup > -1) - 2 * as.integer(sel$phylogroup == first.phylogroup) - 1 * as.integer(sel$phylogroup ==
-            second.phylogroup)
+                                                                                                                  second.phylogroup)
 
 labs <- paste(sel$taxid, sel$weight)  ## create labels
 
@@ -148,7 +165,7 @@ x <-
         space = 0,
         axes = F,
         ylim = c(-(nants + kGridShift) *
-                AbsResGridHeight, maxtick),
+                     AbsResGridHeight, maxtick),
         xlim = c(-2, kSelected),
         beside = T,
         mgp = c(4.8, 0, 0)
@@ -284,7 +301,7 @@ legend(
     legend = c(first.phylogroup, second.phylogroup, "Others"),
     cex = 1.5,
     fill = c(1,
-        2, 3),
+             2, 3),
     y.intersp = 0.8,
     box.col = NA,
     border = NA,
