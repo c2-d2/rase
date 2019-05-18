@@ -53,14 +53,14 @@ DfToAnts <- function(dataframe) {
     ants
 }
 
-LastLine <- function(ct, bps.total, bps.matched) {
+LastLine <- function(ct, bps.total, kmers.matched) {
     paste(
         "Reads: ",
         format(as.integer(ct), big.mark = ","),
         "       Bps: ",
         format(as.integer(bps.total), big.mark = ","),
-        "       Matched bps: ",
-        round(100 * as.double(bps.matched) / as.double(bps.total)),
+        "       Matched k-mers: ",
+        round(100 * as.double(kmers.matched) / as.double(bps.total)),
         "%",
         sep = ""
     )
@@ -105,43 +105,33 @@ if (kRStudio) {
 palette(kPalette)
 
 dfres <- read.delim(res.file, header = T, stringsAsFactors = F)
+colnames(dfres)[colnames(dfres) == "phylogroup"] <- "pg"
 dfsnap_with_unassigned <-
     read.delim(src.file, header = T, stringsAsFactors = F)
+colnames(dfsnap_with_unassigned)[colnames(dfsnap_with_unassigned) == "phylogroup"] <-
+    "pg"
 dfsnap <-
-    dfsnap_with_unassigned[dfsnap_with_unassigned$taxid != "_unassigned_",]
+    dfsnap_with_unassigned[dfsnap_with_unassigned$taxid != "_unassigned_", ]
 
 stopifnot(length(dfsnap[, 1]) == length(dfres[, 1]))  # are the lengths the same?
-stopifnot(data.frame(lapply(dfsnap[order(dfsnap$taxid),][["taxid"]], as.character)) == data.frame(lapply(dfres[order(dfres$taxid),][["taxid"]], as.character)))  # are the taxids the same?
-
-# support for the old DB format
-if ("pg" %in% colnames(dfsnap)) {
-    dfsnap.pgcolname = "pg"
-} else {
-    dfsnap.pgcolname = "phylogroup"
-}
-if ("pg" %in% colnames(dfres)) {
-    dfres.pgcolname = "pg"
-} else {
-    dfres.pgcolname = "phylogroup"
-}
+stopifnot(data.frame(lapply(dfsnap[order(dfsnap$taxid), ][["taxid"]], as.character)) == data.frame(lapply(dfres[order(dfres$taxid), ][["taxid"]], as.character)))  # are the taxids the same?
 
 df <-
     merge(dfsnap,
           dfres,
-          by = "taxid")
+          by = c("taxid", "pg"))
 
-sel <- df[with(df, order(-weight)),][1:kSelected,]
+sel <- df[with(df, order(-weight)), ][1:kSelected, ]
 
-first.phylogroup <- sel$phylogroup[[1]]
+first.pg <- sel$pg[[1]]
 first.serotype <- sel$Serotype.From.Reads[[1]]
 first.cat <- sel$pnc[[2]]
 first.res <- CatToCatName(first.cat)
 
-second.phylogroup <- unique(sel$phylogroup)[[2]]
+second.pg <- unique(sel$pg)[[2]]
 
-phylogroups.masked <-
-    3 * as.integer(sel$phylogroup > -1) - 2 * as.integer(sel$phylogroup == first.phylogroup) - 1 * as.integer(sel$phylogroup ==
-                                                                                                                  second.phylogroup)
+pgs.masked <-
+    3 * as.integer(sel$pg > -1) - 2 * as.integer(sel$pg == first.pg) - 1 * as.integer(sel$pg == second.pg)
 
 labs <- paste(sel$taxid, sel$weight)  ## create labels
 
@@ -158,7 +148,7 @@ AbsResGridHeight <- kResGridHeight * maxval
 x <-
     barplot(
         height = vals.to.plot,
-        col = phylogroups.masked,
+        col = pgs.masked,
         border = NA,
         space = 0,
         axes = F,
@@ -223,7 +213,7 @@ line2 <-
         "Results after 5 mins: Penicillin ",
         first.res,
         ", lineage ",
-        first.phylogroup,
+        first.pg,
         ", serotype ",
         first.serotype
     )
@@ -264,9 +254,9 @@ text(
 
 
 bps.total <- sum(dfsnap_with_unassigned[c("ln")])
-bps.matched <- sum(dfsnap_with_unassigned[c("weight")])
+kmers.matched <- sum(dfsnap_with_unassigned[c("weight")])
 reads <- sum(dfsnap_with_unassigned[c("count")])
-subtitle <- LastLine(reads, bps.total, bps.matched)
+subtitle <- LastLine(reads, bps.total, kmers.matched)
 
 # bps. etc.
 mtext(
@@ -296,7 +286,7 @@ legend(
 legend(
     x = "topright",
     title = "Phylogroup",
-    legend = c(first.phylogroup, second.phylogroup, "Others"),
+    legend = c(first.pg, second.pg, "Others"),
     cex = 1.5,
     fill = c(1,
              2, 3),
