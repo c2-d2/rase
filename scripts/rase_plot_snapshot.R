@@ -104,13 +104,14 @@ if (kRStudio) {
 
 palette(kPalette)
 
-dfres <- read.delim(res.file, header = T)
-dfsnap_with_unassigned <- read.delim(src.file, header = TRUE)
+dfres <- read.delim(res.file, header = T, stringsAsFactors = F)
+dfsnap_with_unassigned <-
+    read.delim(src.file, header = T, stringsAsFactors = F)
 dfsnap <-
-    dfsnap_with_unassigned[dfsnap_with_unassigned$taxid != "_unassigned_", ]
+    dfsnap_with_unassigned[dfsnap_with_unassigned$taxid != "_unassigned_",]
 
 stopifnot(length(dfsnap[, 1]) == length(dfres[, 1]))  # are the lengths the same?
-stopifnot(data.frame(lapply(dfsnap[order(dfsnap$taxid), ][["taxid"]], as.character)) == data.frame(lapply(dfres[order(dfres$taxid), ][["taxid"]], as.character)))  # are the taxids the same?
+stopifnot(data.frame(lapply(dfsnap[order(dfsnap$taxid),][["taxid"]], as.character)) == data.frame(lapply(dfres[order(dfres$taxid),][["taxid"]], as.character)))  # are the taxids the same?
 
 # support for the old DB format
 if ("pg" %in% colnames(dfsnap)) {
@@ -125,14 +126,11 @@ if ("pg" %in% colnames(dfres)) {
 }
 
 df <-
-    merge(
-        dfsnap,
-        dfres,
-        by.x = c("taxid", dfsnap.pgcolname),
-        by.y = c("taxid", dfres.pgcolname)
-    )
+    merge(dfsnap,
+          dfres,
+          by = "taxid")
 
-sel <- df[with(df, order(-weight)), ][1:kSelected, ]
+sel <- df[with(df, order(-weight)),][1:kSelected,]
 
 first.phylogroup <- sel$phylogroup[[1]]
 first.serotype <- sel$Serotype.From.Reads[[1]]
