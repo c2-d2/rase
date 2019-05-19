@@ -59,6 +59,16 @@ def node_to_pg(node, pg_dict):
             s |= node_to_pg(n, pg_dict)
         return s
 
+def _sorting_key(s):
+    """Numerical/lexicographical sorting.
+    """
+    try:
+        val=int(s)
+        norm="{:010}".format(val)
+    except ValueError:
+        norm=s
+    return norm
+
 
 def rename_internal_nodes(tree, pg_dict):
     """Rename internal nodes (add phylogroups to the name).
@@ -66,12 +76,11 @@ def rename_internal_nodes(tree, pg_dict):
 
     numbers = collections.defaultdict(lambda: 0)
 
-    i = 1
     for node in tree.traverse("postorder"):
         if node.is_leaf():
             continue
         pgs = node_to_pg(node, pg_dict)
-        pgs_s = "-".join(sorted(list(pgs), key=int))
+        pgs_s = "-".join(sorted(list(pgs), key=_sorting_key))
         nname = "PG-{}_{}".format(pgs_s, numbers[pgs_s])
         node.name = nname
         numbers[pgs_s] += 1
