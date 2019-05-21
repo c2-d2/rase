@@ -148,8 +148,6 @@ rule preprocess_reads:
         t="prediction/.{pref}.read.complete"
     params:
         reads="prediction/{pref}.fa"
-    group:
-        "group"
     benchmark:
         "benchmarks/{pref}.readprep.log"
     shell:
