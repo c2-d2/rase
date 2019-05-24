@@ -68,8 +68,8 @@ clean: ## Clean
 
 cleanall: ## Clean all files (including bam files and logs)
 cleanall: clean
-	rm -f prediction/*.{fq,fq.complete} benchmarks/*.readprep.log
-	rm -f prediction/*.bam
+	rm -f matching/*.{fq,fq.complete} benchmarks/*.readprep.log
+	rm -f matching/*.bam
 	rm -f prediction/.*.complete
 	rm -f benchmarks/*.classify.log
 	rm -fr database/.*.complete $$(ls -d database/*/ 2>/dev/null || true) benchmarks/decompress.log

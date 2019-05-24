@@ -111,8 +111,8 @@ rule all:
         [
             [
                 [
-                    ancient(f"prediction/.{e}.read.complete"),
-                    ancient(f"prediction/.{e}__{i}.assign.complete"),
+                    ancient(f"matching/.{e}.read.complete"),
+                    ancient(f"matching/.{e}__{i}.assign.complete"),
                     ancient(f"prediction/.{e}__{i}.predict.complete"),
                     ancient(f"plots/.{e}__{i}.plot.complete"),
                 ]
@@ -131,7 +131,7 @@ rule test:
         [
             [
                 [
-                    ancient(f"prediction/.{e}.read.complete"),
+                    ancient(f"matching/.{e}.read.complete"),
                     ancient(f"prediction/.{e}__{i}.predict.complete"),
                     ancient(f"plots/.{e}__{i}.plot.complete"),
                 ]
@@ -145,9 +145,9 @@ rule preprocess_reads:
     input:
         reads=ancient("reads/{pref}."+config["reads_suffix"]),
     output:
-        t="prediction/.{pref}.read.complete"
+        t="matching/.{pref}.read.complete"
     params:
-        reads="prediction/{pref}.fa"
+        reads="matching/{pref}.fa"
     benchmark:
         "benchmarks/{pref}.readprep.log"
     shell:
@@ -169,12 +169,12 @@ rule assign:
     priority: 60
     input:
         ancient("database/.{index}.complete"),
-        ancient("prediction/.{pref}.read.complete"),
+        ancient("matching/.{pref}.read.complete"),
     output:
-        t="prediction/.{pref}__{index}.assign.complete",
+        t="matching/.{pref}__{index}.assign.complete",
     params:
-        reads="prediction/{pref}.fa",
-        bam="prediction/{pref}__{index}.bam",
+        reads="matching/{pref}.fa",
+        bam="matching/{pref}__{index}.bam",
         index="database/{index}"
     group:
         "group"
@@ -193,12 +193,12 @@ rule assign:
 rule predict:
     priority: 80
     input:
-        ancient("prediction/.{pref}__{index}.assign.complete"),
+        ancient("matching/.{pref}__{index}.assign.complete"),
         ancient("database/.{index}.complete"),
     output:
         t="prediction/.{pref}__{index}.predict.complete",
     params:
-        bam="prediction/{pref}__{index}.bam",
+        bam="matching/{pref}__{index}.bam",
         snapshot_dir="prediction/{pref}__{index}/",
         tree="database/{index}/tree.nw",
         metadata="database/{index}.tsv",
