@@ -9,6 +9,14 @@ import glob
 import os
 import sys
 
+mj, mn= sys.version_info.major , sys.version_info.minor
+if mj < 3 or mn < 6:
+    print("!!!!", file=sys.stderr)
+    print("!!!! RASE PIPELINE ERROR  ", file=sys.stderr)
+    print("!!!! Python 3.6+ is required ({}.{} provided)".format(mj, mn), file=sys.stderr)
+    print("!!!!", file=sys.stderr)
+    sys.exit(1)
+
 snakemake.shell.prefix("set -eo pipefail;")
 
 configfile: "config.yaml"
