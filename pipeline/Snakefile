@@ -11,7 +11,7 @@ import os
 import re
 import sys
 
-mj, mn= sys.version_info.major , sys.version_info.minor
+mj, mn = sys.version_info.major, sys.version_info.minor
 if mj < 3 or mn < 6:
     print("!!!!", file=sys.stderr)
     print("!!!! RASE PIPELINE ERROR  ", file=sys.stderr)
@@ -19,7 +19,6 @@ if mj < 3 or mn < 6:
     print("!!!! Python 3.6+ is required ({}.{} provided)".format(mj, mn), file=sys.stderr)
     print("!!!!", file=sys.stderr)
     sys.exit(1)
-
 
 #
 # 0) Config
@@ -37,63 +36,64 @@ re_index = re.compile(r'(.*)/([^/].*?)\.tar\.gz', re.IGNORECASE)
 # 1) Detect indexes
 #
 
+
 def file_size(fn):
     return os.stat(fn).st_size
 
+
 def smallest_file(fns):
-    size=10**30
-    sfn=None
+    size = 10**30
+    sfn = None
     for fn in fns:
-        rfn=os.path.realpath(fn)
-        if file_size(rfn)<size:
-            size=file_size(rfn)
-            sfn=fn
+        rfn = os.path.realpath(fn)
+        if file_size(rfn) < size:
+            size = file_size(rfn)
+            sfn = fn
     return sfn
+
 
 print(file=sys.stderr)
 print("RASE DB and reads detection is starting", file=sys.stderr)
 print(file=sys.stderr)
 
-indexes=[x for x in glob.glob("database/*.tar.gz")]
-if len(indexes)==0:
+indexes = [x for x in glob.glob("database/*.tar.gz")]
+if len(indexes) == 0:
     print("!!!! ", file=sys.stderr)
     print("!!!! RASE PIPELINE ERROR ", file=sys.stderr)
     print("!!!! ", file=sys.stderr)
     print("!!!! No index provided (db.{tsv,tar.gz}).", file=sys.stderr)
     print("!!!! ", file=sys.stderr)
-    databases =[]
-    smallest_index=None
-    smallest_database=None
+    databases = []
+    smallest_index = None
+    smallest_database = None
 else:
-    databases=[re_index.match(x).group(2) for x in indexes]
-    smallest_index=sorted(indexes, key=file_size, reverse=True)[0]
-    smallest_database=re_index.match(smallest_index).group(2)
-    print("  RASE databases:    ", ", ". join(databases), file=sys.stderr)
+    databases = [re_index.match(x).group(2) for x in indexes]
+    smallest_index = sorted(indexes, key=file_size, reverse=True)[0]
+    smallest_database = re_index.match(smallest_index).group(2)
+    print("  RASE databases:    ", ", ".join(databases), file=sys.stderr)
     print("  Smallest database: ", smallest_database, file=sys.stderr)
     print(file=sys.stderr)
-
 
 #
 # 2) Detect reads
 #
-readfiles=[x for x in glob.glob("reads/*") if re_read_files.search(x)]
-if len(readfiles)==0:
+readfiles = [x for x in glob.glob("reads/*") if re_read_files.search(x)]
+if len(readfiles) == 0:
     print("!!!! ", file=sys.stderr)
     print("!!!! RASE PIPELINE ERROR ", file=sys.stderr)
     print("!!!! ", file=sys.stderr)
     print("!!!! No files with sequencing reads provided", file=sys.stderr)
     print("!!!! ", file=sys.stderr)
-    experiments=[]
-    smallest_readfile=None
-    smallest_experiment=None
+    experiments = []
+    smallest_readfile = None
+    smallest_experiment = None
 else:
-    experiments=[re_read_files.match(x).group(2) for x in readfiles]
-    smallest_readfile=sorted(readfiles, key=file_size, reverse=True)[0]
-    smallest_experiment=re_read_files.match(smallest_readfile).group(2)
-    print("  Reads:             ",  ", ".join(experiments), file=sys.stderr)
+    experiments = [re_read_files.match(x).group(2) for x in readfiles]
+    smallest_readfile = sorted(readfiles, key=file_size, reverse=True)[0]
+    smallest_experiment = re_read_files.match(smallest_readfile).group(2)
+    print("  Reads:             ", ", ".join(experiments), file=sys.stderr)
     print("  Smallest dataset:  ", smallest_experiment, file=sys.stderr)
     print(file=sys.stderr)
-
 
 #
 # 3) Check dependencies
@@ -299,4 +299,3 @@ rule decompress:
             prophyle decompress "{input.gz}" database
             touch "{output.t}"
         """
-
