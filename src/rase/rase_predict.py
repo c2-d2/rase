@@ -793,14 +793,14 @@ def main():
         'tree_fn',
         type=str,
         metavar='<tree.nw>',
-        help='RASE database newick tree',
+        help='RASE tree',
     )
 
     parser.add_argument(
         'metadata_fn',
         type=str,
         metavar='<db.tsv>',
-        help='RASE database table with metadata',
+        help='RASE metadata table',
     )
 
     parser.add_argument('bam_fn', type=str, metavar='<in.asgs.bam>', help='input RASE assignments (- for stdin)')
@@ -809,7 +809,7 @@ def main():
         'out_bam_fn',
         type=str,
         metavar='<out.asgs.bam>',
-        help='output RASE assignments (to archive)',
+        help='output RASE matches',
         default=[],
         nargs='?',
     )
