@@ -28,13 +28,6 @@ if (kIsRStudio) {
             help = "phylogroup score threshold [default %default]",
             metavar = "FLOAT"
         ),
-        make_option(
-            c("--sus-thres"),
-            dest = "sus.thres",
-            default = sus.thres,
-            help = "susceptibility score threshold [default %default]",
-            metavar = "FLOAT"
-        )
     )
 
     parser <-
@@ -45,7 +38,6 @@ if (kIsRStudio) {
     opt <- arguments$options
 
     pgs.thres <- opt$pgs.thres
-    sus.thres <- opt$sus.thres
 
     src.file <- arguments$args[1]
     out.file <- arguments$args[2]
@@ -535,6 +527,7 @@ PlotAntibiotic <- function(ant, i, is.last) {
 # PLOTTING -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 df <- LoadTimelineData(src.file)
+sus.thres=0.5
 
 df1 <- df[df$time.min <= kFirstMinutes,]
 df2 <- df[df$inv.time.min <= kRLUnitRatio * kLastHours,]

@@ -8,7 +8,6 @@ License: MIT
 # ./scripts/rase_predict.py ~/github/my/rase-predict/database/spneumoniae_sparc.k18/tree.nw ~/github/my/rase-predict/database/spneumoniae_sparc.k18.tsv  ~/github/my/rase-predict/prediction/sp10_norwich_P33.filtered__spneumoniae_sparc.k18.bam | tL
 
 # todo:
-# - add non-susc threshold as a param
 # - implement option auto for autodetection of the time mode
 """
     Architecture:
@@ -123,12 +122,12 @@ class Worker:
 
     def __init__(
         self, metadata_fn, tree_fn, bam_fn, out_bam_fn, pref, final_stats_fn, mode, delta, first_read_delay, pgs_thres,
-        sus_thres, mbp_per_min, mimic_datetime
+        mbp_per_min, mimic_datetime
     ):
         self.mode = mode
         self.metadata = RaseDbMetadata(metadata_fn)
         self.stats = Stats(tree_fn, self.metadata)
-        self.predict = Predict(self.metadata, pgs_thres=pgs_thres, sus_thres=sus_thres)
+        self.predict = Predict(self.metadata, pgs_thres=pgs_thres)
         self.rase_bam_reader = RaseBamReader(bam_fn, out_bam_fn)
         self.pref = pref
         self.final_stats_fn = final_stats_fn
@@ -212,15 +211,13 @@ class Predict:
         phylogroups: Sorted list of phylogroups.
         summary: Summary table for the output.
         pgs_thres: Threshold for phylogroup passing.
-        sus_thres: Threshold for susceptibility.
     """
 
-    def __init__(self, metadata, pgs_thres, sus_thres):
+    def __init__(self, metadata, pgs_thres):
         self.metadata = metadata
         self.phylogroups = sorted(self.metadata.pgset.keys())
         self.summary = collections.OrderedDict()
         self.pgs_thres = pgs_thres
-        self.sus_thres = sus_thres
 
     def predict(self, stats):
         """Predict.
@@ -335,10 +332,12 @@ class Predict:
             ##  3c) Predict based on the collected info
 
             # prediction
-            if sus > self.sus_thres:
+            if sus > 0.6:
                 pr_cat = "S"
-            elif sus >= 0.5:
+            elif sus > 0.5:
                 pr_cat = "S!"
+            elif sus > 0.4:
+                pr_cat = "R!"
             else:
                 pr_cat = "R"
 
@@ -856,15 +855,6 @@ def main():
     )
 
     parser.add_argument(
-        '--sus-thres',
-        type=float,
-        dest='sus_thres',
-        metavar='FLOAT',
-        help='susceptibility score threshold [0.6]',
-        default=0.6,
-    )
-
-    parser.add_argument(
         '--mbp-per-min',
         type=float,
         dest='mbp_per_min',
@@ -899,7 +889,6 @@ def main():
         first_read_delay=args.first_read_delay,
         out_bam_fn=out_bam_fn,
         pgs_thres=args.pgs_thres,
-        sus_thres=args.sus_thres,
         mbp_per_min=args.mbp_per_min,
         mimic_datetime=args.mimic_datetime,
     )
