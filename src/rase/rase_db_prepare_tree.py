@@ -63,14 +63,15 @@ def node_to_pg(node, pg_dict):
             s |= node_to_pg(n, pg_dict)
         return s
 
+
 def _sorting_key(s):
     """Numerical/lexicographical sorting.
     """
     try:
-        val=int(s)
-        norm="{:010}".format(val)
+        val = int(s)
+        norm = "{:010}".format(val)
     except ValueError:
-        norm=s
+        norm = s
     return norm
 
 

@@ -6,103 +6,98 @@ License: MIT
 
 import datetime
 import glob
+import itertools
 import os
+import re
 import sys
 
+mj, mn = sys.version_info.major, sys.version_info.minor
+if mj < 3 or mn < 6:
+    print("!!!!", file=sys.stderr)
+    print("!!!! RASE PIPELINE ERROR  ", file=sys.stderr)
+    print("!!!!", file=sys.stderr)
+    print("!!!! Python 3.6+ is required ({}.{} provided)".format(mj, mn), file=sys.stderr)
+    print("!!!!", file=sys.stderr)
+    sys.exit(1)
+
+#
+# 0) Config
+#
+
 snakemake.shell.prefix("set -eo pipefail;")
-
 configfile: "config.yaml"
-
-#localrules: plot, plot_timeline, plot_snapshots, preprocess_reads, all
 localrules: all
+#localrules: plot, plot_timeline, plot_snapshots, preprocess_reads, all
 
-#print(config)
+re_read_files = re.compile(r'(.*)/([^/].*?)\.(fasta|fastq|fa|fq)(\.gz)?', re.IGNORECASE)
+re_index = re.compile(r'(.*)/([^/].*?)\.tar\.gz', re.IGNORECASE)
 
-
+#
 # 1) Detect indexes
-
-def remove_suffix(fn, suffix=None):
-    if fn is None:
-        return None
-    if suffix is None:
-        parts=fn.split(".")
-        return ".".join(parts[:-1])
-    else:
-        if suffix[0]!=".":
-            suffix="."+suffix
-        l=len(suffix)
-        pot_suffix=fn[-l:]
-        assert pot_suffix==suffix
-        return fn[:-l]
+#
 
 
 def file_size(fn):
     return os.stat(fn).st_size
 
+
 def smallest_file(fns):
-    size=10**30
-    sfn=None
+    size = 10**30
+    sfn = None
     for fn in fns:
-        rfn=os.path.realpath(fn)
-        if file_size(rfn)<size:
-            size=file_size(rfn)
-            sfn=fn
+        rfn = os.path.realpath(fn)
+        if file_size(rfn) < size:
+            size = file_size(rfn)
+            sfn = fn
     return sfn
 
-def find_db_files(suffix, smallest_only=False):
-    fns=glob.glob("database/*.{}".format(suffix))
-    if smallest_only:
-        fns=[smallest_file(fns)]
-    return [os.path.basename(fn).replace("."+suffix,"") for fn in fns]
 
-indexes_base_tsv=find_db_files("tsv")
+print(file=sys.stderr)
+print("RASE DB and reads detection is starting", file=sys.stderr)
+print(file=sys.stderr)
 
-indexes_base_tar=find_db_files("tar.gz")
-indexes=sorted(list(set(indexes_base_tsv) & set(indexes_base_tar)))
-
-indexes_base_tar_smallest=find_db_files("tar.gz", smallest_only=True)
-smallest_index=list(set(indexes_base_tsv) & set(indexes_base_tar_smallest))
-
-#detection_failure=False
-print("Indexes:", indexes)
-if len(indexes)==0:
+indexes = [x for x in glob.glob("database/*.tar.gz")]
+if len(indexes) == 0:
     print("!!!! ", file=sys.stderr)
     print("!!!! RASE PIPELINE ERROR ", file=sys.stderr)
     print("!!!! ", file=sys.stderr)
-    print("!!!! No index provided ({db}.tsv and {db.tar.gz}).", file=sys.stderr)
+    print("!!!! No index provided (db.{tsv,tar.gz}).", file=sys.stderr)
     print("!!!! ", file=sys.stderr)
-    #detection_failure=True
-
-
-# 2) Detect reads
-
-readfiles=glob.glob("reads/*."+config["reads_suffix"])
-print("Detected read files:", readfiles)
-if len(readfiles)==0:
-    print("!!!! ", file=sys.stderr)
-    print("!!!! RASE PIPELINE ERROR ", file=sys.stderr)
-    print("!!!! ", file=sys.stderr)
-    print("!!!! No files with sequencing reads provided (*.{}).".format(config["reads_suffix"]), file=sys.stderr)
-    print("!!!! Adjust your config file if a different format is used.".format(config["reads_suffix"]), file=sys.stderr)
-    print("!!!! ", file=sys.stderr)
-    #detection_failure=True
-
-#if detection_failure:
-#    sys.exit(42)
-
-
-# 3) Setup experiments
-
-experiments=sorted([os.path.basename(remove_suffix(x, config["reads_suffix"])) for x in readfiles])
-smallest_reads=smallest_file(readfiles)
-if smallest_reads is not None:
-    smallest_experiment=[os.path.basename(remove_suffix(smallest_reads, config["reads_suffix"]))]
+    databases = []
+    smallest_index = None
+    smallest_database = None
 else:
-    smallest_experiment=[]
-print("Experiments:", experiments)
+    databases = [re_index.match(x).group(2) for x in indexes]
+    smallest_index = sorted(indexes, key=file_size, reverse=True)[0]
+    smallest_database = re_index.match(smallest_index).group(2)
+    print("  RASE databases:    ", ", ".join(databases), file=sys.stderr)
+    print("  Smallest database: ", smallest_database, file=sys.stderr)
+    print(file=sys.stderr)
 
+#
+# 2) Detect reads
+#
+readfiles = [x for x in glob.glob("reads/*") if re_read_files.search(x)]
+if len(readfiles) == 0:
+    print("!!!! ", file=sys.stderr)
+    print("!!!! RASE PIPELINE ERROR ", file=sys.stderr)
+    print("!!!! ", file=sys.stderr)
+    print("!!!! No files with sequencing reads provided", file=sys.stderr)
+    print("!!!! ", file=sys.stderr)
+    experiments = []
+    smallest_readfile = None
+    smallest_experiment = None
+else:
+    experiments = [re_read_files.match(x).group(2) for x in readfiles]
+    smallest_readfile = sorted(readfiles, key=file_size, reverse=True)[0]
+    smallest_experiment = re_read_files.match(smallest_readfile).group(2)
+    print("  Reads:             ", ", ".join(experiments), file=sys.stderr)
+    print("  Smallest dataset:  ", smallest_experiment, file=sys.stderr)
+    print(file=sys.stderr)
 
-# 4) Check whether all dependencies are installed
+#
+# 3) Check dependencies
+#
 
 snakemake.shell("(../scripts/rase_test_environments.sh 2>&1) >/dev/null || ../scripts/rase_test_environments.sh")
 
@@ -111,19 +106,19 @@ rule all:
         [
             [
                 [
-                    ancient(f"prediction/.{e}.read.complete"),
-                    ancient(f"prediction/.{e}__{i}.assign.complete"),
-                    ancient(f"prediction/.{e}__{i}.predict.complete"),
-                    ancient(f"plots/.{e}__{i}.plot.complete"),
+                    ancient(f"matching/.{e}.read.complete"),
+                    ancient(f"matching/.{e}__{db}.assign.complete"),
+                    ancient(f"prediction/.{e}__{db}.predict.complete"),
+                    ancient(f"plots/.{e}__{db}.plot.complete"),
                 ]
-                for i in indexes
+                for db in databases
             ]
             for e in experiments
         ],
 
 rule database:
 	input:
-		[ancient(f"database/.{index}.complete") for index in indexes]
+		[ancient(f"database/.{db}.complete") for db in databases]
 
 
 rule test:
@@ -131,50 +126,51 @@ rule test:
         [
             [
                 [
-                    ancient(f"prediction/.{e}.read.complete"),
-                    ancient(f"prediction/.{e}__{i}.predict.complete"),
-                    ancient(f"plots/.{e}__{i}.plot.complete"),
+                    ancient(f"matching/.{e}.read.complete"),
+                    ancient(f"prediction/.{e}__{db}.predict.complete"),
+                    ancient(f"plots/.{e}__{db}.plot.complete"),
                 ]
-                for i in smallest_index
+                for db in [smallest_database]
             ]
-            for e in smallest_experiment
+            for e in [smallest_experiment]
         ],
 
 
-rule preprocess_reads:
-    input:
-        reads=ancient("reads/{pref}."+config["reads_suffix"]),
-    output:
-        t="prediction/.{pref}.read.complete"
-    params:
-        reads="prediction/{pref}.fa"
-    benchmark:
-        "benchmarks/{pref}.readprep.log"
-    shell:
-        """
-            ../src/rase/rase_minion_rename_reads.py "{input.reads}" \
-                | paste -d '\t' - - \
-                | sort \
-                | uniq \
-                | perl -pe 's/\t/\n/g' \
-                > "{params.reads}"
-            touch "{output.t}"
-        """ if config["time_mode"] =="read" else """
-            seqtk seq -A "{input.reads}" > "{params.reads}"
-            touch "{output.t}"
-        """
+for suffix in [f"{x}{y}" for x in ("fa", "fq", "fasta", "fastq") for y in ("", ".gz")]:
+    rule:
+        input:
+            reads=ancient("reads/{pref}."+suffix)
+        output:
+            t="matching/.{pref}.read.complete"
+        params:
+            reads="matching/{pref}.fa"
+        benchmark:
+            "benchmarks/{pref}.readprep.log"
+        shell:
+            """
+                ../src/rase/rase_minion_rename_reads.py "{input.reads}" \
+                    | paste -d '\t' - - \
+                    | sort \
+                    | uniq \
+                    | perl -pe 's/\t/\n/g' \
+                    > "{params.reads}"
+                touch "{output.t}"
+            """ if config["time_mode"] =="read" else """
+                seqtk seq -A "{input.reads}" > "{params.reads}"
+                touch "{output.t}"
+            """
 
 
 rule assign:
     priority: 60
     input:
         ancient("database/.{index}.complete"),
-        ancient("prediction/.{pref}.read.complete"),
+        ancient("matching/.{pref}.read.complete"),
     output:
-        t="prediction/.{pref}__{index}.assign.complete",
+        t="matching/.{pref}__{index}.assign.complete",
     params:
-        reads="prediction/{pref}.fa",
-        bam="prediction/{pref}__{index}.bam",
+        reads="matching/{pref}.fa",
+        bam="matching/{pref}__{index}.bam",
         index="database/{index}"
     group:
         "group"
@@ -193,12 +189,12 @@ rule assign:
 rule predict:
     priority: 80
     input:
-        ancient("prediction/.{pref}__{index}.assign.complete"),
+        ancient("matching/.{pref}__{index}.assign.complete"),
         ancient("database/.{index}.complete"),
     output:
         t="prediction/.{pref}__{index}.predict.complete",
     params:
-        bam="prediction/{pref}__{index}.bam",
+        bam="matching/{pref}__{index}.bam",
         snapshot_dir="prediction/{pref}__{index}/",
         tree="database/{index}/tree.nw",
         metadata="database/{index}.tsv",
@@ -303,4 +299,3 @@ rule decompress:
             prophyle decompress "{input.gz}" database
             touch "{output.t}"
         """
-
