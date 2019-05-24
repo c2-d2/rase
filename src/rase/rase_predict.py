@@ -533,9 +533,7 @@ class Stats:
         Args:
             file (file): Output file.
         """
-        print(
-            "taxid", "pg", "weight", "weight_norm", "ln", "ln_norm", "count", "count_norm", sep="\t", file=file
-        )
+        print("taxid", "pg", "weight", "weight_norm", "ln", "ln_norm", "count", "count_norm", sep="\t", file=file)
         table = []
         for isolate in self._isolates + [FAKE_ISOLATE_UNASSIGNED]:
             if isolate == FAKE_ISOLATE_UNASSIGNED:
