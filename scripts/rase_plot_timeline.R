@@ -21,6 +21,7 @@ ssc.thres.rhiconf <- 0.4
 
 if (kIsRStudio) {
     src.file <- "pipeline/tests/predict.tsv"
+    #src.file <- "/Users/karel/github/my/rase/pipeline/prediction/sp10_norwich_P33.filtered__spneumoniae_sparc.k18.predict.tsv"
 } else {
     option_list <- list(
         make_option(
@@ -244,30 +245,27 @@ GreenBox <- function(df2, threshold) {
 #'
 #' @param i Position: 1=left, 2=right
 #'
-PlotReads <- function(df1, i) {
+PlotReads <- function(df,
+    df.flag,
+    i,
+    xlab = NA,
+    ylab = NA) {
     margin(i)
     reads.ylim <- c(0, max(df$reads) / 1000)
     if (i == 1) {
         par(bty = "[")
         plot(
-            df1$time.mins,
-            df1$reads / 1000,
+            df$time.mins,
+            df$reads / 1000,
             xlim = l.xlim,
             ylim = reads.ylim,
             type = "l",
             las = 1,
             xaxt = "n",
-            ylab = NA,
-            xlab = NA,
+            ylab = ylab,
+            xlab = xlab,
             lwd = kLWD,
             xaxs = "i"
-        )
-        points(
-            df1.flag$time.mins,
-            df1.flag$reads / 1000,
-            col = kFlagCol,
-            pch = df1.flag$pch,
-            cex = kFlagSize
         )
         mtext(
             "#reads (thousands)",
@@ -277,27 +275,34 @@ PlotReads <- function(df1, i) {
             cex = 0.7,
             las = 3
         )
+        points(
+            df.flag$time.mins,
+            df.flag$reads / 1000,
+            col = kFlagCol,
+            pch = df.flag$pch,
+            cex = kFlagSize
+        )
     } else {
         par(bty = "]")
         plot(
-            df2$time.mins / kRLUnitRatio,
-            df2$reads / 1000,
+            df$time.mins / kRLUnitRatio,
+            df$reads / 1000,
             xlim = r.xlim,
             ylim = reads.ylim,
             type = "l",
             las = 1,
             xaxt = "n",
             yaxt = "n",
-            ylab = NA,
-            xlab = NA,
+            ylab = ylab,
+            xlab = xlab,
             lwd = kLWD,
             xaxs = "i"
         )
         points(
-            df2.flag$time.mins / kRLUnitRatio,
-            df2.flag$reads / 1000,
+            df.flag$time.mins / kRLUnitRatio,
+            df.flag$reads / 1000,
             col = kFlagCol,
-            pch = df2.flag$pch,
+            pch = df.flag$pch,
             cex = kFlagSize
         )
     }
@@ -325,52 +330,65 @@ PlotReads <- function(df1, i) {
 #'
 #' @param i Position: 1=left, 2=right
 #'
-PlotProportion <- function(df1, i) {
-    margin(i)
-    prop.ylim <- c(0, 0.10)
-    if (i == 1) {
-        par(bty = "[")
-        plot(
-            df1$time.mins,
-            df1$matched_prop,
-            xlim = l.xlim,
-            ylim = prop.ylim,
-            type = "l",
-            las = 1,
-            xaxt = "n",
-            ylab = NA,
-            xlab = NA,
-            lwd = kLWD,
-            xaxs = "i"
-        )
-        mtext(
-            "proportion of k-mers",
-            side = 2,
-            line = kYLabDist,
-            cex.lab = 1,
-            cex = 0.7,
-            las = 3
-        )
-    } else {
-        par(bty = "]")
-        plot(
-            df2$time.mins / kRLUnitRatio,
-            df2$matched_prop,
-            xlim = r.xlim,
-            ylim = prop.ylim,
-            type = "l",
-            las = 1,
-            xaxt = "n",
-            yaxt = "n",
-            ylab = NA,
-            xlab = NA,
-            lwd = kLWD,
-            xaxs = "i"
-        )
-    }
+PlotProportion <-
+    function(df,
+        i,
+        ylim,
+        type = "l",
+        xlab = NA,
+        ylab = NA,
+        xaxt = "n",
+        las = 1,
+        lwd = kLWD,
+        xaxs = "i",
+        ...)
+    {
+        margin(i)
+        if (i == 1) {
+            par(bty = "[")
+            plot(
+                df$time.mins,
+                df$kmers_prop,
+                xlim = l.xlim,
+                ylim = ylim,
+                type = type,
+                las = las,
+                xaxt = xaxt,
+                xlab = xlab,
+                ylab = ylab,
+                lwd = lwd,
+                xaxs = xaxs,
+                ...
+            )
+            mtext(
+                "proportion of k-mers",
+                side = 2,
+                line = kYLabDist,
+                cex.lab = 1,
+                cex = 0.7,
+                las = 3
+            )
+        } else {
+            par(bty = "]")
+            plot(
+                df$time.mins / kRLUnitRatio,
+                df$kmers_prop,
+                xlim = r.xlim,
+                ylim = ylim,
+                type = type,
+                las = las,
+                xaxt = xaxt,
+                yaxt = "n",
+                xlab = xlab,
+                ylab = ylab,
+                lwd = lwd,
+                xaxs = xaxs,
+                ...
+            )
+        }
 
-    TimeAblines(kVerticalAblines[i])
-}
+        TimeAblines(kVerticalAblines[i])
+    }
 
 
 #' Plot PGS
@@ -381,14 +399,14 @@ PlotProportion <- function(df1, i) {
 #' @export
 #'
 #' @examples
-PlotPGS <- function(i) {
+PlotPGS <- function(df, i) {
     last_pg_predicted <- tail(df, n = 1)["pgs"] >= pgs.thres.pass
     margin(i)
     if (i == 1) {
         par(bty = "[")
         plot(
-            df1$time.mins,
-            df1$pgs,
+            df$time.mins,
+            df$pgs,
             type = "l",
             xlim = l.xlim,
             ylim = c(0, 1),
@@ -427,8 +445,8 @@ PlotPGS <- function(i) {
     } else {
         par(bty = "]")
         plot(
-            df2$time.mins / kRLUnitRatio,
-            df2$pgs,
+            df$time.mins / kRLUnitRatio,
+            df$pgs,
             type = "l",
             xlim = r.xlim,
             ylim = c(0, 1),
@@ -461,15 +479,15 @@ PlotPGS <- function(i) {
 #' @export
 #'
 #' @examples
-PlotAntibiotic <- function(ant, i, is.last) {
+PlotAntibiotic <- function(df, ant, i, is.last) {
     antcol <- paste0(ant, "_sus")
     last_is_resistant <- tail(df, n = 1)[antcol] <= ssc.thres.sr
     par(bty = "l")
     margin(i)
     if (i == 1) {
         plot(
-            df1$time.mins,
-            df1[, antcol],
+            df$time.mins,
+            df[, antcol],
             type = "l",
             xlim = l.xlim,
             ylim = c(0, 1),
@@ -508,8 +526,8 @@ PlotAntibiotic <- function(ant, i, is.last) {
         )
     } else {
         plot(
-            df2$time.mins / kRLUnitRatio,
-            df2[, antcol],
+            df$time.mins / kRLUnitRatio,
+            df[, antcol],
             type = "l",
             xlim = r.xlim,
             ylim = c(0, 1),
@@ -540,14 +558,10 @@ PlotAntibiotic <- function(ant, i, is.last) {
     if (is.last) {
         if (i == 1) {
             axis(1, lwd = 0.5)
-
             mtext("minutes", side = 1, line = 2)
-
         } else {
             axis(1, lwd = 0.5)
-
             mtext("hours", side = 1, line = 2)
-
         }
     }
 }
@@ -583,23 +597,26 @@ ants <- DfToAnts(df)
 par(mfrow = c(length(ants) + 3, 2), tcl = -0.5)
 
 # 1) reads
-PlotReads(df1, 1)
-PlotReads(df2, 2)
+PlotReads(df1, df1.flag, 1)
+PlotReads(df2, df2.flag, 2)
 
 # 2) proportion of k-mers
-PlotProportion(df1, 1)
-PlotProportion(df2, 2)
+y.lim <- c(0, max(pretty(c(
+    df1$kmers_prop, df2$kmers_prop
+))))
+PlotProportion(df1, 1, ylim = y.lim)
+PlotProportion(df2, 2, ylim = y.lim)
 
 # 3) pgs
-PlotPGS(1)
-PlotPGS(2)
+PlotPGS(df1, 1)
+PlotPGS(df2, 2)
 
 # 4) ssc
 last.ant <- tail(ants, 1)
 for (ant in ants) {
     is.last <- ant == last.ant
-    PlotAntibiotic(ant, 1, is.last)
-    PlotAntibiotic(ant, 2, is.last)
+    PlotAntibiotic(df1, ant, 1, is.last)
+    PlotAntibiotic(df2, ant, 2, is.last)
 }
 
 if (!kIsRStudio) {
