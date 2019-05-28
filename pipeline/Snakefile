@@ -148,8 +148,9 @@ for suffix in [f"{x}{y}" for x in ("fa", "fq", "fasta", "fastq") for y in ("", "
             "benchmarks/{pref}.readprep.log"
         shell:
             """
-                minion=1 && ../src/rase/rase_has_datetime.py "{input.reads}" || minion=0
-                if [ minion -ne 1 ]; then
+                minion=1 && ../src/rase/rase_has_datetime.py "{input.reads}" || minion=0; \
+                echo "Has datetimes: $minion";
+                if [ "$minion" -eq "1" ]; then
                     ../src/rase/rase_minion_rename_reads.py "{input.reads}" \
                         | paste -d '\t' - - \
                         | sort \
