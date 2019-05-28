@@ -211,7 +211,7 @@ rule predict:
                 -t {config[time_mode]} \
                 -s {config[prediction_sampling]} \
                 -p "{params.snapshot_dir}" \
-                --pgs-thres {config[pgs_thres_pass]} \
+                --pgs-thres-pass {config[pgs_thres_pass]} \
                 --ssc-thres-shiconf {config[ssc_thres_Shiconf]} \
                 --ssc-thres-sr {config[ssc_thres_SR]} \
                 --ssc-thres-rhiconf {config[ssc_thres_Rhiconf]} \
@@ -256,7 +256,7 @@ rule plot_timeline:
     shell:
         """
             ../scripts/rase_plot_timeline.R \
-                --pgs-thres={config[pgs_thres_pass]} \
+                --pgs-thres-pass={config[pgs_thres_pass]} \
                 --ssc-thres-shiconf={config[ssc_thres_Shiconf]} \
                 --ssc-thres-sr={config[ssc_thres_SR]} \
                 --ssc-thres-rhiconf={config[ssc_thres_Rhiconf]} \

@@ -861,6 +861,33 @@ def main():
     )
 
     parser.add_argument(
+        '--ssc-thres-shiconf',
+        type=float,
+        dest='ssc_thres_shiconf',
+        metavar='FLOAT',
+        help='high-confidence S threshold [0.6]',
+        default=0.6,
+    )
+
+    parser.add_argument(
+        '--ssc-thres-sr',
+        type=float,
+        dest='ssc_thres_sr',
+        metavar='FLOAT',
+        help='S/R threshold [0.5]',
+        default=0.5,
+    )
+
+    parser.add_argument(
+        '--ssc-thres-rhiconf',
+        type=float,
+        dest='ssc_thres_rhiconf',
+        metavar='FLOAT',
+        help='high-confidence R threshold [0.4]',
+        default=0.4,
+    )
+
+    parser.add_argument(
         '--mbp-per-min',
         type=float,
         dest='mbp_per_min',
@@ -895,9 +922,9 @@ def main():
         first_read_delay=args.first_read_delay,
         out_bam_fn=out_bam_fn,
         pgs_thres_pass=args.pgs_thres_pass,
-        ssc_thres_shiconf=ssc_thres_shiconf,
-        ssc_thres_sr=ssc_thres_sr,
-        ssc_thres_rhiconf=ssc_thres_rhiconf,
+        ssc_thres_shiconf=args.ssc_thres_shiconf,
+        ssc_thres_sr=args.ssc_thres_sr,
+        ssc_thres_rhiconf=args.ssc_thres_rhiconf,
         mbp_per_min=args.mbp_per_min,
         mimic_datetime=args.mimic_datetime,
     )

@@ -15,9 +15,9 @@ suppressMessages(suppressWarnings(library(optparse)))
 kIsRStudio <- Sys.getenv("RSTUDIO") == "1"
 
 pgs.thres.pass <- 0.5
-ssc.thres.Shiconf <- 0.6
-ssc.thres.SR <- 0.5
-ssc.thres.Rhiconf <- 0.4
+ssc.thres.shiconf <- 0.6
+ssc.thres.sr <- 0.5
+ssc.thres.rhiconf <- 0.4
 
 if (kIsRStudio) {
     src.file <- "pipeline/tests/predict.tsv"
@@ -32,22 +32,22 @@ if (kIsRStudio) {
         ),
         make_option(
             c("--ssc-thres-shiconf"),
-            dest = "ssc.thres.Shiconf",
-            default = ssc.thres.Shiconf,
+            dest = "ssc.thres.shiconf",
+            default = ssc.thres.shiconf,
             help = "phylogroup score threshold [default %default]",
             metavar = "FLOAT"
         ),
         make_option(
             c("--ssc-thres-sr"),
-            dest = "ssc.thres.SR",
-            default = ssc.thres.SR,
+            dest = "ssc.thres.sr",
+            default = ssc.thres.sr,
             help = "phylogroup score threshold [default %default]",
             metavar = "FLOAT"
         ),
         make_option(
             c("--ssc-thres-rhiconf"),
-            dest = "ssc.thres.Rhiconf",
-            default = ssc.thres.Rhiconf,
+            dest = "ssc.thres.rhiconf",
+            default = ssc.thres.rhiconf,
             help = "phylogroup score threshold [default %default]",
             metavar = "FLOAT"
         )
@@ -61,9 +61,9 @@ if (kIsRStudio) {
     opt <- arguments$options
 
 	pgs.thres.pass <- opt$pgs.thres.pass
-	ssc.thres.Shiconf <- opt$ssc.thres.Shiconf
-	ssc.thres.SR <- opt$ssc.thres.SR
-	ssc.thres.Rhiconf <- opt$ssc.thres.Rhiconf
+	ssc.thres.shiconf <- opt$ssc.thres.shiconf
+	ssc.thres.sr <- opt$ssc.thres.sr
+	ssc.thres.rhiconf <- opt$ssc.thres.rhiconf
 
     src.file <- arguments$args[1]
     out.file <- arguments$args[2]
@@ -462,7 +462,7 @@ PlotPGS <- function(i) {
 #' @examples
 PlotAntibiotic <- function(ant, i, is.last) {
     antcol <- paste0(ant, "_sus")
-    last_is_resistant <- tail(df, n = 1)[antcol] <= sus
+    last_is_resistant <- tail(df, n = 1)[antcol] <= ssc.thres.sr
     par(bty = "l")
     margin(i)
     if (i == 1) {
@@ -524,14 +524,14 @@ PlotAntibiotic <- function(ant, i, is.last) {
     }
 
     if (last_is_resistant) {
-        RedBox(df2, ssc.thres.SR)
+        RedBox(df2, ssc.thres.sr)
     } else {
-        GreenBox(df2, ssc.thres.SR)
+        GreenBox(df2, ssc.thres.sr)
     }
 
-    ThresholdAbline(ssc.thres.Rhiconf)
-    ThresholdAbline(ssc.thres.SR)
-    ThresholdAbline(ssc.thres.Shiconf)
+    ThresholdAbline(ssc.thres.rhiconf)
+    ThresholdAbline(ssc.thres.sr)
+    ThresholdAbline(ssc.thres.shiconf)
     TimeAblines(kVerticalAblines[i])
 
 
