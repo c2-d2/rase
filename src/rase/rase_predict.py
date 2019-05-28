@@ -121,13 +121,16 @@ class Worker:
     """
 
     def __init__(
-        self, metadata_fn, tree_fn, bam_fn, out_bam_fn, pref, final_stats_fn, mode, delta, first_read_delay, pgs_thres,
-        mbp_per_min, mimic_datetime
+        self, metadata_fn, tree_fn, bam_fn, out_bam_fn, pref, final_stats_fn, mode, delta, first_read_delay,
+        pgs_thres_pass, ssc_thres_shiconf, ssc_thres_sr, ssc_thres_rhiconf, mbp_per_min, mimic_datetime
     ):
         self.mode = mode
         self.metadata = RaseDbMetadata(metadata_fn)
         self.stats = Stats(tree_fn, self.metadata)
-        self.predict = Predict(self.metadata, pgs_thres=pgs_thres)
+        self.predict = Predict(
+            self.metadata, pgs_thres_pass=pgs_thres_pass, ssc_thres_shiconf=ssc_thres_shiconf,
+            ssc_thres_sr=ssc_thres_sr, ssc_thres_rhiconf=ssc_thres_rhiconf
+        )
         self.rase_bam_reader = RaseBamReader(bam_fn, out_bam_fn)
         self.pref = pref
         self.final_stats_fn = final_stats_fn
@@ -210,14 +213,17 @@ class Predict:
         metadata: Metadata table.
         phylogroups: Sorted list of phylogroups.
         summary: Summary table for the output.
-        pgs_thres: Threshold for phylogroup passing.
+        pgs_thres_pass: Threshold for phylogroup passing.
     """
 
-    def __init__(self, metadata, pgs_thres):
+    def __init__(self, metadata, pgs_thres_pass, ssc_thres_shiconf, ssc_thres_sr, ssc_thres_rhiconf):
         self.metadata = metadata
         self.phylogroups = sorted(self.metadata.pgset.keys())
         self.summary = collections.OrderedDict()
-        self.pgs_thres = pgs_thres
+        self.pgs_thres_pass = pgs_thres_pass
+        self.ssc_thres_shiconf = ssc_thres_shiconf
+        self.ssc_thres_sr = ssc_thres_sr
+        self.ssc_thres_rhiconf = ssc_thres_rhiconf
 
     def predict(self, stats):
         """Predict.
@@ -262,7 +268,7 @@ class Predict:
         ## 2c) Save values
 
         tbl['pgs'] = pgs
-        tbl['pgs_ok'] = "pass" if pgs >= self.pgs_thres else "fail"
+        tbl['pgs_ok'] = "pass" if pgs >= self.pgs_thres_pass else "fail"
         tbl['pg'] = pg1
         tbl['alt_pg'] = pg2
 
@@ -332,11 +338,11 @@ class Predict:
             ##  3c) Predict based on the collected info
 
             # prediction
-            if sus > 0.6:
+            if sus > self.ssc_thres_shiconf:
                 pr_cat = "S"
-            elif sus > 0.5:
+            elif sus > self.ssc_thres_sr:
                 pr_cat = "S!"
-            elif sus > 0.4:
+            elif sus > self.ssc_thres_rhiconf:
                 pr_cat = "R!"
             else:
                 pr_cat = "R"
@@ -846,9 +852,9 @@ def main():
     )
 
     parser.add_argument(
-        '--pgs-thres',
+        '--pgs-thres-pass',
         type=float,
-        dest='pgs_thres',
+        dest='pgs_thres_pass',
         metavar='FLOAT',
         help='phylogroup score threshold [0.5]',
         default=0.5,
@@ -888,7 +894,10 @@ def main():
         delta=args.delta,
         first_read_delay=args.first_read_delay,
         out_bam_fn=out_bam_fn,
-        pgs_thres=args.pgs_thres,
+        pgs_thres_pass=args.pgs_thres_pass,
+        ssc_thres_shiconf=ssc_thres_shiconf,
+        ssc_thres_sr=ssc_thres_sr,
+        ssc_thres_rhiconf=ssc_thres_rhiconf,
         mbp_per_min=args.mbp_per_min,
         mimic_datetime=args.mimic_datetime,
     )

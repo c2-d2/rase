@@ -93,9 +93,7 @@ def main():
 
     parser.add_argument('reads', metavar='reads.fq', help="nanopore reads (- for stdin)")
 
-    parser.add_argument(
-        'out_bam', metavar='assignments.bam', help="ProPhyle k-mer matches", nargs="?", default=[]
-    )
+    parser.add_argument('out_bam', metavar='assignments.bam', help="ProPhyle k-mer matches", nargs="?", default=[])
 
     args = parser.parse_args()
 
