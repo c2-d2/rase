@@ -148,15 +148,17 @@ for suffix in [f"{x}{y}" for x in ("fa", "fq", "fasta", "fastq") for y in ("", "
             "benchmarks/{pref}.readprep.log"
         shell:
             """
-                ../src/rase/rase_minion_rename_reads.py "{input.reads}" \
-                    | paste -d '\t' - - \
-                    | sort \
-                    | uniq \
-                    | perl -pe 's/\t/\n/g' \
-                    > "{params.reads}"
-                touch "{output.t}"
-            """ if config["time_mode"] =="read" else """
-                seqtk seq -A "{input.reads}" > "{params.reads}"
+                minion=1 && ../src/rase/rase_has_datetime.py "{input.reads}" || minion=0
+                if [ minion -ne 1 ]; then
+                    ../src/rase/rase_minion_rename_reads.py "{input.reads}" \
+                        | paste -d '\t' - - \
+                        | sort \
+                        | uniq \
+                        | perl -pe 's/\t/\n/g' \
+                        > "{params.reads}"
+                else
+                    seqtk seq -A "{input.reads}" > "{params.reads}"
+                fi
                 touch "{output.t}"
             """
 
@@ -200,15 +202,17 @@ rule predict:
         metadata="database/{index}.tsv",
         tsv1="prediction/{pref}__{index}.predict_without_flags.tsv",
         tsv2="prediction/{pref}__{index}.predict.tsv",
+        reads="matching/{pref}.fa",
     group:
         "group"
     benchmark:
         "benchmarks/{pref}__{index}.predict.log"
     shell:
         """
+            mode=read && ../src/rase/rase_has_datetime.py "{params.reads}" || mode=mimic-ont
             mkdir -p "prediction/{wildcards.pref}__{wildcards.index}"
             ../src/rase/rase_predict.py \
-                -t {config[time_mode]} \
+                -t $mode \
                 -s {config[prediction_sampling]} \
                 -p "{params.snapshot_dir}" \
                 --pgs-thres-pass {config[pgs_thres_pass]} \
