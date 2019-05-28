@@ -236,11 +236,11 @@ class Predict:
         tbl['datetime'] = "NA"
         tbl['reads'] = stats.nb_assigned_reads + stats.nb_unassigned_reads
         tbl['kbps'] = round(stats.cumul_ln / 1000)
-        tbl['matched_kbps'] = round(stats.cumul_h1 / 1000)
+        tbl['kkmers'] = round(stats.cumul_h1 / 1000)
         if stats.cumul_ln != 0:
-            tbl['matched_prop'] = round(stats.cumul_h1 / stats.cumul_ln, 5)
+            tbl['kmers_prop'] = round(stats.cumul_h1 / stats.cumul_ln, 5)
         else:
-            tbl['matched_prop'] = 0.0
+            tbl['kmers_prop'] = 0.0
 
         ## 2) PG PREDICTION
 
@@ -268,7 +268,7 @@ class Predict:
         ## 2c) Save values
 
         tbl['pgs'] = pgs
-        tbl['pgs_ok'] = "pass" if pgs >= self.pgs_thres_pass else "fail"
+        tbl['pgs_pass'] = "1" if pgs >= self.pgs_thres_pass else "0"
         tbl['pg'] = pg1
         tbl['alt_pg'] = pg2
 
@@ -277,10 +277,10 @@ class Predict:
         else:
             tbl['bm'] = "NA"
 
-        if pg2_w != "NA" and pg2_w > 0:
-            tbl['alt_bm'] = pg2_bm
-        else:
-            tbl['alt_bm'] = "NA"
+        #if pg2_w != "NA" and pg2_w > 0:
+        #    tbl['alt_bm'] = pg2_bm
+        #else:
+        #    tbl['alt_bm'] = "NA"
 
         for x in self.metadata.additional_cols:
             if stats.cumul_ln > 0:
@@ -347,10 +347,9 @@ class Predict:
             else:
                 pr_cat = "R"
 
-            tbl[ant + "_sus"] = sus
-            tbl[ant + "_pr_cat"] = pr_cat
-            tbl[ant + "_bm_cat"] = bm_cat
-            tbl[ant + "_bm_mic"] = bm_mic
+            tbl[f"{ant}_sus"] = sus
+            tbl[f"{ant}_pred"] = pr_cat
+            tbl[f"{ant}_bm"] = f"{bm_cat} ({bm_mic})"
             #tbl[ant + "_r_bm"] = r_bm
             #tbl[ant + "_s_bm"] = s_bm
             #tbl[ant + "_r_w"] = r_w_round
