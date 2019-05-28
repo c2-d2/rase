@@ -193,10 +193,12 @@ TimeAblines <- function(x) {
 #'
 #' @param y SSC thresholds
 #'
-ThresholdAbline <- function(y) {
+ThresholdAbline <- function(y, lty=1, col = "grey",...) {
     abline(h = c(y),
-           lty = 1,
-           col = "grey")
+           lty = lty,
+           col = col,
+           ...
+           )
 }
 
 
@@ -496,7 +498,7 @@ PlotAntibiotic <- function(ant, i, is.last) {
             side = 2,
             line = kIndicPos,
             cex = kIndicSize,
-            at = 0.6 / 2
+            at = 0.22
         )
         mtext(
             "susc",
@@ -529,9 +531,9 @@ PlotAntibiotic <- function(ant, i, is.last) {
         GreenBox(df2, ssc.thres.sr)
     }
 
-    ThresholdAbline(ssc.thres.rhiconf)
+    ThresholdAbline(ssc.thres.rhiconf, lty=3)
+    ThresholdAbline(ssc.thres.shiconf, lty=3)
     ThresholdAbline(ssc.thres.sr)
-    ThresholdAbline(ssc.thres.shiconf)
     TimeAblines(kVerticalAblines[i])
 
 
