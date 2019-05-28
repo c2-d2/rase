@@ -1,7 +1,3 @@
-time_mode: # time mode of prediction
-  "read"
-#   "clock"
-#   "mimic-ont"
 prediction_sampling: # prediction sampling interval (in seconds)
   60
 pgs_thres_pass: # threshold on phylogroup score for passing
