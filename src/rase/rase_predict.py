@@ -8,7 +8,6 @@ License: MIT
 # ./scripts/rase_predict.py ~/github/my/rase-predict/database/spneumoniae_sparc.k18/tree.nw ~/github/my/rase-predict/database/spneumoniae_sparc.k18.tsv  ~/github/my/rase-predict/prediction/sp10_norwich_P33.filtered__spneumoniae_sparc.k18.bam | tL
 
 # todo:
-# - add non-susc threshold as a param
 # - implement option auto for autodetection of the time mode
 """
     Architecture:
@@ -122,13 +121,16 @@ class Worker:
     """
 
     def __init__(
-        self, metadata_fn, tree_fn, bam_fn, out_bam_fn, pref, final_stats_fn, mode, delta, first_read_delay, pgs_thres,
-        sus_thres, mbp_per_min, mimic_datetime
+        self, metadata_fn, tree_fn, bam_fn, out_bam_fn, pref, final_stats_fn, mode, delta, first_read_delay,
+        pgs_thres_pass, ssc_thres_shiconf, ssc_thres_sr, ssc_thres_rhiconf, mbp_per_min, mimic_datetime
     ):
         self.mode = mode
         self.metadata = RaseDbMetadata(metadata_fn)
         self.stats = Stats(tree_fn, self.metadata)
-        self.predict = Predict(self.metadata, pgs_thres=pgs_thres, sus_thres=sus_thres)
+        self.predict = Predict(
+            self.metadata, pgs_thres_pass=pgs_thres_pass, ssc_thres_shiconf=ssc_thres_shiconf,
+            ssc_thres_sr=ssc_thres_sr, ssc_thres_rhiconf=ssc_thres_rhiconf
+        )
         self.rase_bam_reader = RaseBamReader(bam_fn, out_bam_fn)
         self.pref = pref
         self.final_stats_fn = final_stats_fn
@@ -211,16 +213,17 @@ class Predict:
         metadata: Metadata table.
         phylogroups: Sorted list of phylogroups.
         summary: Summary table for the output.
-        pgs_thres: Threshold for phylogroup passing.
-        sus_thres: Threshold for susceptibility.
+        pgs_thres_pass: Threshold for phylogroup passing.
     """
 
-    def __init__(self, metadata, pgs_thres, sus_thres):
+    def __init__(self, metadata, pgs_thres_pass, ssc_thres_shiconf, ssc_thres_sr, ssc_thres_rhiconf):
         self.metadata = metadata
         self.phylogroups = sorted(self.metadata.pgset.keys())
         self.summary = collections.OrderedDict()
-        self.pgs_thres = pgs_thres
-        self.sus_thres = sus_thres
+        self.pgs_thres_pass = pgs_thres_pass
+        self.ssc_thres_shiconf = ssc_thres_shiconf
+        self.ssc_thres_sr = ssc_thres_sr
+        self.ssc_thres_rhiconf = ssc_thres_rhiconf
 
     def predict(self, stats):
         """Predict.
@@ -233,11 +236,11 @@ class Predict:
         tbl['datetime'] = "NA"
         tbl['reads'] = stats.nb_assigned_reads + stats.nb_unassigned_reads
         tbl['kbps'] = round(stats.cumul_ln / 1000)
-        tbl['matched_kbps'] = round(stats.cumul_h1 / 1000)
+        tbl['kkmers'] = round(stats.cumul_h1 / 1000)
         if stats.cumul_ln != 0:
-            tbl['matched_prop'] = round(stats.cumul_h1 / stats.cumul_ln, 5)
+            tbl['kmers_prop'] = round(stats.cumul_h1 / stats.cumul_ln, 5)
         else:
-            tbl['matched_prop'] = 0.0
+            tbl['kmers_prop'] = 0.0
 
         ## 2) PG PREDICTION
 
@@ -250,7 +253,7 @@ class Predict:
             pg2 = sorted_pgs[1]
             pg2_bm, pg2_w = ppgs[pg2]
 
-            ## 2b) Calculate PGS
+            ## 2b) Calculate pgs
             if pg1_w > 0:
                 pgs = 2.0 * round(pg1_w / (pg1_w + pg2_w), 3) - 1
             else:
@@ -265,7 +268,7 @@ class Predict:
         ## 2c) Save values
 
         tbl['pgs'] = pgs
-        tbl['pgs_ok'] = "pass" if pgs >= self.pgs_thres else "fail"
+        tbl['pgs_pass'] = "1" if pgs >= self.pgs_thres_pass else "0"
         tbl['pg'] = pg1
         tbl['alt_pg'] = pg2
 
@@ -274,10 +277,10 @@ class Predict:
         else:
             tbl['bm'] = "NA"
 
-        if pg2_w != "NA" and pg2_w > 0:
-            tbl['alt_bm'] = pg2_bm
-        else:
-            tbl['alt_bm'] = "NA"
+        #if pg2_w != "NA" and pg2_w > 0:
+        #    tbl['alt_bm'] = pg2_bm
+        #else:
+        #    tbl['alt_bm'] = "NA"
 
         for x in self.metadata.additional_cols:
             if stats.cumul_ln > 0:
@@ -299,7 +302,7 @@ class Predict:
 
             pres = stats.res_by_weight(pg1, ant)
 
-            ##  3b) Calculate susceptibility score (sus) & correct for missing data
+            ##  3b) Calculate susceptibility score (ssc) & correct for missing data
 
             # Identify S/R pivots
             try:
@@ -314,38 +317,39 @@ class Predict:
             except KeyError:
                 r_bm, r_w, r_w_round = "NA", "NA", "NA"
 
-            # Calculate SUS
+            # Calculate ssc
             if s_w != "NA" and r_w != "NA":
                 if r_w + s_w > 0:
-                    sus = round(s_w / (r_w + s_w), 3)
+                    ssc = round(s_w / (r_w + s_w), 3)
                 else:
-                    sus = 0.0
+                    ssc = 0.0
             elif s_w == "NA" and r_w == "NA":
                 # no data yet
-                sus = 0.0
+                ssc = 0.0
             elif s_w == "NA" and r_w != "NA":
                 # everything R
                 assert bm_cat.upper() == "R" or r_w == 0, (bm_cat, pres)
-                sus = 0.0
+                ssc = 0.0
             elif s_w != "NA" and r_w == "NA":
                 # everything S
                 assert bm_cat.upper() == "S" or s_w == 0, (bm_cat, pres)
-                sus = 1.0
+                ssc = 1.0
 
             ##  3c) Predict based on the collected info
 
             # prediction
-            if sus > self.sus_thres:
+            if ssc > self.ssc_thres_shiconf:
                 pr_cat = "S"
-            elif sus >= 0.5:
+            elif ssc > self.ssc_thres_sr:
                 pr_cat = "S!"
+            elif ssc > self.ssc_thres_rhiconf:
+                pr_cat = "R!"
             else:
                 pr_cat = "R"
 
-            tbl[ant + "_sus"] = sus
-            tbl[ant + "_pr_cat"] = pr_cat
-            tbl[ant + "_bm_cat"] = bm_cat
-            tbl[ant + "_bm_mic"] = bm_mic
+            tbl[f"{ant}_ssc"] = ssc
+            tbl[f"{ant}_pred"] = pr_cat
+            tbl[f"{ant}_bm"] = f"{bm_cat} ({bm_mic})"
             #tbl[ant + "_r_bm"] = r_bm
             #tbl[ant + "_s_bm"] = s_bm
             #tbl[ant + "_r_w"] = r_w_round
@@ -847,21 +851,39 @@ def main():
     )
 
     parser.add_argument(
-        '--pgs-thres',
+        '--pgs-thres-pass',
         type=float,
-        dest='pgs_thres',
+        dest='pgs_thres_pass',
         metavar='FLOAT',
         help='phylogroup score threshold [0.5]',
         default=0.5,
     )
 
     parser.add_argument(
-        '--sus-thres',
+        '--ssc-thres-shiconf',
         type=float,
-        dest='sus_thres',
+        dest='ssc_thres_shiconf',
         metavar='FLOAT',
-        help='susceptibility score threshold [0.6]',
+        help='high-confidence S threshold [0.6]',
         default=0.6,
+    )
+
+    parser.add_argument(
+        '--ssc-thres-sr',
+        type=float,
+        dest='ssc_thres_sr',
+        metavar='FLOAT',
+        help='S/R threshold [0.5]',
+        default=0.5,
+    )
+
+    parser.add_argument(
+        '--ssc-thres-rhiconf',
+        type=float,
+        dest='ssc_thres_rhiconf',
+        metavar='FLOAT',
+        help='high-confidence R threshold [0.4]',
+        default=0.4,
     )
 
     parser.add_argument(
@@ -898,8 +920,10 @@ def main():
         delta=args.delta,
         first_read_delay=args.first_read_delay,
         out_bam_fn=out_bam_fn,
-        pgs_thres=args.pgs_thres,
-        sus_thres=args.sus_thres,
+        pgs_thres_pass=args.pgs_thres_pass,
+        ssc_thres_shiconf=args.ssc_thres_shiconf,
+        ssc_thres_sr=args.ssc_thres_sr,
+        ssc_thres_rhiconf=args.ssc_thres_rhiconf,
         mbp_per_min=args.mbp_per_min,
         mimic_datetime=args.mimic_datetime,
     )

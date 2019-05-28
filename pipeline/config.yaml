@@ -4,10 +4,14 @@ time_mode: # time mode of prediction
 #   "mimic-ont"
 prediction_sampling: # prediction sampling interval (in seconds)
   60
-phylogroup_score_threshold: # threshold on phylogroup score for passing
+pgs_thres_pass: # threshold on phylogroup score for passing
   0.5
-susceptibility_score_threshold: # threshold on susceptibility score for susceptibility
+ssc_thres_Shiconf: # threshold on susceptibility score for high-confidence susceptibility
   0.6
+ssc_thres_SR: # threshold on susceptibility score for susceptibility
+  0.5
+ssc_thres_Rhiconf: # threshold on susceptibility score for high-confidence non-susceptibility
+  0.4
 mimic_ont_mbp_per_minute: # mimic-ont; milions of basepairs per minute
  "1.43"
 mimic_ont_datetime: # mimic-ont; date time of the sequencing start
