@@ -248,17 +248,17 @@ GreenBox <- function(df2, threshold) {
 PlotReads <- function(df,
     df.flag,
     i,
+    ylim,
     xlab = NA,
     ylab = NA) {
     margin(i)
-    reads.ylim <- c(0, max(df$reads) / 1000)
     if (i == 1) {
         par(bty = "[")
         plot(
             df$time.mins,
             df$reads / 1000,
             xlim = l.xlim,
-            ylim = reads.ylim,
+            ylim = ylim,
             type = "l",
             las = 1,
             xaxt = "n",
@@ -288,7 +288,7 @@ PlotReads <- function(df,
             df$time.mins / kRLUnitRatio,
             df$reads / 1000,
             xlim = r.xlim,
-            ylim = reads.ylim,
+            ylim = ylim,
             type = "l",
             las = 1,
             xaxt = "n",
@@ -597,8 +597,9 @@ ants <- DfToAnts(df)
 par(mfrow = c(length(ants) + 3, 2), tcl = -0.5)
 
 # 1) reads
-PlotReads(df1, df1.flag, 1)
-PlotReads(df2, df2.flag, 2)
+reads.ylim <- c(0, max(df2$reads) / 1000)
+PlotReads(df1, df1.flag, 1, ylim=reads.ylim)
+PlotReads(df2, df2.flag, 2, ylim=reads.ylim)
 
 # 2) proportion of k-mers
 y.lim <- c(0, max(pretty(c(
