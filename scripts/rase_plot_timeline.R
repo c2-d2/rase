@@ -149,8 +149,8 @@ LoadTimelineData <- function(src.file) {
 #'
 DfToAnts <- function(df) {
     cols <- colnames(df)
-    antcols <- cols[grepl("sus", cols)]
-    ants <- gsub("_sus", "", antcols)
+    antcols <- cols[grepl("ssc", cols)]
+    ants <- gsub("_ssc", "", antcols)
     ants
 }
 
@@ -480,7 +480,7 @@ PlotPGS <- function(df, i) {
 #'
 #' @examples
 PlotAntibiotic <- function(df, ant, i, is.last) {
-    antcol <- paste0(ant, "_sus")
+    antcol <- paste0(ant, "_ssc")
     last_is_resistant <- tail(df, n = 1)[antcol] <= ssc.thres.sr
     par(bty = "l")
     margin(i)

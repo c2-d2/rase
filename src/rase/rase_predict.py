@@ -253,7 +253,7 @@ class Predict:
             pg2 = sorted_pgs[1]
             pg2_bm, pg2_w = ppgs[pg2]
 
-            ## 2b) Calculate PGS
+            ## 2b) Calculate pgs
             if pg1_w > 0:
                 pgs = 2.0 * round(pg1_w / (pg1_w + pg2_w), 3) - 1
             else:
@@ -302,7 +302,7 @@ class Predict:
 
             pres = stats.res_by_weight(pg1, ant)
 
-            ##  3b) Calculate susceptibility score (sus) & correct for missing data
+            ##  3b) Calculate susceptibility score (ssc) & correct for missing data
 
             # Identify S/R pivots
             try:
@@ -317,37 +317,37 @@ class Predict:
             except KeyError:
                 r_bm, r_w, r_w_round = "NA", "NA", "NA"
 
-            # Calculate SUS
+            # Calculate ssc
             if s_w != "NA" and r_w != "NA":
                 if r_w + s_w > 0:
-                    sus = round(s_w / (r_w + s_w), 3)
+                    ssc = round(s_w / (r_w + s_w), 3)
                 else:
-                    sus = 0.0
+                    ssc = 0.0
             elif s_w == "NA" and r_w == "NA":
                 # no data yet
-                sus = 0.0
+                ssc = 0.0
             elif s_w == "NA" and r_w != "NA":
                 # everything R
                 assert bm_cat.upper() == "R" or r_w == 0, (bm_cat, pres)
-                sus = 0.0
+                ssc = 0.0
             elif s_w != "NA" and r_w == "NA":
                 # everything S
                 assert bm_cat.upper() == "S" or s_w == 0, (bm_cat, pres)
-                sus = 1.0
+                ssc = 1.0
 
             ##  3c) Predict based on the collected info
 
             # prediction
-            if sus > self.ssc_thres_shiconf:
+            if ssc > self.ssc_thres_shiconf:
                 pr_cat = "S"
-            elif sus > self.ssc_thres_sr:
+            elif ssc > self.ssc_thres_sr:
                 pr_cat = "S!"
-            elif sus > self.ssc_thres_rhiconf:
+            elif ssc > self.ssc_thres_rhiconf:
                 pr_cat = "R!"
             else:
                 pr_cat = "R"
 
-            tbl[f"{ant}_sus"] = sus
+            tbl[f"{ant}_ssc"] = ssc
             tbl[f"{ant}_pred"] = pr_cat
             tbl[f"{ant}_bm"] = f"{bm_cat} ({bm_mic})"
             #tbl[ant + "_r_bm"] = r_bm
