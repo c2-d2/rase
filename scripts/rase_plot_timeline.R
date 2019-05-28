@@ -55,15 +55,15 @@ if (kIsRStudio) {
 
     parser <-
         OptionParser(usage = "%prog [options] prediction.tsv timeline.pdf", option_list =
-                         option_list)
+                option_list)
     arguments <- parse_args(parser, positional_arguments = 2)
 
     opt <- arguments$options
 
-	pgs.thres.pass <- opt$pgs.thres.pass
-	ssc.thres.shiconf <- opt$ssc.thres.shiconf
-	ssc.thres.sr <- opt$ssc.thres.sr
-	ssc.thres.rhiconf <- opt$ssc.thres.rhiconf
+    pgs.thres.pass <- opt$pgs.thres.pass
+    ssc.thres.shiconf <- opt$ssc.thres.shiconf
+    ssc.thres.sr <- opt$ssc.thres.sr
+    ssc.thres.rhiconf <- opt$ssc.thres.rhiconf
 
     src.file <- arguments$args[1]
     out.file <- arguments$args[2]
@@ -193,12 +193,11 @@ TimeAblines <- function(x) {
 #'
 #' @param y SSC thresholds
 #'
-ThresholdAbline <- function(y, lty=1, col = "grey",...) {
+ThresholdAbline <- function(y, lty = 1, col = "grey", ...) {
     abline(h = c(y),
-           lty = lty,
-           col = col,
-           ...
-           )
+        lty = lty,
+        col = col,
+        ...)
 }
 
 
@@ -223,21 +222,21 @@ margin <- function(i) {
 RedBox <- function(df2, threshold) {
     mx <- max(df2$time.mins) + 15
     rect(-mx,
-         -0.1,
-         mx,
-         threshold,
-         col = rgb(1, 0, 0, alpha = 0.1),
-         border = "NA")
+        -0.1,
+        mx,
+        threshold,
+        col = rgb(1, 0, 0, alpha = 0.1),
+        border = "NA")
 }
 
 GreenBox <- function(df2, threshold) {
     mx <- max(df2$time.mins) + 15
     rect(-mx,
-         threshold,
-         mx,
-         1.1,
-         col = rgb(0, 1, 0, alpha = 0.1),
-         border = "NA")
+        threshold,
+        mx,
+        1.1,
+        col = rgb(0, 1, 0, alpha = 0.1),
+        border = "NA")
 }
 
 
@@ -315,8 +314,8 @@ PlotReads <- function(df1, i) {
             ),
             bg = "white",
             pch = c(4,
-                    #1,
-                    0)
+                #1,
+                0)
         )
     }
 }
@@ -531,8 +530,8 @@ PlotAntibiotic <- function(ant, i, is.last) {
         GreenBox(df2, ssc.thres.sr)
     }
 
-    ThresholdAbline(ssc.thres.rhiconf, lty=3)
-    ThresholdAbline(ssc.thres.shiconf, lty=3)
+    ThresholdAbline(ssc.thres.rhiconf, lty = 3)
+    ThresholdAbline(ssc.thres.shiconf, lty = 3)
     ThresholdAbline(ssc.thres.sr)
     TimeAblines(kVerticalAblines[i])
 
