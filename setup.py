@@ -17,8 +17,11 @@ here = os.path.abspath(os.path.dirname(__file__))
 # Get the current version
 exec(open("src/rase/version.py").read())
 
-rase_pys = list(map(lambda x: x.split('/')[-1].replace(".py", ""), glob.glob('src/rase/rase_*.py')))
-rase_pys_strs = list(map(lambda x: '{z}.py = rase.{z}:main'.format(z=x), rase_pys))
+rase_pys = list(
+    map(lambda x: x.split('/')[-1].replace(".py", ""),
+        glob.glob('src/rase/rase_*.py')))
+rase_pys_strs = list(
+    map(lambda x: '{z}.py = rase.{z}:main'.format(z=x), rase_pys))
 
 #print(['rase = rase.rase:main'] + rase_pys_strs, file=sys.stderr)
 

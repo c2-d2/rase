@@ -45,8 +45,7 @@ def pseudo_mic_to_interval(pseudo_mic):
 
     print(
         f"Warning: MIC string '{pseudo_mic}' could not be parsed. If this represents a value, a new regular expression should be added.",
-        file=sys.stderr
-    )
+        file=sys.stderr)
     return (0, float("+inf"))
 
 
@@ -65,11 +64,11 @@ def interval_to_cat(interval, breakpoint):
 
 
 def assign_cat(
-    tsv_in_fn,
-    ant,
-    breakpoint,
-    miccol,
-    taxidcol,
+        tsv_in_fn,
+        ant,
+        breakpoint,
+        miccol,
+        taxidcol,
 ):
 
     with open(tsv_in_fn) as tsv_fo:
@@ -91,7 +90,8 @@ def assign_cat(
             if pseudo_mic == "":
                 pseudo_mic = "NA"
 
-            line = "\t".join([taxid, pseudo_mic, "{}-{}".format(*interval), cat])
+            line = "\t".join(
+                [taxid, pseudo_mic, "{}-{}".format(*interval), cat])
             line = line.replace("\tinf", "\tInf")  # correction for R
             line = line.replace("-inf", "-Inf")  # correction for R
             print(line)
@@ -99,7 +99,8 @@ def assign_cat(
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Read MICs from a TSV file and assign resistance categories (R / S / NA)."
+        description=
+        "Read MICs from a TSV file and assign resistance categories (R / S / NA)."
     )
 
     parser.add_argument(

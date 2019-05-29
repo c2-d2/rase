@@ -76,7 +76,8 @@ class Parsimony:
         print("Plotting", pdf_fn, file=sys.stderr)
         ts = ete3.TreeStyle()
         ant = self.antibiotics.upper()
-        ts.title.add_face(ete3.TextFace("{}{}".format(18 * " ", ant), fsize=60), column=0)
+        ts.title.add_face(
+            ete3.TextFace("{}{}".format(18 * " ", ant), fsize=60), column=0)
         ts.show_leaf_name = False
 
         for n in self.tree.traverse():
@@ -171,14 +172,20 @@ def ancestral_state_reconstruction(tsv_fn, nhx_fn, pdf_fn, antibiotics):
     parsimony.infer_resistance_parsimony()
     print(parsimony.first_line)
     for taxid in parsimony.mic_dict:
-        print(taxid, parsimony.mic_dict[taxid], parsimony.int_dict[taxid], parsimony.res_dict[taxid], sep="\t")
+        print(
+            taxid,
+            parsimony.mic_dict[taxid],
+            parsimony.int_dict[taxid],
+            parsimony.res_dict[taxid],
+            sep="\t")
     if pdf_fn:
         parsimony.plot_tree(pdf_fn)
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Read resistance categories and infer missing ones (NA) using parsimony."
+        description=
+        "Read resistance categories and infer missing ones (NA) using parsimony."
     )
 
     parser.add_argument(

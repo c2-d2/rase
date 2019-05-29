@@ -20,15 +20,14 @@ re_minion = re.compile(
         read=(\d+) \s
         ch=(\d+) \s
         start_time=(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2})
-    ''', flags=re.X
-)
+    ''',
+    flags=re.X)
 
 # postprocessed by RASE
 re_minion_postprocessed = re.compile(
     r'''
         \d+_EX[0-9a-f]+_RD[0-9a-f]+_CH\d+
-    ''',flags=re.X
-    )   
+    ''', flags=re.X)
 
 
 def has_datetime(line):
@@ -59,13 +58,17 @@ def check_first_line(fn):
 
     with open_fn(fn) as f:
         for line in f:
-            print("   checking first line: '{}...'".format(line[:30]), file=sys.stderr)
+            print(
+                "   checking first line: '{}...'".format(line[:30]),
+                file=sys.stderr)
             return has_datetime(line)
         return False
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Check whether a given FASTA/FASTQ file has MinION datetimes.")
+    parser = argparse.ArgumentParser(
+        description=
+        "Check whether a given FASTA/FASTQ file has MinION datetimes.")
 
     parser.add_argument(
         'fq',

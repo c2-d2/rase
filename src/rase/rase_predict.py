@@ -120,17 +120,19 @@ class Worker:
         Wrapping everything together.
     """
 
-    def __init__(
-        self, metadata_fn, tree_fn, bam_fn, out_bam_fn, pref, final_stats_fn, mode, delta, first_read_delay,
-        pgs_thres_pass, ssc_thres_shiconf, ssc_thres_sr, ssc_thres_rhiconf, mbp_per_min, mimic_datetime
-    ):
+    def __init__(self, metadata_fn, tree_fn, bam_fn, out_bam_fn, pref,
+                 final_stats_fn, mode, delta, first_read_delay, pgs_thres_pass,
+                 ssc_thres_shiconf, ssc_thres_sr, ssc_thres_rhiconf,
+                 mbp_per_min, mimic_datetime):
         self.mode = mode
         self.metadata = RaseDbMetadata(metadata_fn)
         self.stats = Stats(tree_fn, self.metadata)
         self.predict = Predict(
-            self.metadata, pgs_thres_pass=pgs_thres_pass, ssc_thres_shiconf=ssc_thres_shiconf,
-            ssc_thres_sr=ssc_thres_sr, ssc_thres_rhiconf=ssc_thres_rhiconf
-        )
+            self.metadata,
+            pgs_thres_pass=pgs_thres_pass,
+            ssc_thres_shiconf=ssc_thres_shiconf,
+            ssc_thres_sr=ssc_thres_sr,
+            ssc_thres_rhiconf=ssc_thres_rhiconf)
         self.rase_bam_reader = RaseBamReader(bam_fn, out_bam_fn)
         self.pref = pref
         self.final_stats_fn = final_stats_fn
@@ -157,7 +159,8 @@ class Worker:
         current_window = [t0, t0 + self.delta]  # [x, y)
 
         if self.pref is not None:
-            f = open("{}/{}.tsv".format(self.pref, current_window[1]), mode="w")
+            f = open(
+                "{}/{}.tsv".format(self.pref, current_window[1]), mode="w")
 
         # 2) iterate through individual reads, and update and print statistics
         for read_stats in self.rase_bam_reader:
@@ -167,7 +170,8 @@ class Worker:
             elif self.mode == "read":
                 read_timestamp = timestamp_from_qname(read_stats[0]["qname"])
             elif self.mode == "mimic-ont":
-                read_timestamp = t1 + (self.stats.cumul_ln / (10**6)) / (self.mbp_per_min / 60.0)
+                read_timestamp = t1 + (self.stats.cumul_ln /
+                                       (10**6)) / (self.mbp_per_min / 60.0)
             else:
                 assert 1 == 2, "Unknown mode provided ({})".format(self.mode)
 
@@ -183,14 +187,16 @@ class Worker:
                     current_window[0] += self.delta
                     current_window[1] += self.delta
                 if self.pref is not None:
-                    f = open("{}/{}.tsv".format(self.pref, current_window[1]), mode="w")
+                    f = open(
+                        "{}/{}.tsv".format(self.pref, current_window[1]),
+                        mode="w")
 
                 last_time = format_time(current_window[0] - t0)
                 print(
                     "Time t={}: {:,} reads and {:,} kbps.".format(
-                        last_time, self.stats.nb_assigned_reads, round(self.stats.cumul_ln / 1000)
-                    ), file=sys.stderr
-                )
+                        last_time, self.stats.nb_assigned_reads,
+                        round(self.stats.cumul_ln / 1000)),
+                    file=sys.stderr)
 
             self.stats.update_from_read(read_stats)
 
@@ -216,7 +222,8 @@ class Predict:
         pgs_thres_pass: Threshold for phylogroup passing.
     """
 
-    def __init__(self, metadata, pgs_thres_pass, ssc_thres_shiconf, ssc_thres_sr, ssc_thres_rhiconf):
+    def __init__(self, metadata, pgs_thres_pass, ssc_thres_shiconf,
+                 ssc_thres_sr, ssc_thres_rhiconf):
         self.metadata = metadata
         self.phylogroups = sorted(self.metadata.pgset.keys())
         self.summary = collections.OrderedDict()
@@ -438,7 +445,8 @@ class Stats:
     def _precompute_descendants(tree):
         descending_leaves = {}
         for root in list(tree.traverse()) + [tree]:
-            descending_leaves[root.name] = set([isolate.name for isolate in root])
+            descending_leaves[root.name] = set(
+                [isolate.name for isolate in root])
         return descending_leaves
 
     def _descending_isolates(self, *nnames):
@@ -525,7 +533,9 @@ class Stats:
                 self.stats_ln[isolate] += delta_ln
         else:
             if len(asgs) != 1:
-                warnings.warn("A single read shouldn't be reported as unassigned multiple times ({})".format(asgs))
+                warnings.warn(
+                    "A single read shouldn't be reported as unassigned multiple times ({})"
+                    .format(asgs))
             self.nb_unassigned_reads += 1
             self.cumul_ln += ln
             self.stats_ct[FAKE_ISOLATE_UNASSIGNED] += 1
@@ -537,28 +547,42 @@ class Stats:
         Args:
             file (file): Output file.
         """
-        print("taxid", "pg", "weight", "weight_norm", "ln", "ln_norm", "count", "count_norm", sep="\t", file=file)
+        print(
+            "taxid",
+            "pg",
+            "weight",
+            "weight_norm",
+            "ln",
+            "ln_norm",
+            "count",
+            "count_norm",
+            sep="\t",
+            file=file)
         table = []
         for isolate in self._isolates + [FAKE_ISOLATE_UNASSIGNED]:
             if isolate == FAKE_ISOLATE_UNASSIGNED:
                 pg = "NA"
             else:
                 pg = self._metadata.pg[isolate]
-            table.append(
-                [
-                    isolate,
-                    pg,
-                    *format_floats(self.stats_h1[isolate], digits=0),
-                    *format_floats(self.stats_h1[isolate] / self.cumul_h1 if self.cumul_h1 != 0 else 0.0, digits=3),
-                    *format_floats(self.stats_ln[isolate], digits=0),
-                    *format_floats(self.stats_ln[isolate] / self.cumul_ln if self.cumul_ln != 0 else 0.0, digits=3),
-                    *format_floats(self.stats_ct[isolate], digits=0),
-                    *format_floats(
-                        1.0 * self.stats_ct[isolate] / self.nb_assigned_reads if self.nb_assigned_reads != 0 else 0.0,
-                        digits=3
-                    ),
-                ]
-            )
+            table.append([
+                isolate,
+                pg,
+                *format_floats(self.stats_h1[isolate], digits=0),
+                *format_floats(
+                    self.stats_h1[isolate] / self.cumul_h1
+                    if self.cumul_h1 != 0 else 0.0,
+                    digits=3),
+                *format_floats(self.stats_ln[isolate], digits=0),
+                *format_floats(
+                    self.stats_ln[isolate] / self.cumul_ln
+                    if self.cumul_ln != 0 else 0.0,
+                    digits=3),
+                *format_floats(self.stats_ct[isolate], digits=0),
+                *format_floats(
+                    1.0 * self.stats_ct[isolate] / self.nb_assigned_reads
+                    if self.nb_assigned_reads != 0 else 0.0,
+                    digits=3),
+            ])
 
         table.sort(key=lambda x: int(x[2]), reverse=True)
 
@@ -595,19 +619,28 @@ class RaseDbMetadata:
 
         self.weight = {}
 
-        df = pandas.read_csv(tsv, delimiter='\t', na_values=[], keep_default_na=False, dtype=str)
+        df = pandas.read_csv(
+            tsv,
+            delimiter='\t',
+            na_values=[],
+            keep_default_na=False,
+            dtype=str)
         df = df.rename(columns={'phylogroup': 'pg'})  # backward compatibility
 
         # extract antibiotic abbrev from col names
         re_mic = re.compile(r'(\w+)_mic')
         self.ants = re_mic.findall(" ".join(df.columns))
 
-        print("Antibiotics in the RASE DB:", ", ".join(self.ants), file=sys.stderr)
+        print(
+            "Antibiotics in the RASE DB:",
+            ", ".join(self.ants),
+            file=sys.stderr)
 
         # check that all required columns are present
-        basic_cols = ["taxid", "pg", "order"] + list(map(lambda x: x + "_cat", self.ants)) + list(
-            map(lambda x: x + "_int", self.ants)
-        ) + list(map(lambda x: x + "_mic", self.ants))
+        basic_cols = ["taxid", "pg", "order"] + list(
+            map(lambda x: x + "_cat", self.ants)) + list(
+                map(lambda x: x + "_int", self.ants)) + list(
+                    map(lambda x: x + "_mic", self.ants))
         self.additional_cols = set(df.columns) - set(basic_cols)
         for x in basic_cols:
             assert x in df.columns, f"Column '{x}' is missing in '{tsv}'."
@@ -615,7 +648,8 @@ class RaseDbMetadata:
         # check that values are ok
         cats = set(itertools.chain(*[df[ant + "_cat"] for ant in self.ants]))
         cats_wrong = cats - set(["S", "R", "s", "r"])
-        assert not cats_wrong, "Unknown resistance categories: {}".format(", ".join(cats_wrong))
+        assert not cats_wrong, "Unknown resistance categories: {}".format(
+            ", ".join(cats_wrong))
 
         df_dict = df.to_dict('index')
         for _, row in df_dict.items():
@@ -652,7 +686,8 @@ class RaseBamReader:
         try:
             self._load_assignment()
         except StopIteration:
-            error("The provided SAM/BAM stream does not contain any alignments.")
+            error(
+                "The provided SAM/BAM stream does not contain any alignments.")
         self._extract_t1()
 
     def __iter__(self):
@@ -665,7 +700,8 @@ class RaseBamReader:
         if self._finished:
             raise StopIteration
 
-        while len(self._buffer) < 2 or self._buffer[-1]["qname"] == self._buffer[-2]["qname"]:
+        while len(self._buffer) < 2 or self._buffer[-1][
+                "qname"] == self._buffer[-2]["qname"]:
             try:
                 self._load_assignment()
             except StopIteration:
@@ -710,13 +746,17 @@ class _SingleAssignmentReader:
         try:
             self.samfile = pysam.AlignmentFile(bam_fn, "rb")
         except ValueError as e:
-            error("SAM/BAM stream from '{}' could not be read:".format(bam_fn), str(e))
+            error("SAM/BAM stream from '{}' could not be read:".format(bam_fn),
+                  str(e))
 
         if out_bam_fn is not None:
             try:
-                self.output_bamfile = pysam.AlignmentFile(out_bam_fn, "wb", header=self.samfile.header)
+                self.output_bamfile = pysam.AlignmentFile(
+                    out_bam_fn, "wb", header=self.samfile.header)
             except ValueError as e:
-                error("Output BAM file '{}' could not be created:".format(output_bam_fn), str(e))
+                error(
+                    "Output BAM file '{}' could not be created:".format(
+                        output_bam_fn), str(e))
 
         self.alignments_iter = self.samfile.fetch(until_eof=True)
 
@@ -807,7 +847,11 @@ def main():
         help='RASE metadata table',
     )
 
-    parser.add_argument('bam_fn', type=str, metavar='<in.asgs.bam>', help='input RASE assignments (- for stdin)')
+    parser.add_argument(
+        'bam_fn',
+        type=str,
+        metavar='<in.asgs.bam>',
+        help='input RASE assignments (- for stdin)')
 
     parser.add_argument(
         'out_bam_fn',
@@ -818,11 +862,19 @@ def main():
         nargs='?',
     )
 
-    parser.add_argument('-p', dest='pref', metavar='STR', help="output dir for samplings", default=None)
+    parser.add_argument(
+        '-p',
+        dest='pref',
+        metavar='STR',
+        help="output dir for samplings",
+        default=None)
 
     parser.add_argument(
-        '-f', dest='final_stats_fn', metavar='STR', help="statistics for the last snapshot", default=None
-    )
+        '-f',
+        dest='final_stats_fn',
+        metavar='STR',
+        help="statistics for the last snapshot",
+        default=None)
 
     parser.add_argument(
         '-t',

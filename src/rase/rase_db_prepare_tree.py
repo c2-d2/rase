@@ -55,7 +55,9 @@ def node_to_pg(node, pg_dict):
         try:
             return set([pg_dict[node.name]])
         except KeyError:
-            print(f"Renaming error: Unknown isolate '{node.name}'", file=sys.stderr)
+            print(
+                f"Renaming error: Unknown isolate '{node.name}'",
+                file=sys.stderr)
             sys.exit(42)
     else:
         s = set()
@@ -101,7 +103,8 @@ def rename_leaves(tree, rename_dict):
     return tree
 
 
-def prepare_rase_tree(newick_in_fn, newick_out_fn, table_fn, node_col, taxid_col, pg_col):
+def prepare_rase_tree(newick_in_fn, newick_out_fn, table_fn, node_col,
+                      taxid_col, pg_col):
     print("\n1) Testing files.\n")
     test_file(newick_in_fn)
     test_file(table_fn)
@@ -127,7 +130,8 @@ def prepare_rase_tree(newick_in_fn, newick_out_fn, table_fn, node_col, taxid_col
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Prepare a tree for RASE. Rename nodes and add names for internal nodes.'
+        description=
+        'Prepare a tree for RASE. Rename nodes and add names for internal nodes.'
     )
 
     parser.add_argument(

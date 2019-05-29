@@ -48,7 +48,9 @@ def compute_stats(fn, s):
     ants_sorted = sorted(ants.keys(), key=lambda s: s.lower())
     cats_sorted = sorted(cats, key=lambda s: s.lower())
 
-    parts = ['pg', 'count'] + ['{}_{}'.format(ant, cat) for ant in ants_sorted for cat in cats_sorted]
+    parts = ['pg', 'count'] + [
+        '{}_{}'.format(ant, cat) for ant in ants_sorted for cat in cats_sorted
+    ]
     print(*parts, sep="\t")
 
     for pg in sorted(pgs, key=lambda x: int(x)):
@@ -65,7 +67,10 @@ def compute_stats(fn, s):
     ]
     for ant in ants_sorted:
         for catgr in cats_sorted:
-            parts.append(sum([sum([stats[pg][(ant, cat)] for cat in catgr]) for pg in pgs]))
+            parts.append(
+                sum([
+                    sum([stats[pg][(ant, cat)] for cat in catgr]) for pg in pgs
+                ]))
 
     print(*parts, sep="\t")
 

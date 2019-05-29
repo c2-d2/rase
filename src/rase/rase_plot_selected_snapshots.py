@@ -44,7 +44,9 @@ def secs_to_text(cs):
 
 
 def plot_snapshots(res_table, directory, snapshot_indexes, outprefix):
-    plotting_script = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../../scripts/rase_plot_snapshot.R")
+    plotting_script = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)),
+        "../../scripts/rase_plot_snapshot.R")
     plots = get_plot_info(directory, snapshot_indexes)
     for fn, s, t in plots:
         cmd = [plotting_script, res_table, fn, "{}{}.pdf".format(outprefix, t)]
@@ -52,7 +54,10 @@ def plot_snapshots(res_table, directory, snapshot_indexes, outprefix):
         try:
             subprocess.run(cmd, check=True)
         except subprocess.CalledProcessError:
-            print("The following command failed:", " ".join(cmd), file=sys.stderr)
+            print(
+                "The following command failed:",
+                " ".join(cmd),
+                file=sys.stderr)
 
 
 def get_plot_info(directory, snapshot_indexes):
@@ -68,14 +73,17 @@ def get_plot_info(directory, snapshot_indexes):
             fn, sec = tsvs_rel[i]
             tr.append((fn, sec, secs_to_text(sec)))
         except IndexError:
-            print("Warning: snapshot '{}' does not exist".format(i), file=sys.stderr)
+            print(
+                "Warning: snapshot '{}' does not exist".format(i),
+                file=sys.stderr)
 
     return tr
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Plot selected snapshots and use human readable names (e.g., 5m, 1h, etc.)"
+        description=
+        "Plot selected snapshots and use human readable names (e.g., 5m, 1h, etc.)"
     )
 
     parser.add_argument(

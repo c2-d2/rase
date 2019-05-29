@@ -14,9 +14,7 @@ License: MIT
 import argparse
 import collections
 import csv
-import os
 import re
-import sys
 
 
 def get_cols(tsv_dl):
@@ -29,10 +27,9 @@ def extract_flag_cols(cols):
     res_flagging = [
         re.compile(r"^bm$"),
         re.compile(r"^serotype$"),
-        re.compile(r"^ST$"),
+        re.compile(r"^bm_\S+$"),
         re.compile(r"^pg$"),
-        re.compile(r"^alt_pg$"),
-        re.compile(r"^.*_cat$"),
+        re.compile(r"^.*_pred$"),
     ]
     flag_cols = []
     for k in cols:
@@ -64,9 +61,12 @@ def add_flags(tsv_fn):
     cols = get_cols(tsv_dl)
     flag_cols = extract_flag_cols(cols)
     last_rec = tsv_dl[-1]
-    stabilization_points = {col: get_stabilization_point(tsv_dl, col) for col in flag_cols}
+    stabilization_points = {
+        col: get_stabilization_point(tsv_dl, col)
+        for col in flag_cols
+    }
 
-    #add flags
+    # add flags
     prev_rec = collections.defaultdict(lambda: "")
     for i, rec in enumerate(tsv_dl):
         if i == 0:
@@ -91,7 +91,9 @@ def add_flags(tsv_fn):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Add flags to predictions (R=beginning of a run, S=stabilized).")
+    parser = argparse.ArgumentParser(
+        description=
+        "Add flags to predictions (R=beginning of a run, S=stabilized).")
 
     parser.add_argument(
         'file',

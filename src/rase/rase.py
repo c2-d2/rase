@@ -76,8 +76,10 @@ def rase(db, reads_fn, bam_fn):
         cmd_predict.append(bam_fn[0])
 
     # todo: maybe use subprocess.check_output ?
-    process_classify = subprocess.Popen(cmd_classify, stdout=subprocess.PIPE, shell=False)
-    process_predict = subprocess.Popen(cmd_predict, stdin=process_classify.stdout, shell=False)
+    process_classify = subprocess.Popen(
+        cmd_classify, stdout=subprocess.PIPE, shell=False)
+    process_predict = subprocess.Popen(
+        cmd_predict, stdin=process_classify.stdout, shell=False)
 
     print("Running:", *cmd_classify, "|", *cmd_predict, file=sys.stderr)
 
@@ -89,11 +91,20 @@ def rase(db, reads_fn, bam_fn):
 def main():
     parser = argparse.ArgumentParser(description=DESC)
 
-    parser.add_argument('rase_db', metavar='db', help="prefix of the RASE database (<pref>.tar.gz, <pref>.tsv)")
+    parser.add_argument(
+        'rase_db',
+        metavar='db',
+        help="prefix of the RASE database (<pref>.tar.gz, <pref>.tsv)")
 
-    parser.add_argument('reads', metavar='reads.fq', help="nanopore reads (- for stdin)")
+    parser.add_argument(
+        'reads', metavar='reads.fq', help="nanopore reads (- for stdin)")
 
-    parser.add_argument('out_bam', metavar='assignments.bam', help="ProPhyle k-mer matches", nargs="?", default=[])
+    parser.add_argument(
+        'out_bam',
+        metavar='assignments.bam',
+        help="ProPhyle k-mer matches",
+        nargs="?",
+        default=[])
 
     args = parser.parse_args()
 

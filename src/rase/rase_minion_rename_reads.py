@@ -27,8 +27,8 @@ re_minion = re.compile(
         read=(\d+) \s
         ch=(\d+) \s
         start_time=(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2})
-    ''', flags=re.X
-)
+    ''',
+    flags=re.X)
 
 
 def parse_header_line(hl):
@@ -42,7 +42,8 @@ def parse_header_line(hl):
     """
     m = re_minion.match(hl)
     gg = m.groups()
-    assert gg is not None, "Header line doesn't match the regular expression ('{}').".format(hl)
+    assert gg is not None, "Header line doesn't match the regular expression ('{}').".format(
+        hl)
     return gg
 
 
@@ -117,7 +118,8 @@ def transf(fq):
             uuid = name
             runid, read, ch, date, time = parse_header_line(comment)
             ts = timestamp_from_datetime(date, time)
-            print(">" + "{}_EX{}_RD{}_CH{}".format(ts, runid[:9], uuid.partition("-")[0], ch))
+            print(">" + "{}_EX{}_RD{}_CH{}".format(ts, runid[:9],
+                                                   uuid.partition("-")[0], ch))
             print(seq)
 
         return
@@ -126,13 +128,16 @@ def transf(fq):
             if i % 4 == 0:
                 uuid, runid, read, ch, date, time = parse_header_line(x)
                 ts = timestamp_from_datetime(date, time)
-                print("@" + "{}_EX{}_RD{}_CH{}".format(ts, runid[:9], uuid.partition("-")[0], ch))
+                print("@" +
+                      "{}_EX{}_RD{}_CH{}".format(ts, runid[:9],
+                                                 uuid.partition("-")[0], ch))
             else:
                 print(x, end="")
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Reformat Minion read names in a FQ file.")
+    parser = argparse.ArgumentParser(
+        description="Reformat Minion read names in a FQ file.")
 
     parser.add_argument(
         'fq',
