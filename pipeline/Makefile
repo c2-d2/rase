@@ -38,8 +38,7 @@ replot: ## Replot all figures
 	$(SM)
 
 export: ## Export all outputs
-	d=$$(date +"%Y-%m-%d_%H-%M"); \
-	f="rase_exported.$$d.tar"; \
+	f="rase_results.$$d.tar"; \
 	rm -f $$f; \
 	tar cvf $$f --files-from /dev/null; \
 	for x in prediction/*.tsv plots/*.pdf; do \
