@@ -1,4 +1,0 @@
-time_mode: # time mode of prediction
-  "clock"
-prediction_sampling:
-  1

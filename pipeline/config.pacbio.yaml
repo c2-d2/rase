@@ -1,4 +1,0 @@
-time_mode: # time mode of prediction
-  "mimic-ont"
-prediction_sampling:
-  60
