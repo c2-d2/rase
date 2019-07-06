@@ -1,5 +1,6 @@
 #!/usr/bin/env Rscript
 
+# Plot MIC intervals for all isolates in a RASE DB.
 #
 # Author:  Karel Brinda <kbrinda@hsph.harvard.edu>
 #
@@ -69,30 +70,15 @@ InfToBig <- function(vec) {
         ifelse(vec == 0, 0.00000000000000000001, vec))
 }
 
-GetPhylogroupStarts <- function(df) {
+GetLineagesStarts <- function(df) {
     starts <- c(1)
     for (i in seq(nrow(df) - 1)) {
-        if (df[i,]$phylogroup != df[i + 1,]$phylogroup) {
+        if (df[i,]$lineage != df[i + 1,]$lineage) {
             starts <- c(starts, i + 1)
         }
     }
     starts <- c(starts, nrow(df) + 1)
     starts
-}
-
-GetSubPhylogroupStarts <- function(df) {
-    if ("subsubphylogroup" %in% colnames(df)) {
-        starts <- c(1)
-        for (i in seq(nrow(df) - 1)) {
-            if (df[i,]$subphylogroup != df[i + 1,]$subphylogroup) {
-                starts <- c(starts, i + 1)
-            }
-        }
-        starts <- c(starts, nrow(df) + 1)
-        starts
-    } else{
-        c()
-    }
 }
 
 
@@ -164,35 +150,31 @@ print(paste("Breakpoint", breakpoint))
 
 # PLOTTING -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-df_big <- read.delim(res.file, header = T)
+df.big <- read.delim(res.file, header = T)
+colnames(df.big)[colnames(df.big) == "phylogroup"] <- "lineage" # Backward compatibility
+colnames(df.big)[colnames(df.big) == "pg"] <- "lineage" # Backward compatibility
 
 par(mar = c(4.4, 4.2, 1.5 , 1.0))
 
-if ("order" %in% colnames(df_big)) {
-    the.order <- order(df_big$order)
-} else if ("subsubphylogroup" %in% colnames(df_big)) {
-    the.order <- order(df_big$phylogroup,
-        df_big$subphylogroup,
-        df_big$subsubphylogroup)
-} else if ("subsubphylogroup" %in% colnames(df_big)) {
-    the.order <- order(df_big$phylogroup, df_big$subphylogroup)
+if ("order" %in% colnames(df.big)) {
+    the.order <- order(df.big$order)
 } else {
-    the.order <- order(df_big$phylogroup)
+    the.order <- order(df.big$lineage)
 }
 
-df <- head(df_big[the.order, ], kHead)
+df <- head(df.big[the.order, ], kHead)
 
-ant_int_col <- paste(ant, "_int", sep = "")
-ant_cat_col <- paste(ant, "_cat", sep = "")
-ant_intervals <- df[[ant_int_col]]
-l_int <- as.numeric(gsub("(.*)-(.*)", "\\1", ant_intervals))
-r_int <- as.numeric(gsub("(.*)-(.*)", "\\2", ant_intervals))
-df$l <- InfToBig(l_int)
-df$r <- InfToBig(r_int)
-l_int_df <- data.frame(l_int)
-r_int_df <- data.frame(r_int)
-rmax <- max(r_int_df[r_int_df != Inf, ])
-rmin <- min(r_int_df[r_int_df != 0, ])
+ant.int.col <- paste(ant, "_int", sep = "")
+ant.cat.col <- paste(ant, "_cat", sep = "")
+ant.intervals <- df[[ant.int.col]]
+l.int <- as.numeric(gsub("(.*)-(.*)", "\\1", ant.intervals))
+r.int <- as.numeric(gsub("(.*)-(.*)", "\\2", ant.intervals))
+df$l <- InfToBig(l.int)
+df$r <- InfToBig(r.int)
+l.int.df <- data.frame(l.int)
+r.int.df <- data.frame(r.int)
+rmax <- max(r.int.df[r.int.df != Inf, ])
+rmin <- min(r.int.df[r.int.df != 0, ])
 
 k.ylim <- c(log2(rmin) - 1, log2(rmax) + 3)
 
@@ -214,56 +196,37 @@ segments(seq(nrow(df)),
     log2(df$l),
     seq(nrow(df)),
     log2(df$r),
-    col = CatToColor(df[, ant_cat_col, ]),
+    col = CatToColor(df[, ant.cat.col, ]),
     lwd = 1)
 
-points(log2(df$l), col = CatToColor(df[, ant_cat_col, ]), pch = kPch)
-points(log2(df$r), col = CatToColor(df[, ant_cat_col, ]), pch = kPch)
+points(log2(df$l), col = CatToColor(df[, ant.cat.col, ]), pch = kPch)
+points(log2(df$r), col = CatToColor(df[, ant.cat.col, ]), pch = kPch)
 
-pg_starts <- GetPhylogroupStarts(df)
-spg_starts <- GetSubPhylogroupStarts(df)
-if (zoomed) {
-    for (i in seq(lengths(spg_starts))) {
-        middle <- floor((spg_starts[i] + spg_starts[i + 1]) / 2.0)
-        text(
-            x = middle ,
-            y = log2(rmin) - 0.6,
-            cex = 0.6,
-            label = paste("SPG", df[middle,]$subphylogroup)
-        )
-    }
-}
+lineages.starts <- GetLineagesStarts(df)
 
-for (i in seq(lengths(pg_starts))) {
-    middle <- floor((pg_starts[i] + pg_starts[i + 1]) / 2.0)
-    pg = df[middle,]$phylogroup
+for (i in seq(lengths(lineages.starts))) {
+    middle <- floor((lineages.starts[i] + lineages.starts[i + 1]) / 2.0)
+    lineage = df[middle,]$lineage
     if (zoomed) {
-        pg.label = paste("PG", pg)
+        lineage.label = paste("Lineage", lineage)
     } else{
-        pg.label = pg
+        lineage.label = lineage
     }
     text(x = middle ,
         y = log2(rmin) - 1,
-        label = pg.label)
+        label = lineage.label)
 }
 
 if (zoomed) {
     abline(
-        v = spg_starts - 0.5,
-        col = "black",
-        lty = 2,
-        lwd = 1
-    )
-
-    abline(
-        v = pg_starts - 0.5,
+        v = lineages.starts - 0.5,
         col = "black",
         lty = 1,
         lwd = 2
     )
 } else {
     abline(
-        v = pg_starts - 0.5,
+        v = lineages.starts - 0.5,
         col = "black",
         lty = 2,
         lwd = 2
