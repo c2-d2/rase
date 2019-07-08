@@ -23,18 +23,20 @@ def compute_stats(fn, s):
 
     stats = collections.defaultdict(lambda: collections.Counter())
     ants = {}
-    pgs = set()
-    pg_count = collections.Counter()
+    lineages = set()
+    lineage_count = collections.Counter()
 
     with open(fn) as f:
         tsv_reader = csv.DictReader(f, delimiter='\t')
         for r in tsv_reader:
             try:
-                pg = r["phylogroup"]
+                lineage = r["lineage"]
             except KeyError:
-                pg = r["pg"]
-            pg_count[pg] += 1
-            pgs.add(pg)
+                lineage = r["pg"]
+            except KeyError:
+                lineage = r["phylogroup"]
+            lineage_count[lineage] += 1
+            lineages.add(lineage)
 
             for k in r:
                 m = re_cat.match(k)
@@ -43,33 +45,35 @@ def compute_stats(fn, s):
                     cat = r[k]
                     ants[ant] = ''
 
-                    stats[pg][(ant, cat)] += 1
+                    stats[lineage][(ant, cat)] += 1
 
     ants_sorted = sorted(ants.keys(), key=lambda s: s.lower())
     cats_sorted = sorted(cats, key=lambda s: s.lower())
 
-    parts = ['pg', 'count'] + [
+    parts = ['lineage', 'count'] + [
         '{}_{}'.format(ant, cat) for ant in ants_sorted for cat in cats_sorted
     ]
     print(*parts, sep="\t")
 
-    for pg in sorted(pgs, key=lambda x: int(x)):
-        parts = [pg, pg_count[pg]]
+    for lineage in sorted(lineages, key=lambda x: int(x)):
+        parts = [lineage, lineage_count[lineage]]
         for ant in ants_sorted:
             for catgr in cats_sorted:
-                parts.append(sum([stats[pg][(ant, cat)] for cat in catgr]))
+                parts.append(
+                    sum([stats[lineage][(ant, cat)] for cat in catgr]))
 
         print(*parts, sep="\t")
 
     parts = [
         "sum",
-        sum([pg_count[pg] for pg in pgs]),
+        sum([lineage_count[lineage] for lineage in lineages]),
     ]
     for ant in ants_sorted:
         for catgr in cats_sorted:
             parts.append(
                 sum([
-                    sum([stats[pg][(ant, cat)] for cat in catgr]) for pg in pgs
+                    sum([stats[lineage][(ant, cat)] for cat in catgr])
+                    for lineage in lineages
                 ]))
 
     print(*parts, sep="\t")
