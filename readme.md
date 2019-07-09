@@ -58,13 +58,15 @@ The entire computation takes only 6m on a standard laptop (MacBook Pro). Note
 that this is the experiment from Figure 3 (with human reads removed in-silico).
 
 To run the example, [install all
-dependencies](https://github.com/c2-d2/rase/blob/master/environment.md) and run
+dependencies](https://github.com/
+
+/rase/blob/master/environment.md) and run
 the following code:
 
 
 ```bash
 # clone this repository
-git clone https://github.com/c2-d2/rase-predict
+git clone https://github.com/karel-brinda/rase
 
 # download the default database
 (cd rase-predict/database \
@@ -101,7 +103,7 @@ make -C rase-predict
     ```
 
   or download it as a [single .tar.gz
-  file](https://github.com/c2-d2/rase-predict/archive/master.tar.gz).
+  file](https://github.com/karel-brinda/rase/archive/master.tar.gz).
 
 3) **Installing a RASE database.** A RASE database should be placed into the
   directory `database`.  Every database consists of two files: a compressed
@@ -161,7 +163,7 @@ multiple Unix and OS X machines, including clusters and virtual machines.
   packages that were installed previously.
 
     ```bash
-    conda install prophyle ete3 pysam snakemake samtools parallel r-optparse
+    conda install prophyle ete3 pysam snakemake samtools parallel r-optparse pandas
     ```
 
 * **Manually.** All the dependencies can also be installed without BioConda. Many
@@ -169,14 +171,14 @@ multiple Unix and OS X machines, including clusters and virtual machines.
   [APT](https://wiki.debian.org/Apt).
 
     ```bash
-    apt-get install build-essential python3 zlib1g-dev r-base r-cran-optparse ghostscript
+    apt-get install build-essential python3 python3-pandas zlib1g-dev r-base r-cran-optparse ghostscript
     ```
 
   All the Python packages (ProPhyle, PySAM, ETE 3, and Snakemake) can be
   installed using [PIP](https://pypi.org/project/pip/):
 
     ```bash
-    pip3 install prophyle pysam ete3 snakemake
+    pip3 install prophyle pysam ete3 snakemake pandas
     ```
 
 #### Environment troubleshooting
@@ -210,8 +212,6 @@ multiple Unix and OS X machines, including clusters and virtual machines.
    ```
    xvfb-run --server-args="-screen 0 1024x768x24 -noreset" \
    ```
-
-
 
 ## Usage
 
@@ -319,7 +319,6 @@ help`.
   | `ln_norm` | normalized `ln` |
   | `count` | cumulative "read count divided by number of matches" |
   | `count_norm` | normalized `count` |
-
 
 
 ## FAQs
