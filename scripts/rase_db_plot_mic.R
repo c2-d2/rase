@@ -131,7 +131,7 @@ if (kRStudio) {
 
     if (zoomed) {
         pdf(out.file,
-            width = df.len / 10,
+            width = 1 + df.len / 10,
             height = kHeight)
     } else {
         pdf(out.file,
@@ -161,6 +161,7 @@ if ("order" %in% colnames(df.big)) {
 } else {
     the.order <- order(df.big$lineage)
 }
+
 
 df <- head(df.big[the.order, ], kHead)
 
