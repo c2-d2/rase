@@ -9,7 +9,6 @@
   * [Computational environment](#computational-environment)
     * [Dependencies](#dependencies)
     * [Setting up an environment](#setting-up-an-environment)
-    * [Environment troubleshooting](#environment-troubleshooting)
 * [Usage](#usage)
 * [Files and directories](#files-and-directories)
   * [Prediction pipeline](#prediction-pipeline)
@@ -178,39 +177,6 @@ multiple Unix and OS X machines, including clusters and virtual machines.
     pip3 install prophyle pysam ete3 snakemake pandas
     ```
 
-#### Environment troubleshooting
-
-* **libR.dylib Reason: image not found**
-
-   On some systems, the R package distributed by Bioconda might not be properly built and would display messages such as
-
-   ```
-   dyld: Library not loaded: @rpath/libintl.9.dylib
-     Referenced from: /Users/user/miniconda/envs/rase/lib/R/lib/libR.dylib
-     Reason: image not found
-   Abort trap: 6
-   ```
-
-   The solution is then to create the `raseenv` environment without `r-optparse`, and
-   to install R and the OptParse package manually.
-
-* **ETE: cannot connect to X server**
-
-   ETE 3 library, which is used for tree plotting, internally depends on QT and
-   requires using an X-Server. This becomes problematic especially on virtual
-   machines.  For instance, on Ubuntu-based machines this can be solved by
-   installing several additional packages:
-
-   ```
-   apt-get install xvfb libqt4-dev libgl1-mesa-dev libglu1-mesa-dev xauth xfonts-base
-   ```
-
-   and then prepending the following string to commands for building the database.
-   ```
-   xvfb-run --server-args="-screen 0 1024x768x24 -noreset" \
-   ```
-
-
 
 ## Usage
 
@@ -333,6 +299,38 @@ several minutes up to 2 hours, in dependence on the amount of sequencing data.
 A cluster might be useful when many sequencing
 experiments are to be processed at the same time, or a battery of databases needs to be
 evaluated. In most of situations, we a laptop is sufficient.
+
+
+> Why am I getting 'libR.dylib Reason: image not found'?
+
+On some systems, the R package distributed by Bioconda might not be properly
+built and would display messages such as
+
+```
+dyld: Library not loaded: @rpath/libintl.9.dylib
+   Referenced from: /Users/user/miniconda/envs/rase/lib/R/lib/libR.dylib
+   Reason: image not found
+Abort trap: 6
+```
+
+The solution is then to create the `raseenv` environment without `r-optparse`,
+and to install R and the OptParse package manually.
+
+> Why am I getting 'ETE: cannot connect to X server'?
+
+ETE 3 library, which is used for tree plotting, internally depends on QT and
+requires using an X-Server. This becomes problematic especially on virtual
+machines.  For instance, on Ubuntu-based machines this can be solved by
+installing several additional packages:
+
+```
+apt-get install xvfb libqt4-dev libgl1-mesa-dev libglu1-mesa-dev xauth xfonts-base
+```
+
+and then prepending the following string to commands for building the database.
+```
+xvfb-run --server-args="-screen 0 1024x768x24 -noreset" \
+```
 
 
 ## License
