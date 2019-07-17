@@ -262,14 +262,13 @@ help`.
   | `kbps` | number of processed bps (thousands) |
   | `kkmers` | number of matched k-mers (thousands) |
   | `kmers_prop` | proportion of matched k-mers |
-  | `lns` | lineage score |
-  | `lns_pass` | lineage score interpretation, 1=_passing_ 0=_failing_ |
+  | `ls` | lineage score |
+  | `ls_pass` | lineage score interpretation, 1=_passing_ 0=_failing_ |
   | `ln`, `alt_ln` | predicted and alternative lineage, respectively |
   | `bm`, `bm_{prop}` | best-matching isolate (nearest neighbor) and its properties |
-  | `pg1_w`, `pg2_w` | their weights |
-  | `{ant}_ssc` | susceptibility score |
-  | `{ant}_pred` | interpretation: `S`=susceptible, `R`=non-susceptible, `S!` and `R!`=low confidence calls |
-  | `{ant}_bm` | resistance information for the best match, `cat (mic)` |
+  | `{ant}_ssc` | susceptibility score for the antibiotic `{ant}` |
+  | `{ant}_pred` | its interpretation: `S`=susceptible, `R`=non-susceptible, `S!` and `R!`=low confidence calls |
+  | `{ant}_bm` | resistance information for the best match, format: `cat (mic)` |
 
 * **Prediction output (snapshot).** Tab-separated text file with the following columns:
 
