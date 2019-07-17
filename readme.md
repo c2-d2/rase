@@ -22,11 +22,10 @@
 
 ## Introduction
 
-This repository contains the RASE prediction pipeline. The method uses lineage
-calling to identify antibiotic resistant clones from nanopore reads. In our
-[paper](https://www.biorxiv.org/content/early/2018/08/29/403204), we
-demonstrate on the example of pneumococcus that, using this approach,
-antibiotic resistance can be predicted within minutes from the start of
+This repository contains the RASE prediction pipeline. The method uses
+neighbortyping to infer antibiotic resistance and susceptibility from nanopore
+reads. In our [paper](https://www.biorxiv.org/content/early/2018/08/29/403204),
+we demonstrate on the examples of pneumococcus and gonococcus that using this approach antibiotic resistance can be predicted within minutes from the start of
 sequencing. Please, look at the paper for more information.
 
 
@@ -46,7 +45,7 @@ database are pre-processed: reads are sorted by time of sequencing and the
 database gets uncompressed (i.e., the full internal ProPhyle k-mer index
 restored).  Subsequently, nanopore reads from individual experiments are
 compared to the database(s) using [ProPhyle](http://prophyle.github.io), and
-isolate, phylogroup and resistance to individual antibiotics predicted - all
+isolate, lineage and resistance to individual antibiotics predicted - all
 as a function of time.  Finally, the obtained time characteristics, as well as
 rank plots for selected moments, are visualized using R.
 
@@ -292,27 +291,26 @@ help`.
 
   | column | description |
   | --- | --- |
-  | `datetime` | datetime of sequencing or data processing |
+  | `datetime` | datetime of the read |
   | `reads` | number of processed reads |
-  | `bps` | number of processed basepairs |
-  | `matched bps` | number of matched basepairs (via k-mers) |
-  | `pgs` | phylogroup score |
-  | `pgs_ok` | phylogroup score interpretation, `pass` and `fail` for _passing_ and _failing_, respectively |
-  | `pg1`, `pg2` | predicted and alternative phylogroup, respectively |
-  | `pg1_bm`, `pg2_bm` | best-matching isolate within the predicted and alternative phylogroup, respectively |
+  | `kbps` | number of processed bps (thousands) |
+  | `kkmers` | number of matched k-mers (thousands) |
+  | `kmers_prop` | proportion of matched k-mers |
+  | `lns` | lineage score |
+  | `lns_pass` | lineage score interpretation, 1=_passing_ 0=_failing_ |
+  | `ln`, `alt_ln` | predicted and alternative lineage, respectively |
+  | `bm`, `bm_{prop}` | best-matching isolate (nearest neighbor) and its properties |
   | `pg1_w`, `pg2_w` | their weights |
-  | `{ant}_sus` | susceptibility score of the antibiotic `{ant}` |
-  | `{ant}_pr_cat` | susceptibility score interpretation: `S` , `S!`, and `R` for _susceptible best match_, _susceptible best match but high risk of resistance_, _resistant best match_, respectively |
-  | `{ant}_bm_cat` | category of the best matching isolate: `R`, `S`, `r`, `s` for _resistant_, _susceptible_, _unknown and inferred as resistant_, and _unknown and inferred as susceptible_, respectively |
-  | `{ant}_r_bm`, `{ant}_s_bm` | best-matching resistant and susceptible isolate within the phylogroup, respectively |
-  | `{ant}_r_w`, `{ant}_s_w` | their weights |
+  | `{ant}_ssc` | susceptibility score |
+  | `{ant}_pred` | interpretation: `S`=susceptible, `R`=non-susceptible, `S!` and `R!`=low confidence calls |
+  | `{ant}_bm` | resistance information for the best match, `cat (mic)` |
 
 * **Prediction output (snapshot).** Tab-separated text file with the following columns:
 
   | column | description |
   | --- | --- |
   | `taxid` | taxid of a database isolate, `_unassigned_` for reads without any k-mer matches with the database |
-  | `phylogroup` | phylogroup |
+  | `lineage` | lineage |
   | `weight` | weight (cumulative "number of k-mer best matches divided by the number of matches") |
   | `weight_norm` | normalized `weight` |
   | `ln` | cumulative "read length divided by number of matches" |
