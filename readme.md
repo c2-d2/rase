@@ -279,11 +279,8 @@ help`.
   | `lineage` | lineage |
   | `weight` | weight (cumulative "number of k-mer best matches divided by the number of matches") |
   | `weight_norm` | normalized `weight` |
-  | `ln` | cumulative "read length divided by number of matches" |
-  | `ln_norm` | normalized `ln` |
-  | `count` | cumulative "read count divided by number of matches" |
-  | `count_norm` | normalized `count` |
-
+  | `length` | cumulative "read length divided by number of matches" |
+  | `length_norm` | normalized `ln` |
 
 
 ## FAQs
