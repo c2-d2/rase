@@ -155,6 +155,71 @@ DfToAnts <- function(df) {
 }
 
 
+#' Return list marking final values of resistance predictions.
+#'
+#' @param col Column of resistance predictions
+#'
+#' @return List of T/F.
+#'
+ResPredIsFinal <- function(col) {
+    a <- factor(col, levels = c("S", "S!", "R!", "R"))
+    final.states <- head(unique(rev(a)), 2)
+    is.final <-  a == final.states[1] | a == final.states[2]
+    is.final
+}
+
+
+#' Find stabilization points
+#'
+#' @param col
+#'
+#' @return List of T/F.
+#'
+StabilizationPoint <- function(col) {
+    # detect last block
+    r <- rle(col)
+    r$values[] <- F
+    r$values[length(r$values)] <- T
+    x <- inverse.rle(r)
+    # detect its first value
+    cumsum(x)==1
+}
+
+#' Find detection points
+#'
+#' @param col
+#'
+#' @return List of T/F.
+#'
+DetectionPoints <- function(col){
+    (col-c(0,head(col,-1)))==1
+}
+
+
+#' Find losing points
+#'
+#' @param col
+#'
+#' @return List of T/F.
+#'
+LosingPoints <- function(col){
+    (col-c(0,head(col,-1)))==-1
+}
+
+
+#' Return list marking final values of category predictions.
+#'
+#' @param col Column of category predictions
+#'
+#' @return List of T/F.
+#'
+CatPredIsFinal <- function(col) {
+    final.states <- head(unique(rev(col)), 1)
+    is.final <- col == final.states[1]
+    is.final
+}
+
+
 #' Create a data frame with flag points
 #'
 #' @param df Input dataframe
