@@ -30,7 +30,7 @@
   | `reads` | number of processed reads |
   | `kbps` | number of processed bps (thousands) |
   | `kkmers` | number of matched *k*-mers (thousands) |
-  | `ks` | ks (proportion of matched *k*-mers) |
+  | `ks` | *k*-mer score (proportion of matched *k*-mers) |
   | `ls` | lineage score |
   | `ls_pass` | lineage score interpretation, 1=_passing_ 0=_failing_ |
   | `ln`, `alt_ln` | predicted and alternative lineage |
@@ -38,6 +38,8 @@
   | `{ant}_ss` | susceptibility score for the antibiotic `{ant}` |
   | `{ant}_pred` | prediction (score interpretation): `S`=susceptible, `R`=non-susceptible, `S!` and `R!`=low confidence calls |
   | `{ant}_bm` | resistance information for the best match, format: `cat (mic)` |
+
+  See an [example](tests/predict.tsv).
 
 * **Prediction output (snapshot).** Tab-separated text file with the following columns:
 
@@ -49,6 +51,8 @@
   | `weight_norm` | normalized `weight` |
   | `length` | cumulative "read length divided by number of matches" |
   | `count` | cumulative "count divided by number of matches" |
+
+  See an [example](tests/snapshot.tsv).
 
 
 ## Related repositories
