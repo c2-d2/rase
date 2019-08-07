@@ -29,21 +29,21 @@
   | `datetime` | datetime of the read |
   | `reads` | number of processed reads |
   | `kbps` | number of processed bps (thousands) |
-  | `kkmers` | number of matched k-mers (thousands) |
-  | `kmers_prop` | proportion of matched k-mers |
+  | `kkmers` | number of matched *k*-mers (thousands) |
+  | `ks` | ks (proportion of matched *k*-mers) |
   | `ls` | lineage score |
   | `ls_pass` | lineage score interpretation, 1=_passing_ 0=_failing_ |
-  | `ln`, `alt_ln` | predicted and alternative lineage, respectively |
-  | `bm`, `bm_{prop}` | best-matching isolate (nearest neighbor) and its properties |
-  | `{ant}_ssc` | susceptibility score for the antibiotic `{ant}` |
-  | `{ant}_pred` | its interpretation: `S`=susceptible, `R`=non-susceptible, `S!` and `R!`=low confidence calls |
+  | `ln`, `alt_ln` | predicted and alternative lineage |
+  | `bm`, `bm_{prop}` | best-matching strain (nearest neighbor) and its properties |
+  | `{ant}_ss` | susceptibility score for the antibiotic `{ant}` |
+  | `{ant}_pred` | prediction (score interpretation): `S`=susceptible, `R`=non-susceptible, `S!` and `R!`=low confidence calls |
   | `{ant}_bm` | resistance information for the best match, format: `cat (mic)` |
 
 * **Prediction output (snapshot).** Tab-separated text file with the following columns:
 
   | column | description |
   | --- | --- |
-  | `taxid` | taxid of a database isolate, `_unassigned_` for reads without any k-mer matches with the database |
+  | `taxid` | taxid of a database strain, `_unassigned_` for reads without any k-mer matches with the database |
   | `lineage` | lineage |
   | `weight` | weight (cumulative "number of k-mer best matches divided by the number of matches") |
   | `weight_norm` | normalized `weight` |
