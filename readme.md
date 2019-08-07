@@ -34,7 +34,7 @@
   | `ls` | lineage score |
   | `ls_pass` | lineage score interpretation, 1=_passing_ 0=_failing_ |
   | `ln`, `alt_ln` | predicted and alternative lineage |
-  | `bm`, `bm_{prop}` | best-matching strain (nearest neighbor) and its properties |
+  | `bm`, `bm_{feature}` | best-matching strain (nearest neighbor) and its features |
   | `{ant}_ss` | susceptibility score for the antibiotic `{ant}` |
   | `{ant}_pred` | prediction (score interpretation): `S`=susceptible, `R`=non-susceptible, `S!` and `R!`=low confidence calls |
   | `{ant}_bm` | resistance information for the best match, format: `cat (mic)` |
@@ -53,6 +53,21 @@
   | `count` | cumulative "count divided by number of matches" |
 
   See an [example](tests/snapshot.tsv).
+
+
+* **RASE DB metadata.** Tab-separated text file with the following columns:
+
+  | column | description |
+  | --- | --- |
+  | `taxid` | taxid of a database strain |
+  | `lineage` | lineage |
+  | `order` | order for plotting |
+  | `{feature}` | arbitrary features (e.g., `serotype` or `MLST`)|
+  | `{ant}_mic` | original MIC string (e.g., `<0.03`) |
+  | `{ant}_int` | extracted MIC interval (`0-0.03`) |
+  | `{ant}_cat` | resistance category  (`S`/`R`/`s`/`r`) |
+
+  See an [example](tests/metadata.tsv). Metadata files are generated in dedicated repositories (see [RASE DB skeleton])(https://github.com/c2-d2/rase-db-skeleton), [*S. pneumoniae* RASE DB](https://github.com/c2-d2/rase-db-spneumoniae-sparc), and [*N. gonorrhoeae* RASE DB](https://github.com/c2-d2/rase-db-ngonorrhoeae-gisp)).
 
 
 ## Related repositories
