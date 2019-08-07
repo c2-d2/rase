@@ -121,18 +121,18 @@ class Worker:
     """
 
     def __init__(self, metadata_fn, tree_fn, bam_fn, out_bam_fn, pref,
-                 final_stats_fn, mode, delta, first_read_delay, pgs_thres_pass,
-                 ssc_thres_shiconf, ssc_thres_sr, ssc_thres_rhiconf,
+                 final_stats_fn, mode, delta, first_read_delay, ls_thres_pass,
+                 ss_thres_shiconf, ss_thres_sr, ss_thres_rhiconf,
                  mbp_per_min, mimic_datetime):
         self.mode = mode
         self.metadata = RaseDbMetadata(metadata_fn)
         self.stats = Stats(tree_fn, self.metadata)
         self.predict = Predict(
             self.metadata,
-            pgs_thres_pass=pgs_thres_pass,
-            ssc_thres_shiconf=ssc_thres_shiconf,
-            ssc_thres_sr=ssc_thres_sr,
-            ssc_thres_rhiconf=ssc_thres_rhiconf)
+            ls_thres_pass=ls_thres_pass,
+            ss_thres_shiconf=ss_thres_shiconf,
+            ss_thres_sr=ss_thres_sr,
+            ss_thres_rhiconf=ss_thres_rhiconf)
         self.rase_bam_reader = RaseBamReader(bam_fn, out_bam_fn)
         self.pref = pref
         self.final_stats_fn = final_stats_fn
@@ -219,18 +219,18 @@ class Predict:
         metadata: Metadata table.
         phylogroups: Sorted list of phylogroups.
         summary: Summary table for the output.
-        pgs_thres_pass: Threshold for phylogroup passing.
+        ls_thres_pass: Threshold for lineage passing.
     """
 
-    def __init__(self, metadata, pgs_thres_pass, ssc_thres_shiconf,
-                 ssc_thres_sr, ssc_thres_rhiconf):
+    def __init__(self, metadata, ls_thres_pass, ss_thres_shiconf,
+                 ss_thres_sr, ss_thres_rhiconf):
         self.metadata = metadata
-        self.phylogroups = sorted(self.metadata.pgset.keys())
+        self.lineages = sorted(self.metadata.lineageset.keys())
         self.summary = collections.OrderedDict()
-        self.pgs_thres_pass = pgs_thres_pass
-        self.ssc_thres_shiconf = ssc_thres_shiconf
-        self.ssc_thres_sr = ssc_thres_sr
-        self.ssc_thres_rhiconf = ssc_thres_rhiconf
+        self.ls_thres_pass = ls_thres_pass
+        self.ss_thres_shiconf = ss_thres_shiconf
+        self.ss_thres_sr = ss_thres_sr
+        self.ss_thres_rhiconf = ss_thres_rhiconf
 
     def predict(self, stats):
         """Predict.
@@ -245,53 +245,48 @@ class Predict:
         tbl['kbps'] = round(stats.cumul_ln / 1000)
         tbl['kkmers'] = round(stats.cumul_h1 / 1000)
         if stats.cumul_ln != 0:
-            tbl['kmers_prop'] = round(stats.cumul_h1 / stats.cumul_ln, 5)
+            tbl['ks'] = round(stats.cumul_h1 / stats.cumul_ln, 5)
         else:
-            tbl['kmers_prop'] = 0.0
+            tbl['ks'] = 0.0
 
-        ## 2) PG PREDICTION
+        ## 2) LINEAGE PREDICTION
 
-        ## 2a) Find best and 2nd best PG
-        ppgs = stats.pgs_by_weight()
-        sorted_pgs = list(ppgs)
+        ## 2a) Find best and alternative lineage
+        lineages_by_w = stats.lineages_by_weight()
+        sorted_lineages = list(lineages_by_w)
         if stats.cumul_ln > 0:
-            pg1 = sorted_pgs[0]
-            pg1_bm, pg1_w = ppgs[pg1]
-            pg2 = sorted_pgs[1]
-            pg2_bm, pg2_w = ppgs[pg2]
+            lineage1 = sorted_lineages[0]
+            lineage1_bm, lineage1_w = lineages_by_w[lineage1]
+            lineage2 = sorted_lineages[1]
+            lineage2_bm, lineage2_w = lineages_by_w[lineage2]
 
-            ## 2b) Calculate pgs
-            if pg1_w > 0:
-                pgs = 2.0 * round(pg1_w / (pg1_w + pg2_w), 3) - 1
+            ## 2b) Calculate lineage score
+            if lineage1_w > 0:
+                ls = 2.0 * round(lineage1_w / (lineage1_w + lineage2_w), 3) - 1
             else:
-                pgs = 0.0
+                ls = 0.0
 
         else:
-            pg1, pg1_bm, pg1_w, pg2, pg2_bm, pg2_w = 6 * [
+            lineage1, lineage1_bm, lineage1_w, lineage2, lineage2_bm, lineage2_w = 6 * [
                 "NA",
             ]
-            pgs = 0
+            ls = 0
 
         ## 2c) Save values
 
-        tbl['pgs'] = pgs
-        tbl['pgs_pass'] = "1" if pgs >= self.pgs_thres_pass else "0"
-        tbl['pg'] = pg1
-        tbl['alt_pg'] = pg2
+        tbl['ls'] = ls
+        tbl['ls_pass'] = "1" if ls >= self.ls_thres_pass else "0"
+        tbl['ln'] = lineage1
+        tbl['alt_ln'] = lineage2
 
-        if pg1_w != "NA" and pg1_w > 0:
-            tbl['bm'] = pg1_bm
+        if lineage1_w != "NA" and lineage1_w > 0:
+            tbl['bm'] = lineage1_bm
         else:
             tbl['bm'] = "NA"
 
-        #if pg2_w != "NA" and pg2_w > 0:
-        #    tbl['alt_bm'] = pg2_bm
-        #else:
-        #    tbl['alt_bm'] = "NA"
-
         for x in self.metadata.additional_cols:
             if stats.cumul_ln > 0:
-                tbl["bm_" + x] = self.metadata.additional_info[pg1_bm][x]
+                tbl["bm_" + x] = self.metadata.additional_info[lineage1_bm][x]
             else:
                 tbl["bm_" + x] = "NA"
 
@@ -300,16 +295,16 @@ class Predict:
         for ant in self.metadata.ants:
 
             ## 3a) Find best-match category
-            if pg1_w != "NA" and pg1_w > 0:
-                bm_cat = self.metadata.rcat[pg1_bm][ant]
-                bm_mic = self.metadata.rmic[pg1_bm][ant]
+            if lineage1_w != "NA" and lineage1_w > 0:
+                bm_cat = self.metadata.rcat[lineage1_bm][ant]
+                bm_mic = self.metadata.rmic[lineage1_bm][ant]
             else:
                 bm_cat = "NA"
                 bm_mic = "NA"
 
-            pres = stats.res_by_weight(pg1, ant)
+            pres = stats.res_by_weight(lineage1, ant)
 
-            ##  3b) Calculate susceptibility score (ssc) & correct for missing data
+            ##  3b) Calculate susceptibility score (ss) & correct for missing data
 
             # Identify S/R pivots
             try:
@@ -324,37 +319,37 @@ class Predict:
             except KeyError:
                 r_bm, r_w, r_w_round = "NA", "NA", "NA"
 
-            # Calculate ssc
+            # Calculate susceptibility scores
             if s_w != "NA" and r_w != "NA":
                 if r_w + s_w > 0:
-                    ssc = round(s_w / (r_w + s_w), 3)
+                    ss = round(s_w / (r_w + s_w), 3)
                 else:
-                    ssc = 0.0
+                    ss = 0.0
             elif s_w == "NA" and r_w == "NA":
                 # no data yet
-                ssc = 0.0
+                ss = 0.0
             elif s_w == "NA" and r_w != "NA":
                 # everything R
                 assert bm_cat.upper() == "R" or r_w == 0, (bm_cat, pres)
-                ssc = 0.0
+                ss = 0.0
             elif s_w != "NA" and r_w == "NA":
                 # everything S
                 assert bm_cat.upper() == "S" or s_w == 0, (bm_cat, pres)
-                ssc = 1.0
+                ss = 1.0
 
             ##  3c) Predict based on the collected info
 
             # prediction
-            if ssc > self.ssc_thres_shiconf:
+            if ss > self.ss_thres_shiconf:
                 pr_cat = "S"
-            elif ssc > self.ssc_thres_sr:
+            elif ss > self.ss_thres_sr:
                 pr_cat = "S!"
-            elif ssc > self.ssc_thres_rhiconf:
+            elif ss > self.ss_thres_rhiconf:
                 pr_cat = "R!"
             else:
                 pr_cat = "R"
 
-            tbl[f"{ant}_ssc"] = ssc
+            tbl[f"{ant}_ss"] = ss
             tbl[f"{ant}_pred"] = pr_cat
             tbl[f"{ant}_bm"] = f"{bm_cat} ({bm_mic})"
             #tbl[ant + "_r_bm"] = r_bm
@@ -455,11 +450,11 @@ class Stats:
             isolates |= self._descending_isolates_d[nname]
         return sorted(isolates)
 
-    def pgs_by_weight(self):
+    def lineages_by_weight(self):
         """Sort phylogroups by weight.
 
         Returns:
-            OrderedDict: pg -> (pivot_isolate, weight)
+            OrderedDict: lineage -> (pivot_isolate, weight)
         """
 
         d = collections.defaultdict(lambda: [None, -1])
@@ -467,17 +462,17 @@ class Stats:
         for isolate in self._isolates:
             if isolate == FAKE_ISOLATE_UNASSIGNED:
                 continue
-            pg = self._metadata.pg[isolate]
+            lineage = self._metadata.lineage[isolate]
             val = self.weight(isolate)
 
-            if val > d[pg][1]:
-                d[pg] = isolate, val
+            if val > d[lineage][1]:
+                d[lineage] = isolate, val
 
         l = list(d.items())
         l.sort(key=lambda x: x[1][1], reverse=True)
         return collections.OrderedDict(l)
 
-    def res_by_weight(self, pg, ant):
+    def res_by_weight(self, lineage, ant):
         """Return heaviest R/S isolates for a given antibiotic.
 
         Returns:
@@ -486,7 +481,7 @@ class Stats:
 
         d = collections.defaultdict(lambda: (None, -1))
 
-        for isolate in self._metadata.pgset[pg]:
+        for isolate in self._metadata.lineageset[lineage]:
             val = self.weight(isolate)
             cat = self._metadata.rcat[isolate][ant].upper()
 
@@ -549,39 +544,39 @@ class Stats:
         """
         print(
             "taxid",
-            "pg",
+            "lineage",
             "weight",
             "weight_norm",
-            "ln",
-            "ln_norm",
+            "length",
+            #"length_norm",
             "count",
-            "count_norm",
-            sep="\t",
+            #"count_norm",
+            sep="\t",   
             file=file)
         table = []
         for isolate in self._isolates + [FAKE_ISOLATE_UNASSIGNED]:
             if isolate == FAKE_ISOLATE_UNASSIGNED:
-                pg = "NA"
+                lineage = "NA"
             else:
-                pg = self._metadata.pg[isolate]
+                lineage = self._metadata.lineage[isolate]
             table.append([
                 isolate,
-                pg,
+                lineage,
                 *format_floats(self.stats_h1[isolate], digits=0),
                 *format_floats(
                     self.stats_h1[isolate] / self.cumul_h1
                     if self.cumul_h1 != 0 else 0.0,
                     digits=3),
                 *format_floats(self.stats_ln[isolate], digits=0),
-                *format_floats(
-                    self.stats_ln[isolate] / self.cumul_ln
-                    if self.cumul_ln != 0 else 0.0,
-                    digits=3),
+                #*format_floats(
+                #    self.stats_ln[isolate] / self.cumul_ln
+                #    if self.cumul_ln != 0 else 0.0,
+                #    digits=3),
                 *format_floats(self.stats_ct[isolate], digits=0),
-                *format_floats(
-                    1.0 * self.stats_ct[isolate] / self.nb_assigned_reads
-                    if self.nb_assigned_reads != 0 else 0.0,
-                    digits=3),
+                #*format_floats(
+                #    1.0 * self.stats_ct[isolate] / self.nb_assigned_reads
+                #    if self.nb_assigned_reads != 0 else 0.0,
+                #    digits=3),
             ])
 
         table.sort(key=lambda x: int(x[2]), reverse=True)
@@ -598,8 +593,8 @@ class RaseDbMetadata:
     structures.
 
     Attributes:
-        pg: taxid -> phylogroup
-        pgset: phylogroup -> set of taxids
+        lineage: taxid -> lineage
+        lineageset: lineage -> set of taxids
         rcat: taxid -> antibiotic -> category
         rmic: taxid -> antibiotic -> original_mic
         weight: taxid -> weight
@@ -609,8 +604,8 @@ class RaseDbMetadata:
 
     def __init__(self, tsv):
 
-        self.pg = {}
-        self.pgset = collections.defaultdict(set)
+        self.lineage = {}
+        self.lineageset = collections.defaultdict(set)
 
         self.rcat = collections.defaultdict(dict)
         self.rmic = collections.defaultdict(dict)
@@ -625,7 +620,7 @@ class RaseDbMetadata:
             na_values=[],
             keep_default_na=False,
             dtype=str)
-        df = df.rename(columns={'phylogroup': 'pg'})  # backward compatibility
+        df = df.rename(columns={'phylogroup': 'lineage', 'pg': 'lineage'})  # backward compatibility
 
         # extract antibiotic abbrev from col names
         re_mic = re.compile(r'(\w+)_mic')
@@ -637,7 +632,7 @@ class RaseDbMetadata:
             file=sys.stderr)
 
         # check that all required columns are present
-        basic_cols = ["taxid", "pg", "order"] + list(
+        basic_cols = ["taxid", "lineage", "order"] + list(
             map(lambda x: x + "_cat", self.ants)) + list(
                 map(lambda x: x + "_int", self.ants)) + list(
                     map(lambda x: x + "_mic", self.ants))
@@ -654,9 +649,9 @@ class RaseDbMetadata:
         df_dict = df.to_dict('index')
         for _, row in df_dict.items():
             taxid = row['taxid']
-            pg = row['pg']
-            self.pg[taxid] = pg
-            self.pgset[pg].add(taxid)
+            lineage = row['lineage']
+            self.lineage[taxid] = lineage
+            self.lineageset[lineage].add(taxid)
 
             for x in self.additional_cols:
                 self.additional_info[taxid][x] = row[x]
@@ -903,36 +898,36 @@ def main():
     )
 
     parser.add_argument(
-        '--pgs-thres-pass',
+        '--ls-thres-pass',
         type=float,
-        dest='pgs_thres_pass',
+        dest='ls_thres_pass',
         metavar='FLOAT',
-        help='phylogroup score threshold [0.5]',
+        help='lineage score threshold [0.5]',
         default=0.5,
     )
 
     parser.add_argument(
-        '--ssc-thres-shiconf',
+        '--ss-thres-shiconf',
         type=float,
-        dest='ssc_thres_shiconf',
+        dest='ss_thres_shiconf',
         metavar='FLOAT',
         help='high-confidence S threshold [0.6]',
         default=0.6,
     )
 
     parser.add_argument(
-        '--ssc-thres-sr',
+        '--ss-thres-sr',
         type=float,
-        dest='ssc_thres_sr',
+        dest='ss_thres_sr',
         metavar='FLOAT',
         help='S/R threshold [0.5]',
         default=0.5,
     )
 
     parser.add_argument(
-        '--ssc-thres-rhiconf',
+        '--ss-thres-rhiconf',
         type=float,
-        dest='ssc_thres_rhiconf',
+        dest='ss_thres_rhiconf',
         metavar='FLOAT',
         help='high-confidence R threshold [0.4]',
         default=0.4,
@@ -972,10 +967,10 @@ def main():
         delta=args.delta,
         first_read_delay=args.first_read_delay,
         out_bam_fn=out_bam_fn,
-        pgs_thres_pass=args.pgs_thres_pass,
-        ssc_thres_shiconf=args.ssc_thres_shiconf,
-        ssc_thres_sr=args.ssc_thres_sr,
-        ssc_thres_rhiconf=args.ssc_thres_rhiconf,
+        ls_thres_pass=args.ls_thres_pass,
+        ss_thres_shiconf=args.ss_thres_shiconf,
+        ss_thres_sr=args.ss_thres_sr,
+        ss_thres_rhiconf=args.ss_thres_rhiconf,
         mbp_per_min=args.mbp_per_min,
         mimic_datetime=args.mimic_datetime,
     )

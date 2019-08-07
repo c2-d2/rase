@@ -70,15 +70,15 @@ LastLine <- function(ct, bps.total, kmers.matched) {
 # CLI-parsing -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 if (kRStudio) {
-    src.file <- "pipeline/tests/test.timestamp.tsv"
-    res.file <- "pipeline/tests/res_cat.tsv"
+    src.file <- "tests/snapshot.tsv"
+    met.file <- "tests/metadata.tsv"
     timestamp <- 1505967676
     sample.desc <- "Sample desc."
 } else {
     option.list <-
         list(make_option(c("-d", "--desc"), default = F, help = "sample description"))
     parser <-
-        OptionParser(usage = "%prog [options] res_cats.tsv snapshot.tsv plot.pdf", option_list = option.list)
+        OptionParser(usage = "%prog [options] metadata.tsv snapshot.tsv plot.pdf", option_list = option.list)
 
     arguments <- parse_args(parser, positional_arguments = 3)
     opt <- arguments$options
@@ -88,7 +88,7 @@ if (kRStudio) {
         sample.desc <- opt$desc
     }
 
-    res.file <- arguments$args[1]
+    met.file <- arguments$args[1]
     src.file <- arguments$args[2]
     out.file <- arguments$args[3]
 
@@ -104,34 +104,40 @@ if (kRStudio) {
 
 palette(kPalette)
 
-dfres <- read.delim(res.file, header = T, stringsAsFactors = F)
-colnames(dfres)[colnames(dfres) == "phylogroup"] <- "pg"
-dfsnap_with_unassigned <-
-    read.delim(src.file, header = T, stringsAsFactors = F)
-colnames(dfsnap_with_unassigned)[colnames(dfsnap_with_unassigned) == "phylogroup"] <-
-    "pg"
-dfsnap <-
-    dfsnap_with_unassigned[dfsnap_with_unassigned$taxid != "_unassigned_", ]
+df.met <- read.delim(met.file, header = T, stringsAsFactors = F)
+# support for legacy formats
+colnames(df.met)[colnames(df.met) == "phylogroup"] <- "lineage"
+colnames(df.met)[colnames(df.met) == "pg"] <- "lineage"
 
-stopifnot(length(dfsnap[, 1]) == length(dfres[, 1]))  # are the lengths the same?
-stopifnot(data.frame(lapply(dfsnap[order(dfsnap$taxid), ][["taxid"]], as.character)) == data.frame(lapply(dfres[order(dfres$taxid), ][["taxid"]], as.character)))  # are the taxids the same?
+df.snap.all <- read.delim(src.file, header = T, stringsAsFactors = F)
+# support for legacy formats
+colnames(df.snap.all)[colnames(df.snap.all) == "phylogroup"] <-
+    "lineage"
+colnames(df.snap.all)[colnames(df.snap.all) == "pg"] <-
+    "lineage"
+
+df.snap <- df.snap.all[df.snap.all$taxid != "_unassigned_",]
+
+stopifnot(length(df.snap[, 1]) == length(df.met[, 1]))  # are the lengths the same?
+taxids.snap = data.frame(lapply(df.snap[order(df.snap$taxid),][["taxid"]], as.character))
+taxids.met = data.frame(lapply(df.met[order(df.met$taxid),][["taxid"]], as.character))
+stopifnot(taxids.snap == taxids.met)  # are the taxids the same?
 
 df <-
-    merge(dfsnap,
-          dfres,
-          by = c("taxid", "pg"))
+    merge(df.snap,
+          df.met,
+          by = c("taxid", "lineage"))
 
-sel <- df[with(df, order(-weight)), ][1:kSelected, ]
+sel <- df[with(df, order(-weight)),][1:kSelected,]
 
-first.pg <- sel$pg[[1]]
-first.serotype <- sel$Serotype.From.Reads[[1]]
+first.lineage <- sel$lineage[[1]]
 first.cat <- sel$pnc[[2]]
-first.res <- CatToCatName(first.cat)
+first.resistant <- CatToCatName(first.cat)
 
-second.pg <- unique(sel$pg)[[2]]
+second.lineage <- unique(sel$lineage)[[2]]
 
-pgs.masked <-
-    3 * as.integer(sel$pg > -1) - 2 * as.integer(sel$pg == first.pg) - 1 * as.integer(sel$pg == second.pg)
+lineages.masked <-
+    3 * as.integer(sel$lineage > -1) - 2 * as.integer(sel$lineage == first.lineage) - 1 * as.integer(sel$lineage == second.lineage)
 
 labs <- paste(sel$taxid, sel$weight)  ## create labels
 
@@ -148,7 +154,7 @@ AbsResGridHeight <- kResGridHeight * maxval
 x <-
     barplot(
         height = vals.to.plot,
-        col = pgs.masked,
+        col = lineages.masked,
         border = NA,
         space = 0,
         axes = F,
@@ -206,19 +212,6 @@ axis(
     mgp = c(50, 0.5, 0)
 )
 
-
-line1 <- paste0("Test sample: ", sample.desc)
-line2 <-
-    paste0(
-        "Results after 5 mins: Penicillin ",
-        first.res,
-        ", lineage ",
-        first.pg,
-        ", serotype ",
-        first.serotype
-    )
-
-
 mtext(
     "Weight (normalized)",
     side = 2,
@@ -252,10 +245,9 @@ text(
     col = "#000000"
 )
 
-
-bps.total <- sum(dfsnap_with_unassigned[c("ln")])
-kmers.matched <- sum(dfsnap_with_unassigned[c("weight")])
-reads <- sum(dfsnap_with_unassigned[c("count")])
+bps.total <- sum(df.snap.all[c("length")])
+kmers.matched <- sum(df.snap.all[c("weight")])
+reads <- sum(df.snap.all[c("count")])
 subtitle <- LastLine(reads, bps.total, kmers.matched)
 
 # bps. etc.
@@ -267,7 +259,7 @@ mtext(
 )
 
 
-# legend - resistance
+# legend - resistance, susc.
 legend(
     x = "topright",
     title = "Susceptibility",
@@ -282,14 +274,13 @@ legend(
     title.adj = 0
 )
 
-# legend - seq. phylogroups
+# legend - lineages
 legend(
     x = "topright",
-    title = "Phylogroup",
-    legend = c(first.pg, second.pg, "Others"),
+    title = "Lineage",
+    legend = c(first.lineage, second.lineage, "Others"),
     cex = 1.5,
-    fill = c(1,
-             2, 3),
+    fill = c(1, 2, 3),
     y.intersp = 0.8,
     box.col = NA,
     border = NA,

@@ -2,6 +2,7 @@
 
 <!-- vim-markdown-toc GFM -->
 
+* [Introduction](#introduction)
 * [Installation](#installation)
 * [File formats](#file-formats)
 * [Related repositories](#related-repositories)
@@ -9,6 +10,10 @@
 * [Contact](#contact)
 
 <!-- vim-markdown-toc -->
+
+## Introduction
+
+This repository contains the core RASE software. For more information, see the [RASE paper](https://www.biorxiv.org/content/10.1101/403204v2) and [RASE supplementary materials](https://github.com/c2-d2/rase-supplement/). A pipeline for users is located in a [separate repository](https://github.com/c2-d2/rase-pipeline/).
 
 ## Installation
 
@@ -29,33 +34,51 @@
   | `datetime` | datetime of the read |
   | `reads` | number of processed reads |
   | `kbps` | number of processed bps (thousands) |
-  | `kkmers` | number of matched k-mers (thousands) |
-  | `kmers_prop` | proportion of matched k-mers |
+  | `kkmers` | number of matched *k*-mers (thousands) |
+  | `ks` | *k*-mer score (proportion of matched *k*-mers) |
   | `ls` | lineage score |
   | `ls_pass` | lineage score interpretation, 1=_passing_ 0=_failing_ |
-  | `ln`, `alt_ln` | predicted and alternative lineage, respectively |
-  | `bm`, `bm_{prop}` | best-matching isolate (nearest neighbor) and its properties |
-  | `{ant}_ssc` | susceptibility score for the antibiotic `{ant}` |
-  | `{ant}_pred` | its interpretation: `S`=susceptible, `R`=non-susceptible, `S!` and `R!`=low confidence calls |
+  | `ln`, `alt_ln` | predicted and alternative lineage |
+  | `bm`, `bm_{feature}` | best-matching strain (nearest neighbor) and its features |
+  | `{ant}_ss` | susceptibility score for the antibiotic `{ant}` |
+  | `{ant}_pred` | prediction (score interpretation): `S`=susceptible, `R`=non-susceptible, `S!` and `R!`=low confidence calls |
   | `{ant}_bm` | resistance information for the best match, format: `cat (mic)` |
+
+  See an [example file](tests/predict.tsv).
 
 * **Prediction output (snapshot).** Tab-separated text file with the following columns:
 
   | column | description |
   | --- | --- |
-  | `taxid` | taxid of a database isolate, `_unassigned_` for reads without any k-mer matches with the database |
+  | `taxid` | taxid of a database strain, `_unassigned_` for reads without any k-mer matches with the database |
   | `lineage` | lineage |
-  | `weight` | weight (cumulative "number of k-mer best matches divided by the number of matches") |
+  | `weight` | weight (cumulative "number of *k*-mers matches divided by the the number of best matches") |
   | `weight_norm` | normalized `weight` |
   | `length` | cumulative "read length divided by number of matches" |
-  | `length_norm` | normalized `ln` |
+  | `count` | cumulative "count divided by number of matches" |
+
+  See an [example file](tests/snapshot.tsv).
+
+
+* **RASE DB metadata.** Tab-separated text file with the following columns:
+
+  | column | description |
+  | --- | --- |
+  | `taxid` | taxid of a database strain |
+  | `lineage` | lineage |
+  | `order` | order for plotting |
+  | `{feature}` | arbitrary features (e.g., `serotype` or `MLST`)|
+  | `{ant}_mic` | original MIC string (e.g., `<0.03`) |
+  | `{ant}_int` | extracted MIC interval (`0-0.03`) |
+  | `{ant}_cat` | resistance category  (`S`/`R`/`s`/`r`) |
+
+  See an [example file](tests/metadata.tsv). Metadata files are generated in dedicated repositories (see [RASE DB skeleton](https://github.com/c2-d2/rase-db-skeleton), [*S. pneumoniae* RASE DB](https://github.com/c2-d2/rase-db-spneumoniae-sparc), and [*N. gonorrhoeae* RASE DB](https://github.com/c2-d2/rase-db-ngonorrhoeae-gisp)).
 
 
 ## Related repositories
 
-* [RASE supplementary](http://github.com/c2-d2/rase-supplement). Supplementary Materials for the RASE paper, including figures and tables.
-* [ProPhyle](http://prophyle.github.io). A highly accurate and resource-frugal DNA sequence classifier used by RASE.
-* [Prophex](http://github.com/prophyle/prophex). A k-mer index based on the Burrows-Wheeler Transform, used by ProPhyle.
+* [RASE supplementary](http://github.com/c2-d2/rase-supplement). Supplementary Materials for the RASE paper, including figures, tables, experiments, and links to other related repositories.
+* [RASE DB skeleton](http://github.com/c2-d2/rase-db-skeleton). Skeleton for creating novel RASE databases.
 
 
 ## License
