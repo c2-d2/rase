@@ -45,10 +45,10 @@
   | --- | --- |
   | `taxid` | taxid of a database strain, `_unassigned_` for reads without any k-mer matches with the database |
   | `lineage` | lineage |
-  | `weight` | weight (cumulative "number of k-mer best matches divided by the number of matches") |
+  | `weight` | weight (cumulative "number of *k*-mers matches divided by the the number of best matches") |
   | `weight_norm` | normalized `weight` |
   | `length` | cumulative "read length divided by number of matches" |
-  | `length_norm` | normalized `ln` |
+  | `count` | cumulative "count divided by number of matches" |
 
 
 ## Related repositories
