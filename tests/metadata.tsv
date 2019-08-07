@@ -1,4 +1,4 @@
-taxid	pg	order	serotype	ST	cro_mic	cro_int	cro_cat	ery_mic	ery_int	ery_cat	pen_mic	pen_int	pen_cat	sxt_mic	sxt_int	sxt_cat	tet_mic	tet_int	tet_cat
+taxid	lineage	order	serotype	ST	cro_mic	cro_int	cro_cat	ery_mic	ery_int	ery_cat	pen_mic	pen_int	pen_cat	sxt_mic	sxt_int	sxt_cat	tet_mic	tet_int	tet_cat
 001334	1	462	10A	585	<0.03	0-0.03	S	<0.03	0-0.03	S	<0.03	0-0.03	S	0.25/4	0.25-0.25	S	0.25	0.25-0.25	S
 001996	1	441	6A	1360	<0.03	0-0.03	S	<0.03	0-0.03	S	<0.03	0-0.03	S	0.25/4	0.25-0.25	S	0.25	0.25-0.25	S
 007649	11	181	35B	558	0.5	0.5-0.5	R	>1	1.0-Inf	R	2	2.0-2.0	R	0.25/4	0.25-0.25	S	0.25	0.25-0.25	S
