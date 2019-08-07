@@ -545,11 +545,13 @@ class Stats:
         print(
             "taxid",
             "lineage",
-            "w",
-            "w_norm",
-            "l",
-            "l_norm",
-            sep="\t",
+            "weight",
+            "weight_norm",
+            "length",
+            #"length_norm",
+            "count",
+            #"count_norm",
+            sep="\t",   
             file=file)
         table = []
         for isolate in self._isolates + [FAKE_ISOLATE_UNASSIGNED]:
@@ -566,11 +568,11 @@ class Stats:
                     if self.cumul_h1 != 0 else 0.0,
                     digits=3),
                 *format_floats(self.stats_ln[isolate], digits=0),
-                *format_floats(
-                    self.stats_ln[isolate] / self.cumul_ln
-                    if self.cumul_ln != 0 else 0.0,
-                    digits=3),
-                #*format_floats(self.stats_ct[isolate], digits=0),
+                #*format_floats(
+                #    self.stats_ln[isolate] / self.cumul_ln
+                #    if self.cumul_ln != 0 else 0.0,
+                #    digits=3),
+                *format_floats(self.stats_ct[isolate], digits=0),
                 #*format_floats(
                 #    1.0 * self.stats_ct[isolate] / self.nb_assigned_reads
                 #    if self.nb_assigned_reads != 0 else 0.0,
