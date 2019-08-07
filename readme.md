@@ -57,9 +57,8 @@
 
 ## Related repositories
 
-* [RASE supplementary](http://github.com/c2-d2/rase-supplement). Supplementary Materials for the RASE paper, including figures and tables.
-* [ProPhyle](http://prophyle.github.io). A highly accurate and resource-frugal DNA sequence classifier used by RASE.
-* [Prophex](http://github.com/prophyle/prophex). A k-mer index based on the Burrows-Wheeler Transform, used by ProPhyle.
+* [RASE supplementary](http://github.com/c2-d2/rase-supplement). Supplementary Materials for the RASE paper, including figures, tables, experiments, and links to other related repositories.
+* [RASE DB skeleton](http://github.com/c2-d2/rase-db-skeleton). Skeleton for creating novel RASE databases.
 
 
 ## License
