@@ -1,5 +1,5 @@
 #! /usr/bin/env python3
-"""Prepare a phylogenetic tree for using in RASE.
+"""Prepare phylogenetic tree for use in RASE.
 
 Author: Karel Brinda <kbrinda@hsph.harvard.edu>
 
@@ -50,10 +50,10 @@ def load_tsv_dict(tsv, col1, col2):
     return d
 
 
-def node_to_pg(node, pg_dict):
+def node_to_lineage(node, lineage_dict):
     if node.is_leaf():
         try:
-            return set([pg_dict[node.name]])
+            return set([lineage_dict[node.name]])
         except KeyError:
             print(
                 f"Renaming error: Unknown isolate '{node.name}'",
@@ -62,7 +62,7 @@ def node_to_pg(node, pg_dict):
     else:
         s = set()
         for n in node:
-            s |= node_to_pg(n, pg_dict)
+            s |= node_to_lineage(n, lineage_dict)
         return s
 
 
@@ -77,7 +77,7 @@ def _sorting_key(s):
     return norm
 
 
-def rename_internal_nodes(tree, pg_dict):
+def rename_internal_nodes(tree, lineage_dict):
     """Rename internal nodes (add phylogroups to the name).
     """
 
@@ -86,11 +86,11 @@ def rename_internal_nodes(tree, pg_dict):
     for node in tree.traverse("postorder"):
         if node.is_leaf():
             continue
-        pgs = node_to_pg(node, pg_dict)
-        pgs_s = "-".join(sorted(list(pgs), key=_sorting_key))
-        nname = "PG-{}_{}".format(pgs_s, numbers[pgs_s])
+        lineages = node_to_lineage(node, lineage_dict)
+        lineages_s = "-".join(sorted(list(lineages), key=_sorting_key))
+        nname = "L{}_{}".format(lineages_s, numbers[lineages_s])
         node.name = nname
-        numbers[pgs_s] += 1
+        numbers[lineages_s] += 1
     return tree
 
 
@@ -104,22 +104,22 @@ def rename_leaves(tree, rename_dict):
 
 
 def prepare_rase_tree(newick_in_fn, newick_out_fn, table_fn, node_col,
-                      taxid_col, pg_col):
+                      taxid_col, lineage_col):
     print("\n1) Testing files.\n")
     test_file(newick_in_fn)
     test_file(table_fn)
     tree = Tree(newick_in_fn, format=NW_IN_FORMAT)
 
     print("\n2) Building phylogroup dictionary:\n")
-    pg_dict = load_tsv_dict(table_fn, node_col, pg_col)
-    pprint(pg_dict)
+    lineage_dict = load_tsv_dict(table_fn, node_col, lineage_col)
+    pprint(lineage_dict)
 
     print("\n3) Building renaming dictionary:\n")
     rename_dict = load_tsv_dict(table_fn, node_col, taxid_col)
     pprint(rename_dict)
 
     print("\n4) Renaming nodes.\n")
-    tree = rename_internal_nodes(tree, pg_dict)
+    tree = rename_internal_nodes(tree, lineage_dict)
     tree = rename_leaves(tree, rename_dict)
 
     tree.write(
@@ -190,7 +190,7 @@ def main():
         type=int,
         metavar='INT',
         required=True,
-        dest='pg_col',
+        dest='lineage_col',
         help='0-based phylogroup column id',
     )
 
@@ -202,7 +202,7 @@ def main():
         table_fn=args.table_fn,
         node_col=args.node_col,
         taxid_col=args.taxid_col,
-        pg_col=args.pg_col,
+        lineage_col=args.lineage_col,
     )
 
 

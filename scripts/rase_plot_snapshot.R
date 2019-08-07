@@ -105,11 +105,14 @@ if (kRStudio) {
 palette(kPalette)
 
 dfres <- read.delim(res.file, header = T, stringsAsFactors = F)
-colnames(dfres)[colnames(dfres) == "phylogroup"] <- "pg"
+colnames(dfres)[colnames(dfres) == "phylogroup"] <- "lineage"
+colnames(dfres)[colnames(dfres) == "pg"] <- "lineage"
 dfsnap_with_unassigned <-
     read.delim(src.file, header = T, stringsAsFactors = F)
 colnames(dfsnap_with_unassigned)[colnames(dfsnap_with_unassigned) == "phylogroup"] <-
-    "pg"
+    "lineage"
+colnames(dfsnap_with_unassigned)[colnames(dfsnap_with_unassigned) == "pg"] <-
+    "lineage"
 dfsnap <-
     dfsnap_with_unassigned[dfsnap_with_unassigned$taxid != "_unassigned_", ]
 
@@ -119,19 +122,19 @@ stopifnot(data.frame(lapply(dfsnap[order(dfsnap$taxid), ][["taxid"]], as.charact
 df <-
     merge(dfsnap,
           dfres,
-          by = c("taxid", "pg"))
+          by = c("taxid", "lineage"))
 
 sel <- df[with(df, order(-weight)), ][1:kSelected, ]
 
-first.pg <- sel$pg[[1]]
+first.lineage <- sel$lineage[[1]]
 first.serotype <- sel$Serotype.From.Reads[[1]]
 first.cat <- sel$pnc[[2]]
 first.res <- CatToCatName(first.cat)
 
-second.pg <- unique(sel$pg)[[2]]
+second.lineage <- unique(sel$lineage)[[2]]
 
-pgs.masked <-
-    3 * as.integer(sel$pg > -1) - 2 * as.integer(sel$pg == first.pg) - 1 * as.integer(sel$pg == second.pg)
+lineages.masked <-
+    3 * as.integer(sel$lineage > -1) - 2 * as.integer(sel$lineage == first.lineaga) - 1 * as.integer(sel$lineage == second.lineage)
 
 labs <- paste(sel$taxid, sel$weight)  ## create labels
 
@@ -148,7 +151,7 @@ AbsResGridHeight <- kResGridHeight * maxval
 x <-
     barplot(
         height = vals.to.plot,
-        col = pgs.masked,
+        col = lineages.masked,
         border = NA,
         space = 0,
         axes = F,
@@ -213,7 +216,7 @@ line2 <-
         "Results after 5 mins: Penicillin ",
         first.res,
         ", lineage ",
-        first.pg,
+        first.lineage,
         ", serotype ",
         first.serotype
     )
@@ -286,10 +289,9 @@ legend(
 legend(
     x = "topright",
     title = "Phylogroup",
-    legend = c(first.pg, second.pg, "Others"),
+    legend = c(first.lineage, second.lineage, "Others"),
     cex = 1.5,
-    fill = c(1,
-             2, 3),
+    fill = c(1, 2, 3),
     y.intersp = 0.8,
     box.col = NA,
     border = NA,

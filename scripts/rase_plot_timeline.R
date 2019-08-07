@@ -14,10 +14,10 @@ suppressMessages(suppressWarnings(library(optparse)))
 
 kIsRStudio <- Sys.getenv("RSTUDIO") == "1"
 
-pgs.thres.pass <- 0.5
-ssc.thres.shiconf <- 0.6
-ssc.thres.sr <- 0.5
-ssc.thres.rhiconf <- 0.4
+ls.thres.pass <- 0.5
+ss.thres.shiconf <- 0.6
+ss.thres.sr <- 0.5
+ss.thres.rhiconf <- 0.4
 
 if (kIsRStudio) {
     src.file <- "pipeline/tests/predict.tsv"
@@ -25,30 +25,30 @@ if (kIsRStudio) {
 } else {
     option_list <- list(
         make_option(
-            c("--pgs-thres-pass"),
-            dest = "pgs.thres.pass",
-            default = pgs.thres.pass,
+            c("--ls-thres-pass"),
+            dest = "ls.thres.pass",
+            default = ls.thres.pass,
             help = "phylogroup score threshold [default %default]",
             metavar = "FLOAT"
         ),
         make_option(
-            c("--ssc-thres-shiconf"),
-            dest = "ssc.thres.shiconf",
-            default = ssc.thres.shiconf,
+            c("--ss-thres-shiconf"),
+            dest = "ss.thres.shiconf",
+            default = ss.thres.shiconf,
             help = "phylogroup score threshold [default %default]",
             metavar = "FLOAT"
         ),
         make_option(
-            c("--ssc-thres-sr"),
-            dest = "ssc.thres.sr",
-            default = ssc.thres.sr,
+            c("--ss-thres-sr"),
+            dest = "ss.thres.sr",
+            default = ss.thres.sr,
             help = "phylogroup score threshold [default %default]",
             metavar = "FLOAT"
         ),
         make_option(
-            c("--ssc-thres-rhiconf"),
-            dest = "ssc.thres.rhiconf",
-            default = ssc.thres.rhiconf,
+            c("--ss-thres-rhiconf"),
+            dest = "ss.thres.rhiconf",
+            default = ss.thres.rhiconf,
             help = "phylogroup score threshold [default %default]",
             metavar = "FLOAT"
         )
@@ -61,10 +61,10 @@ if (kIsRStudio) {
 
     opt <- arguments$options
 
-    pgs.thres.pass <- opt$pgs.thres.pass
-    ssc.thres.shiconf <- opt$ssc.thres.shiconf
-    ssc.thres.sr <- opt$ssc.thres.sr
-    ssc.thres.rhiconf <- opt$ssc.thres.rhiconf
+    ls.thres.pass <- opt$ls.thres.pass
+    ss.thres.shiconf <- opt$ss.thres.shiconf
+    ss.thres.sr <- opt$ss.thres.sr
+    ss.thres.rhiconf <- opt$ss.thres.rhiconf
 
     src.file <- arguments$args[1]
     out.file <- arguments$args[2]
@@ -149,8 +149,8 @@ LoadTimelineData <- function(src.file) {
 #'
 DfToAnts <- function(df) {
     cols <- colnames(df)
-    antcols <- cols[grepl("ssc", cols)]
-    ants <- gsub("_ssc", "", antcols)
+    antcols <- cols[grepl("ss", cols)]
+    ants <- gsub("_ss", "", antcols)
     ants
 }
 
@@ -192,7 +192,7 @@ TimeAblines <- function(x) {
 
 #' Plots horizontal ablines
 #'
-#' @param y SSC thresholds
+#' @param y SS thresholds
 #'
 ThresholdAbline <- function(y, lty = 1, col = "grey", ...) {
     abline(h = c(y),
@@ -330,7 +330,7 @@ PlotReads <- function(df,
 #'
 #' @param i Position: 1=left, 2=right
 #'
-PlotProportion <-
+PlotKS <-
     function(df,
         i,
         ylim,
@@ -348,7 +348,7 @@ PlotProportion <-
             par(bty = "[")
             plot(
                 df$time.mins,
-                df$kmers_prop,
+                df$ks,
                 xlim = l.xlim,
                 ylim = ylim,
                 type = type,
@@ -372,7 +372,7 @@ PlotProportion <-
             par(bty = "]")
             plot(
                 df$time.mins / kRLUnitRatio,
-                df$kmers_prop,
+                df$ks,
                 xlim = r.xlim,
                 ylim = ylim,
                 type = type,
@@ -391,7 +391,7 @@ PlotProportion <-
     }
 
 
-#' Plot PGS
+#' Plot LS
 #'
 #' @param i
 #'
@@ -399,14 +399,14 @@ PlotProportion <-
 #' @export
 #'
 #' @examples
-PlotPGS <- function(df, i) {
-    last_pg_predicted <- tail(df, n = 1)["pgs"] >= pgs.thres.pass
+PlotLS <- function(df, i) {
+    last_pg_predicted <- tail(df, n = 1)["ls"] >= ls.thres.pass
     margin(i)
     if (i == 1) {
         par(bty = "[")
         plot(
             df$time.mins,
-            df$pgs,
+            df$ls,
             type = "l",
             xlim = l.xlim,
             ylim = c(0, 1),
@@ -419,7 +419,7 @@ PlotPGS <- function(df, i) {
         )
 
         mtext(
-            "PGS",
+            "LS",
             side = 2,
             line = kYLabDist,
             cex.lab = 1,
@@ -446,7 +446,7 @@ PlotPGS <- function(df, i) {
         par(bty = "]")
         plot(
             df$time.mins / kRLUnitRatio,
-            df$pgs,
+            df$ls,
             type = "l",
             xlim = r.xlim,
             ylim = c(0, 1),
@@ -459,17 +459,17 @@ PlotPGS <- function(df, i) {
             xaxs = "i"
         )
     }
-    ThresholdAbline(pgs.thres.pass)
+    ThresholdAbline(ls.thres.pass)
     if (last_pg_predicted) {
-        GreenBox(df2, pgs.thres.pass)
+        GreenBox(df2, ls.thres.pass)
     } else {
-        RedBox(df2, pgs.thres.pass)
+        RedBox(df2, ls.thres.pass)
     }
     TimeAblines(kVerticalAblines[i])
 }
 
 
-#' Plot SSC
+#' Plot SS
 #'
 #' @param ant
 #' @param i
@@ -480,8 +480,8 @@ PlotPGS <- function(df, i) {
 #'
 #' @examples
 PlotAntibiotic <- function(df, ant, i, is.last) {
-    antcol <- paste0(ant, "_ssc")
-    last_is_resistant <- tail(df, n = 1)[antcol] <= ssc.thres.sr
+    antcol <- paste0(ant, "_ss")
+    last_is_resistant <- tail(df, n = 1)[antcol] <= ss.thres.sr
     par(bty = "l")
     margin(i)
     if (i == 1) {
@@ -502,7 +502,7 @@ PlotAntibiotic <- function(df, ant, i, is.last) {
         )
 
         mtext(
-            paste(toupper(ant), "SSC"),
+            paste(toupper(ant), "SS"),
             side = 2,
             line = kYLabDist,
             cex.lab = 1,
@@ -543,14 +543,14 @@ PlotAntibiotic <- function(df, ant, i, is.last) {
     }
 
     if (last_is_resistant) {
-        RedBox(df2, ssc.thres.sr)
+        RedBox(df2, ss.thres.sr)
     } else {
-        GreenBox(df2, ssc.thres.sr)
+        GreenBox(df2, ss.thres.sr)
     }
 
-    ThresholdAbline(ssc.thres.rhiconf, lty = 3)
-    ThresholdAbline(ssc.thres.shiconf, lty = 3)
-    ThresholdAbline(ssc.thres.sr)
+    ThresholdAbline(ss.thres.rhiconf, lty = 3)
+    ThresholdAbline(ss.thres.shiconf, lty = 3)
+    ThresholdAbline(ss.thres.sr)
     TimeAblines(kVerticalAblines[i])
 
 
@@ -601,18 +601,18 @@ reads.ylim <- c(0, max(df2$reads) / 1000)
 PlotReads(df1, df1.flag, 1, ylim=reads.ylim)
 PlotReads(df2, df2.flag, 2, ylim=reads.ylim)
 
-# 2) proportion of k-mers
+# 2) ks
 y.lim <- c(0, max(pretty(c(
-    df1$kmers_prop, df2$kmers_prop
+    df1$ks, df2$ks
 ))))
-PlotProportion(df1, 1, ylim = y.lim)
-PlotProportion(df2, 2, ylim = y.lim)
+PlotKS(df1, 1, ylim = y.lim)
+PlotKS(df2, 2, ylim = y.lim)
 
-# 3) pgs
-PlotPGS(df1, 1)
-PlotPGS(df2, 2)
+# 3) ls
+PlotLS(df1, 1)
+PlotLS(df2, 2)
 
-# 4) ssc
+# 4) ss
 last.ant <- tail(ants, 1)
 for (ant in ants) {
     is.last <- ant == last.ant
