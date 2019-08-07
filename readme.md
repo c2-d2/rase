@@ -39,7 +39,7 @@
   | `{ant}_pred` | prediction (score interpretation): `S`=susceptible, `R`=non-susceptible, `S!` and `R!`=low confidence calls |
   | `{ant}_bm` | resistance information for the best match, format: `cat (mic)` |
 
-  See an [example](tests/predict.tsv).
+  See an [example file](tests/predict.tsv).
 
 * **Prediction output (snapshot).** Tab-separated text file with the following columns:
 
@@ -52,7 +52,7 @@
   | `length` | cumulative "read length divided by number of matches" |
   | `count` | cumulative "count divided by number of matches" |
 
-  See an [example](tests/snapshot.tsv).
+  See an [example file](tests/snapshot.tsv).
 
 
 * **RASE DB metadata.** Tab-separated text file with the following columns:
@@ -67,7 +67,7 @@
   | `{ant}_int` | extracted MIC interval (`0-0.03`) |
   | `{ant}_cat` | resistance category  (`S`/`R`/`s`/`r`) |
 
-  See an [example](tests/metadata.tsv). Metadata files are generated in dedicated repositories (see [RASE DB skeleton])(https://github.com/c2-d2/rase-db-skeleton), [*S. pneumoniae* RASE DB](https://github.com/c2-d2/rase-db-spneumoniae-sparc), and [*N. gonorrhoeae* RASE DB](https://github.com/c2-d2/rase-db-ngonorrhoeae-gisp)).
+  See an [example file](tests/metadata.tsv). Metadata files are generated in dedicated repositories (see [RASE DB skeleton](https://github.com/c2-d2/rase-db-skeleton), [*S. pneumoniae* RASE DB](https://github.com/c2-d2/rase-db-spneumoniae-sparc), and [*N. gonorrhoeae* RASE DB](https://github.com/c2-d2/rase-db-ngonorrhoeae-gisp)).
 
 
 ## Related repositories
