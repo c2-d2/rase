@@ -450,7 +450,7 @@ class Stats:
             isolates |= self._descending_isolates_d[nname]
         return sorted(isolates)
 
-    def ls_by_weight(self):
+    def lineages_by_weight(self):
         """Sort phylogroups by weight.
 
         Returns:
@@ -481,7 +481,7 @@ class Stats:
 
         d = collections.defaultdict(lambda: (None, -1))
 
-        for isolate in self._metadata.lnset[lineage]:
+        for isolate in self._metadata.lineageset[lineage]:
             val = self.weight(isolate)
             cat = self._metadata.rcat[isolate][ant].upper()
 

@@ -20,8 +20,7 @@ ss.thres.sr <- 0.5
 ss.thres.rhiconf <- 0.4
 
 if (kIsRStudio) {
-    src.file <- "pipeline/tests/predict.tsv"
-    #src.file <- "/Users/karel/github/my/rase/pipeline/prediction/sp10_norwich_P33.filtered__spneumoniae_sparc.k18.predict.tsv"
+    src.file <- "tests/predict.tsv"
 } else {
     option_list <- list(
         make_option(
@@ -149,7 +148,7 @@ LoadTimelineData <- function(src.file) {
 #'
 DfToAnts <- function(df) {
     cols <- colnames(df)
-    antcols <- cols[grepl("ss", cols)]
+    antcols <- cols[grepl("_ss", cols)]
     ants <- gsub("_ss", "", antcols)
     ants
 }
@@ -162,7 +161,7 @@ DfToAnts <- function(df) {
 #' @return Dataframe with flag points to plot
 #'
 DfToFlags <- function(dataframe) {
-    df.1 <- dataframe[grep("S:pg", dataframe$flags),]
+    df.1 <- dataframe[grep("S:lineage", dataframe$flags),]
     df.1$pch <- rep(4, nrow(df.1))
 
     #df.2 <- dataframe[grep("S:alt_pg", dataframe$flags), ]
@@ -361,7 +360,7 @@ PlotKS <-
                 ...
             )
             mtext(
-                "proportion of k-mers",
+                "KS",
                 side = 2,
                 line = kYLabDist,
                 cex.lab = 1,
@@ -481,6 +480,7 @@ PlotLS <- function(df, i) {
 #' @examples
 PlotAntibiotic <- function(df, ant, i, is.last) {
     antcol <- paste0(ant, "_ss")
+    print(antcol)
     last_is_resistant <- tail(df, n = 1)[antcol] <= ss.thres.sr
     par(bty = "l")
     margin(i)
