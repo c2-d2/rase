@@ -27,28 +27,28 @@ if (kIsRStudio) {
             c("--ls-thres-pass"),
             dest = "ls.thres.pass",
             default = ls.thres.pass,
-            help = "phylogroup score threshold [default %default]",
+            help = "lineage score threshold for high-confidence calls [default %default]",
             metavar = "FLOAT"
         ),
         make_option(
             c("--ss-thres-shiconf"),
             dest = "ss.thres.shiconf",
             default = ss.thres.shiconf,
-            help = "phylogroup score threshold [default %default]",
+            help = "susceptibility score threshold for high-confidence susceptible [default %default]",
             metavar = "FLOAT"
         ),
         make_option(
             c("--ss-thres-sr"),
             dest = "ss.thres.sr",
             default = ss.thres.sr,
-            help = "phylogroup score threshold [default %default]",
+            help = "susceptibility score threshold for susceptible/non-susceptible [default %default]",
             metavar = "FLOAT"
         ),
         make_option(
             c("--ss-thres-rhiconf"),
             dest = "ss.thres.rhiconf",
             default = ss.thres.rhiconf,
-            help = "phylogroup score threshold [default %default]",
+            help = "susceptibility score threshold for high-confidence non-susceptible [default %default]",
             metavar = "FLOAT"
         )
     )
@@ -164,7 +164,7 @@ DfToFlags <- function(dataframe) {
     df.1 <- dataframe[grep("S:lineage", dataframe$flags),]
     df.1$pch <- rep(4, nrow(df.1))
 
-    #df.2 <- dataframe[grep("S:alt_pg", dataframe$flags), ]
+    #df.2 <- dataframe[grep("S:alt_lineage", dataframe$flags), ]
     #df.2$pch <- rep(1, nrow(df.2))
 
     df.3 <- dataframe[grep("S:bm", dataframe$flags),]
@@ -312,8 +312,8 @@ PlotReads <- function(df,
         legend(
             "topleft",
             c(
-                "Predicted PG stabilized",
-                #"Alternative PG  stabilized",
+                "Predicted lineage stabilized",
+                #"Alternative lineage  stabilized",
                 "Predicted isolate stabilized"
             ),
             bg = "white",
@@ -399,7 +399,7 @@ PlotKS <-
 #'
 #' @examples
 PlotLS <- function(df, i) {
-    last_pg_predicted <- tail(df, n = 1)["ls"] >= ls.thres.pass
+    last_lineage_predicted <- tail(df, n = 1)["ls"] >= ls.thres.pass
     margin(i)
     if (i == 1) {
         par(bty = "[")
@@ -459,7 +459,7 @@ PlotLS <- function(df, i) {
         )
     }
     ThresholdAbline(ls.thres.pass)
-    if (last_pg_predicted) {
+    if (last_lineage_predicted) {
         GreenBox(df2, ls.thres.pass)
     } else {
         RedBox(df2, ls.thres.pass)
