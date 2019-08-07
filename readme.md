@@ -13,7 +13,7 @@
 
 ## Introduction
 
-This repository contains the core RASE software. Pipeline for users is located in a [separate repository](https://github.com/c2-d2/rase-pipeline/).
+This repository contains the core RASE software. For more information, see the [RASE paper](https://www.biorxiv.org/content/10.1101/403204v2) and [RASE supplementary materials](https://github.com/c2-d2/rase-supplement/). A pipeline for users is located in a [separate repository](https://github.com/c2-d2/rase-pipeline/).
 
 ## Installation
 
