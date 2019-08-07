@@ -2,6 +2,7 @@
 
 <!-- vim-markdown-toc GFM -->
 
+* [Introduction](#introduction)
 * [Installation](#installation)
 * [File formats](#file-formats)
 * [Related repositories](#related-repositories)
@@ -9,6 +10,10 @@
 * [Contact](#contact)
 
 <!-- vim-markdown-toc -->
+
+## Introduction
+
+This repository contains the core RASE software. Pipeline for users is located in a [separate repository](https://github.com/c2-d2/rase-pipeline/).
 
 ## Installation
 
