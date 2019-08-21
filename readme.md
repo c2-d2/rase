@@ -5,6 +5,9 @@
 * [Introduction](#introduction)
 * [Installation](#installation)
 * [File formats](#file-formats)
+  * [Prediction output (timeline)](#prediction-output-timeline)
+  * [Prediction output (snapshot)](#prediction-output-snapshot)
+  * [RASE DB metadata](#rase-db-metadata)
 * [Related repositories](#related-repositories)
 * [License](#license)
 * [Contact](#contact)
@@ -27,7 +30,9 @@ This repository contains the core RASE software. For more information, see the [
 
 ## File formats
 
-* **Prediction output (timeline).**  Tab-separated text file with the following columns:
+### Prediction output (timeline)
+
+Tab-separated text file with the following columns:
 
   | column | description |
   | --- | --- |
@@ -46,7 +51,9 @@ This repository contains the core RASE software. For more information, see the [
 
   See an [example file](tests/predict.tsv).
 
-* **Prediction output (snapshot).** Tab-separated text file with the following columns:
+### Prediction output (snapshot)
+
+Tab-separated text file with the following columns:
 
   | column | description |
   | --- | --- |
@@ -59,8 +66,9 @@ This repository contains the core RASE software. For more information, see the [
 
   See an [example file](tests/snapshot.tsv).
 
+### RASE DB metadata
 
-* **RASE DB metadata.** Tab-separated text file with the following columns:
+Tab-separated text file with the following columns:
 
   | column | description |
   | --- | --- |
