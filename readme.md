@@ -8,6 +8,7 @@
   * [Prediction output (timeline)](#prediction-output-timeline)
   * [Prediction output (snapshot)](#prediction-output-snapshot)
   * [RASE DB metadata](#rase-db-metadata)
+  * [RASE/BAM](#rasebam)
 * [Related repositories](#related-repositories)
 * [License](#license)
 * [Contact](#contact)
@@ -81,6 +82,20 @@ Tab-separated text file with the following columns:
   | `{ant}_cat` | resistance category  (`S`/`R`/`s`/`r`) |
 
   See an [example file](tests/metadata.tsv). Metadata files are generated in dedicated repositories (see [RASE DB skeleton](https://github.com/c2-d2/rase-db-skeleton), [*S. pneumoniae* RASE DB](https://github.com/c2-d2/rase-db-spneumoniae-sparc), and [*N. gonorrhoeae* RASE DB](https://github.com/c2-d2/rase-db-ngonorrhoeae-gisp)).
+
+
+### RASE/BAM
+
+File following the [SAM/BAM specification](https://samtools.github.io/hts-specs/SAMv1.pdf), containing the following information:
+
+  | field | description |
+  | --- | --- |
+  | `QNAME` | read name (ideally with the timestamp encoded) |
+  | `FLAG` | 4 for unassigned,  0 otherwise |
+  | `RNAME` | strain taxid or name of an internal node |
+  | `ln:i:` | read length |
+  | `h1:i:` | number of k-mer matches at this node |
+
 
 
 ## Related repositories
