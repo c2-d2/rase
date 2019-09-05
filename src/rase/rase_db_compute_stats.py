@@ -55,7 +55,12 @@ def compute_stats(fn, s):
     ]
     print(*parts, sep="\t")
 
-    for lineage in sorted(lineages, key=lambda x: int(x)):
+    try:
+        lineages_sorted = sorted(lineages, key=lambda x: int(x))
+    except ValueError:
+        lineages_sorted = sorted(lineages, key=lambda x: x)
+
+    for lineage in lineages_sorted:
         parts = [lineage, lineage_count[lineage]]
         for ant in ants_sorted:
             for catgr in cats_sorted:
