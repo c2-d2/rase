@@ -1,6 +1,6 @@
 # RASE - Resistance-Associated Sequence Elements
 
-| This repository contains the core RASE package. Other components of the software are the [RASE pipeline](https://github.com/c2-d2/rase-pipeline/) and the [RASE DB skeleton](https://github.com/c2-d2/rase-db-skeleton).  For more information, see the [RASE paper](https://www.biorxiv.org/content/10.1101/403204v2) and the [RASE supplementary materials](https://github.com/c2-d2/rase-supplement/). |
+| This repository contains the core RASE package. Other components of the software include the [RASE pipeline](https://github.com/c2-d2/rase-pipeline/) and the [RASE DB skeleton](https://github.com/c2-d2/rase-db-skeleton).  For more information, see the [RASE paper](https://www.biorxiv.org/content/10.1101/403204v2) and the [RASE supplementary materials](https://github.com/c2-d2/rase-supplement/). |
 |-|
 
 ## Content
