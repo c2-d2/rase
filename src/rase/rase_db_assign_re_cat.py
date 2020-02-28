@@ -15,6 +15,7 @@ import csv
 re_number = re.compile(r'^([0-9]*\.{0,1}[0-9]*)$')
 re_greater = re.compile(r'^(?:≥|>|>=)([0-9]*\.{0,1}[0-9]*)$')
 re_lesser = re.compile(r'^(?:≤|<|<=)([0-9]*\.{0,1}[0-9]*)$')
+re_interval = re.compile(r'^([0-9]*\.{0,1}[0-9]*)-([0-9]*\.{0,1}[0-9]*)$')
 
 
 def pseudo_mic_to_interval(pseudo_mic):
@@ -42,6 +43,12 @@ def pseudo_mic_to_interval(pseudo_mic):
     if m:
         number = float(m.group(1))
         return (0, number)
+
+    m = re_interval.match(pseudo_mic)
+    if m:
+        number1 = float(m.group(1))
+        number2 = float(m.group(2))
+        return (number1, number2)
 
     print(
         f"Warning: MIC string '{pseudo_mic}' could not be parsed. If this represents a value, a new regular expression should be added.",
