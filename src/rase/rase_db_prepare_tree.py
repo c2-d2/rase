@@ -95,7 +95,7 @@ def rename_internal_nodes(tree, lineage_dict):
         else:
             # short "fake" name
             x = "-".join(sorted(list(lineages), key=_sorting_key)[:3])
-            h = hashlib.md5(lineages_ss)[:10]
+            h = hashlib.md5(lineages_ss.encode('utf-8')).hexdigest()[:10]
             lineages_ss = f"{x}-etc--{h}"
         nname = "L{}_{}".format(lineages_ss, numbers[lineages_s])
         node.name = nname
