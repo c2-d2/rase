@@ -8,6 +8,7 @@ Licence: MIT
 
 import argparse
 import collections
+import hashlib
 import os
 import pprint as ppprint
 import sys
@@ -88,7 +89,15 @@ def rename_internal_nodes(tree, lineage_dict):
             continue
         lineages = node_to_lineage(node, lineage_dict)
         lineages_s = "-".join(sorted(list(lineages), key=_sorting_key))
-        nname = "L{}_{}".format(lineages_s, numbers[lineages_s])
+        # if the name is too long, make a bibtex-like etc form and attach hash
+        if len(lineages_s)<40:
+            lineages_ss = lineages_s
+        else:
+            # short "fake" name
+            x = "-".join(sorted(list(lineages), key=_sorting_key)[:3])
+            h = hashlib.md5(lineages_ss)[:10]
+            lineages_ss = f"{x}-etc--{h}"
+        nname = "L{}_{}".format(lineages_ss, numbers[lineages_s])
         node.name = nname
         numbers[lineages_s] += 1
     return tree
